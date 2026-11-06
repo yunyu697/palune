@@ -1,0 +1,11 @@
+{
+    "applicationPath": "D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/build/Release/Palune.exe",
+    "arguments": [
+        "--e2e-restarted",
+        "--e2e-marker",
+        "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\palune\\qa\\runtime\\restart-marker-download.json"
+    ],
+    "pid": 26512,
+    "restartedAt": "2026-11-06T17:46:04.521",
+    "version": "1.0.0-alpha1"
+}

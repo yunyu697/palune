@@ -1,0 +1,44 @@
+{
+    "actualSha256": "",
+    "availableVersion": "1.0.0-alpha2",
+    "currentVersion": "1.0.0-alpha1",
+    "downloadDir": "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\palune\\qa\\runtime\\badhash-dl",
+    "downloadedPath": "",
+    "errorCode": "UPD-006",
+    "errorMessage": "安装包完整性校验失败，已拒绝安装（SHA-256 不匹配：期望 0000000000000000000000000000000000000000000000000000000000000000，实际 ac1a5ff9a7c4e45971328a1ea6315c504bab20ea73f4d365a0a54b5c9d757ac2）",
+    "expectedSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "feed": "http://127.0.0.1:8765/feed-bad-hash/latest.json",
+    "generatedAt": "2026-11-06T17:46:22",
+    "logPath": "C:/Users/Tyler Zhang/AppData/Roaming/Palune/Palune/logs/palune.log",
+    "mirror": "镜像 A",
+    "mirrorIndex": 1,
+    "mode": "update-e2e:download-only",
+    "restartMarker": "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\palune\\qa\\runtime\\restart-marker-badhash.json",
+    "state": "error",
+    "transitions": [
+        {
+            "at": "2026-11-06T17:46:22.798",
+            "mirror": "直连",
+            "progress": 0,
+            "state": "checking"
+        },
+        {
+            "at": "2026-11-06T17:46:22.815",
+            "mirror": "直连",
+            "progress": 0,
+            "state": "available"
+        },
+        {
+            "at": "2026-11-06T17:46:22.881",
+            "mirror": "镜像 A",
+            "progress": 0,
+            "state": "downloading"
+        },
+        {
+            "at": "2026-11-06T17:46:22.887",
+            "mirror": "镜像 A",
+            "progress": 100,
+            "state": "error"
+        }
+    ]
+}

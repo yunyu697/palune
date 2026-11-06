@@ -1,0 +1,50 @@
+{
+    "actualSha256": "ac1a5ff9a7c4e45971328a1ea6315c504bab20ea73f4d365a0a54b5c9d757ac2",
+    "availableVersion": "1.0.0-alpha2",
+    "currentVersion": "1.0.0-alpha1",
+    "downloadDir": "",
+    "downloadedPath": "D:/Data/Downloads/Downloads/Palune/Palune-1.0.0-alpha2-win-x64-setup.cmd",
+    "errorCode": "",
+    "errorMessage": "",
+    "expectedSha256": "ac1a5ff9a7c4e45971328a1ea6315c504bab20ea73f4d365a0a54b5c9d757ac2",
+    "feed": "http://127.0.0.1:8765/feed/latest.json",
+    "generatedAt": "2026-11-06T17:46:04",
+    "logPath": "C:/Users/Tyler Zhang/AppData/Roaming/Palune/Palune/logs/palune.log",
+    "mirror": "镜像 A",
+    "mirrorIndex": 1,
+    "mode": "update-e2e:download-only",
+    "restartMarker": "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\palune\\qa\\runtime\\restart-marker-download.json",
+    "state": "installing",
+    "transitions": [
+        {
+            "at": "2026-11-06T17:46:04.198",
+            "mirror": "直连",
+            "progress": 0,
+            "state": "checking"
+        },
+        {
+            "at": "2026-11-06T17:46:04.273",
+            "mirror": "直连",
+            "progress": 0,
+            "state": "available"
+        },
+        {
+            "at": "2026-11-06T17:46:04.336",
+            "mirror": "镜像 A",
+            "progress": 0,
+            "state": "downloading"
+        },
+        {
+            "at": "2026-11-06T17:46:04.355",
+            "mirror": "镜像 A",
+            "progress": 100,
+            "state": "downloaded"
+        },
+        {
+            "at": "2026-11-06T17:46:04.356",
+            "mirror": "镜像 A",
+            "progress": 100,
+            "state": "installing"
+        }
+    ]
+}

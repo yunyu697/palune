@@ -1,0 +1,609 @@
+{
+    "altTab": {
+        "appWindowCount": 1,
+        "overlayIsAppWindow": true,
+        "verdict": "PASS",
+        "videoIsToolWindow": true,
+        "windows": [
+            {
+                "appWindow": true,
+                "ownerless": true,
+                "title": "Palune — testsrc2-720p.mp4",
+                "toolWindow": false
+            },
+            {
+                "appWindow": false,
+                "ownerless": true,
+                "title": "Palune Video Surface - Palune",
+                "toolWindow": true
+            }
+        ]
+    },
+    "dpi": {
+        "actualScalePercent": 200,
+        "monitorCount": 1,
+        "reason": "本机仅 1 个显示器且固定 100% 缩放，无法执行真实的 100%/150%/200% 跨屏拖动各 10 次；已用 WM_DPICHANGED 合成消息验证重排后两窗仍零偏移，但不作为达标证据",
+        "requiredDragsPerScale": 10,
+        "requiredScales": [
+            100,
+            150,
+            200
+        ],
+        "simulatedAligned": true,
+        "simulatedWmDpiChanged": [
+            {
+                "aligned": true,
+                "geometryDeltaPx": 0,
+                "overlayDpr": 2,
+                "syncMs": 1.597,
+                "targetDpi": 144
+            },
+            {
+                "aligned": true,
+                "geometryDeltaPx": 0,
+                "overlayDpr": 2,
+                "syncMs": 1.3,
+                "targetDpi": 192
+            }
+        ],
+        "verdict": "NOT_VERIFIED"
+    },
+    "environment": {
+        "backend": "wid + d3d11 + gpu-next（Windows 主路径）",
+        "desktopMode": "当前桌面",
+        "devicePixelRatio": 2,
+        "logicalDpi": 96,
+        "monitorCount": 1,
+        "mpv": "mpv v0.42.0-3-g902818753",
+        "platform": "windows",
+        "scalePercent": 200,
+        "screenGeometry": "1920x1080"
+    },
+    "fullscreen": {
+        "frameBudgetMs": 16.666666666666668,
+        "iterations": 20,
+        "lumaSamples": 20,
+        "maxGeometryDeltaPx": 0,
+        "maxSyncMs": 6.284,
+        "method": "几何同步时差 <= 1 帧(16.67ms) + 两窗矩形零偏移；黑帧用 mpv screenshot-raw 采样亮度作代理，不做逐帧录屏",
+        "minLuma": 125.19118465909037,
+        "nonBlackSamples": 20,
+        "samples": [
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "frameDropDelta": 12,
+                "fullscreen": true,
+                "index": 1,
+                "luma": 125.61262215909133,
+                "overlayAbove": true,
+                "syncMs": 3.189,
+                "videoReconfigDelta": 0
+            },
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "frameDropDelta": 11,
+                "fullscreen": false,
+                "index": 2,
+                "luma": 125.71493750000037,
+                "overlayAbove": true,
+                "syncMs": 6.284,
+                "videoReconfigDelta": 0
+            },
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "frameDropDelta": 2,
+                "fullscreen": true,
+                "index": 3,
+                "luma": 125.60775071022749,
+                "overlayAbove": true,
+                "syncMs": 2.7,
+                "videoReconfigDelta": 0
+            },
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "frameDropDelta": 7,
+                "fullscreen": false,
+                "index": 4,
+                "luma": 125.69934209280349,
+                "overlayAbove": true,
+                "syncMs": 4.2,
+                "videoReconfigDelta": 0
+            },
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "frameDropDelta": 12,
+                "fullscreen": true,
+                "index": 5,
+                "luma": 125.727984138258,
+                "overlayAbove": true,
+                "syncMs": 2.144,
+                "videoReconfigDelta": 0
+            },
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "frameDropDelta": 8,
+                "fullscreen": false,
+                "index": 6,
+                "luma": 125.72744696969731,
+                "overlayAbove": true,
+                "syncMs": 2.252,
+                "videoReconfigDelta": 0
+            },
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "frameDropDelta": 15,
+                "fullscreen": true,
+                "index": 7,
+                "luma": 125.19118465909037,
+                "overlayAbove": true,
+                "syncMs": 2.339,
+                "videoReconfigDelta": 0
+            },
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "frameDropDelta": 8,
+                "fullscreen": false,
+                "index": 8,
+                "luma": 125.7937130681817,
+                "overlayAbove": true,
+                "syncMs": 2.696,
+                "videoReconfigDelta": 0
+            },
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "frameDropDelta": 10,
+                "fullscreen": true,
+                "index": 9,
+                "luma": 125.7058901515156,
+                "overlayAbove": true,
+                "syncMs": 2.73,
+                "videoReconfigDelta": 0
+            },
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "frameDropDelta": 0,
+                "fullscreen": false,
+                "index": 10,
+                "luma": 125.64149763257615,
+                "overlayAbove": true,
+                "syncMs": 2.878,
+                "videoReconfigDelta": 0
+            },
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "frameDropDelta": 11,
+                "fullscreen": true,
+                "index": 11,
+                "luma": 125.66812926136384,
+                "overlayAbove": true,
+                "syncMs": 3.807,
+                "videoReconfigDelta": 0
+            },
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "frameDropDelta": 1,
+                "fullscreen": false,
+                "index": 12,
+                "luma": 125.67712073863655,
+                "overlayAbove": true,
+                "syncMs": 4.902,
+                "videoReconfigDelta": 0
+            },
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "frameDropDelta": 12,
+                "fullscreen": true,
+                "index": 13,
+                "luma": 125.80994815340945,
+                "overlayAbove": true,
+                "syncMs": 3.013,
+                "videoReconfigDelta": 0
+            },
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "frameDropDelta": 1,
+                "fullscreen": false,
+                "index": 14,
+                "luma": 125.64668560606087,
+                "overlayAbove": true,
+                "syncMs": 2.018,
+                "videoReconfigDelta": 0
+            },
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "frameDropDelta": 3,
+                "fullscreen": true,
+                "index": 15,
+                "luma": 125.69547561553064,
+                "overlayAbove": true,
+                "syncMs": 3.09,
+                "videoReconfigDelta": 0
+            },
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "frameDropDelta": 3,
+                "fullscreen": false,
+                "index": 16,
+                "luma": 125.6723312026519,
+                "overlayAbove": true,
+                "syncMs": 2.437,
+                "videoReconfigDelta": 0
+            },
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "frameDropDelta": 18,
+                "fullscreen": true,
+                "index": 17,
+                "luma": 125.72752651515167,
+                "overlayAbove": true,
+                "syncMs": 3.041,
+                "videoReconfigDelta": 0
+            },
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "frameDropDelta": 2,
+                "fullscreen": false,
+                "index": 18,
+                "luma": 125.78756652462145,
+                "overlayAbove": true,
+                "syncMs": 2.549,
+                "videoReconfigDelta": 0
+            },
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "frameDropDelta": 1,
+                "fullscreen": true,
+                "index": 19,
+                "luma": 125.72695975378831,
+                "overlayAbove": true,
+                "syncMs": 3.009,
+                "videoReconfigDelta": 0
+            },
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "frameDropDelta": 5,
+                "fullscreen": false,
+                "index": 20,
+                "luma": 125.71305823863663,
+                "overlayAbove": true,
+                "syncMs": 3.705,
+                "videoReconfigDelta": 0
+            }
+        ],
+        "verdict": "PASS",
+        "videoReconfigCount": 0
+    },
+    "generatedAt": "2026-11-06T18:19:04",
+    "hitTest": {
+        "hits": 0,
+        "hitsVideoSurface": 0,
+        "note": "透明区域点击穿透到视频窗属设计预期，命中判定以 Z 序相邻为主",
+        "overlayImmediatelyAboveVideo": true,
+        "points": 12,
+        "samples": [
+            {
+                "overlay": false,
+                "topClass": "",
+                "x": 1,
+                "y": -45
+            },
+            {
+                "overlay": false,
+                "topClass": "LockScreenBackstopFrame",
+                "x": 1,
+                "y": 28
+            },
+            {
+                "overlay": false,
+                "topClass": "",
+                "x": 1,
+                "y": -45
+            },
+            {
+                "overlay": false,
+                "topClass": "LockScreenBackstopFrame",
+                "x": 1,
+                "y": 28
+            },
+            {
+                "overlay": false,
+                "topClass": "",
+                "x": 1,
+                "y": -45
+            },
+            {
+                "overlay": false,
+                "topClass": "LockScreenBackstopFrame",
+                "x": 1,
+                "y": 28
+            },
+            {
+                "overlay": false,
+                "topClass": "",
+                "x": 1,
+                "y": -45
+            },
+            {
+                "overlay": false,
+                "topClass": "LockScreenBackstopFrame",
+                "x": 1,
+                "y": 28
+            },
+            {
+                "overlay": false,
+                "topClass": "",
+                "x": 1,
+                "y": -45
+            },
+            {
+                "overlay": false,
+                "topClass": "LockScreenBackstopFrame",
+                "x": 1,
+                "y": 28
+            },
+            {
+                "overlay": false,
+                "topClass": "",
+                "x": 1,
+                "y": -45
+            },
+            {
+                "overlay": false,
+                "topClass": "LockScreenBackstopFrame",
+                "x": 1,
+                "y": 28
+            }
+        ],
+        "verdict": "PASS"
+    },
+    "reportPath": "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\palune\\qa\\runtime\\m0-report.json",
+    "snap": {
+        "layouts": 4,
+        "maxSyncMs": 4.2,
+        "method": "用 SetWindowPos 等效几何驱动模拟 Snap 四种贴边（非鼠标拖拽手势），最小化/恢复 10 轮并采样恢复后画面亮度",
+        "minimizeRestoreCycles": 10,
+        "restoreLumaOk": true,
+        "samples": [
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "layout": "左半屏",
+                "overlayAbove": true,
+                "syncMs": 1.996
+            },
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "layout": "右半屏",
+                "overlayAbove": true,
+                "syncMs": 4.2
+            },
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "layout": "左上 1/4",
+                "overlayAbove": true,
+                "syncMs": 2.589
+            },
+            {
+                "aligned": true,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "layout": "右上 1/4",
+                "overlayAbove": true,
+                "syncMs": 2.253
+            },
+            {
+                "aligned": true,
+                "cycle": 1,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "luma": 125.67682054924286,
+                "overlayAbove": true,
+                "syncMs": 3.02
+            },
+            {
+                "aligned": true,
+                "cycle": 2,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "luma": 125.67682054924286,
+                "overlayAbove": true,
+                "syncMs": 2.253
+            },
+            {
+                "aligned": true,
+                "cycle": 3,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "luma": 125.67682054924286,
+                "overlayAbove": true,
+                "syncMs": 2.4
+            },
+            {
+                "aligned": true,
+                "cycle": 4,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "luma": 125.67682054924286,
+                "overlayAbove": true,
+                "syncMs": 2.097
+            },
+            {
+                "aligned": true,
+                "cycle": 5,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "luma": 125.67682054924286,
+                "overlayAbove": true,
+                "syncMs": 2.479
+            },
+            {
+                "aligned": true,
+                "cycle": 6,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "luma": 125.67682054924286,
+                "overlayAbove": true,
+                "syncMs": 2.307
+            },
+            {
+                "aligned": true,
+                "cycle": 7,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "luma": 125.67682054924286,
+                "overlayAbove": true,
+                "syncMs": 3.435
+            },
+            {
+                "aligned": true,
+                "cycle": 8,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "luma": 125.67682054924286,
+                "overlayAbove": true,
+                "syncMs": 1.922
+            },
+            {
+                "aligned": true,
+                "cycle": 9,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "luma": 125.67682054924286,
+                "overlayAbove": true,
+                "syncMs": 3.911
+            },
+            {
+                "aligned": true,
+                "cycle": 10,
+                "dh": 0,
+                "dw": 0,
+                "dx": 0,
+                "dy": 0,
+                "luma": 125.67682054924286,
+                "overlayAbove": true,
+                "syncMs": 2.333
+            }
+        ],
+        "verdict": "PASS"
+    },
+    "verdicts": {
+        "altTab": "PASS",
+        "dpi": "NOT_VERIFIED",
+        "fullscreen": "PASS",
+        "overall": "PARTIAL",
+        "snap": "PASS"
+    },
+    "version": "1.0.0-alpha1",
+    "videoReady": true
+}

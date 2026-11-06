@@ -1,0 +1,20 @@
+{
+    "actualSha256": "",
+    "availableVersion": "1.0.0-alpha2",
+    "currentVersion": "1.0.0-alpha1",
+    "downloadDir": "",
+    "downloadedPath": "",
+    "errorCode": "",
+    "errorMessage": "",
+    "expectedSha256": "b77fb48fea093ed583804ae723485b952e305f3638b59231ebb4fff800f79dda",
+    "feed": "http://127.0.0.1:8765/feed/latest.json",
+    "generatedAt": "2026-11-06T17:38:35",
+    "logPath": "C:/Users/Tyler Zhang/AppData/Roaming/Palune/Palune/logs/palune.log",
+    "mirror": "直连",
+    "mirrorIndex": 0,
+    "mode": "update-e2e:",
+    "restartMarker": "",
+    "state": "available",
+    "transitions": [
+    ]
+}

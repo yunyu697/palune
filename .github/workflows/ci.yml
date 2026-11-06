@@ -55,10 +55,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libmpv-dev libsodium23
 
-      - name: 安装系统依赖（macOS）
-        if: runner.os == 'macOS'
-        run: brew install mpv libsodium
-
       - name: 配置
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 

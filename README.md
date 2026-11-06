@@ -55,6 +55,8 @@ macOS / Linux 依赖：`tools/ci/fetch_deps.sh`（brew / apt / dnf / pacman）�
 - 每次运行都上传 `latest.json` 与 `SHA256SUMS`
 - `latest.json` 按 `UPDATER_SPEC.md` 的 payload + 分离签名结构生成；`artifacts` 每平台一条（exe / dmg / AppImage），msi/deb/rpm 放在 `extraArtifacts`
 - 签名私钥取仓库 Secret `PALUNE_UPDATE_PRIVATE_KEY`（PEM 或其 base64，或 32 字节种子 base64），缺失时清单标记 `signing.signed=false` 且产物不带签名，流程不因此变红
+- 首次完整跑通（tag `1.0.0-alpha1`，三平台打包 + Release）：https://github.com/yunyu697/palune/actions/runs/42238311152
+- 发布页：https://github.com/yunyu697/palune/releases/tag/1.0.0-alpha1
 
 ## 版本号规则（硬约束）
 

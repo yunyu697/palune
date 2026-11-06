@@ -75,24 +75,33 @@ endif()
 
 target_link_libraries(Palune PRIVATE palune_core)
 
-# 把 libmpv / libsodium 复制到可执行文件旁（运行时动态加载）。
-# CI 环境没有本地二进制，缺文件时跳过，保证构建本身可通过。
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/libmpv/libmpv-2.dll")
-    add_custom_command(TARGET Palune POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_CURRENT_SOURCE_DIR}/third_party/libmpv/libmpv-2.dll"
-            "$<TARGET_FILE_DIR:Palune>/libmpv-2.dll"
-        COMMENT "复制 libmpv 运行时库"
-    )
-endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/libsodium/libsodium.dll")
-    add_custom_command(TARGET Palune POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_CURRENT_SOURCE_DIR}/third_party/libsodium/libsodium.dll"
-            "$<TARGET_FILE_DIR:Palune>/libsodium.dll"
-        COMMENT "复制 libsodium 运行时库"
-    )
-endif()
+# 把 libmpv / libsodium 复制到可执行文件旁（运行时动态加载，文件名随平台不同）。
+# 缺文件时跳过；CI 的常规构建没有本地二进制也能通过编译。
+set(PALUNE_RUNTIME_LIBS "")
+foreach(_rel IN ITEMS
+        "third_party/libmpv/libmpv-2.dll"
+        "third_party/libmpv/libmpv.dylib"
+        "third_party/libmpv/libmpv.2.dylib"
+        "third_party/libmpv/libmpv.so.2"
+        "third_party/libsodium/libsodium.dll"
+        "third_party/libsodium/libsodium.dylib"
+        "third_party/libsodium/libsodium.so.23")
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_rel}")
+        list(APPEND PALUNE_RUNTIME_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/${_rel}")
+    endif()
+endforeach()
+
+function(palune_copy_runtime_libs target)
+    foreach(_lib IN LISTS PALUNE_RUNTIME_LIBS)
+        get_filename_component(_name "${_lib}" NAME)
+        add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${_lib}" "$<TARGET_FILE_DIR:${target}>/${_name}"
+            COMMENT "复制运行时库 ${_name}")
+    endforeach()
+endfunction()
+
+palune_copy_runtime_libs(Palune)
 
 # ---------------------------------------------------------------------------
 # 安装与打包（release 工作流使用：Windows NSIS/MSI、macOS dmg、Linux AppImage/deb/rpm）
@@ -167,11 +176,5 @@ add_test(NAME version COMMAND tst_version)
 
 add_executable(tst_manifest tests/unit/tst_manifest.cpp)
 target_link_libraries(tst_manifest PRIVATE palune_core Qt6::Test)
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/libsodium/libsodium.dll")
-    add_custom_command(TARGET tst_manifest POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_CURRENT_SOURCE_DIR}/third_party/libsodium/libsodium.dll"
-            "$<TARGET_FILE_DIR:tst_manifest>/libsodium.dll"
-    )
-endif()
+palune_copy_runtime_libs(tst_manifest)
 add_test(NAME manifest COMMAND tst_manifest)

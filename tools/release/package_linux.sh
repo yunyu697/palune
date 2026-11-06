@@ -22,7 +22,7 @@ mkdir -p "$APPDIR/usr/bin" "$APPDIR/usr/lib" \
          "$APPDIR/usr/share/applications" \
          "$APPDIR/usr/share/icons/hicolor/256x256/apps" \
          "$APPDIR/usr/share/palune"
-cp "${BUILD_DIR}/Palune" "$APPDIR/usr/bin/Palune"
+cp "${BUILD_DIR}/Palune" "$APPDIR/usr/bin/palune"
 cp packaging/palune.desktop "$APPDIR/usr/share/applications/"
 cp packaging/palune-256.png "$APPDIR/usr/share/icons/hicolor/256x256/apps/palune.png"
 cp README.md NOTICE.md VERSION "$APPDIR/usr/share/palune/"
@@ -58,7 +58,7 @@ fi
 
 # linuxdeploy 会把产物直接写到当前目录，统一改名后收进 dist。
 shopt -s nullglob
-for f in Palune*.AppImage; do
+for f in *.AppImage; do
     mv "$f" "$OUT/Palune-${VERSION}-linux-x86_64.AppImage"
 done
 shopt -u nullglob

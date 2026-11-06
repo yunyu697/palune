@@ -42,10 +42,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 安装 Qt 6.8.3
+      - name: 安装 Qt 6.8.4
+        # macOS 26 SDK 移除了 AGL.framework，Qt 6.8.3 仍带 -framework AGL 会链接失败；
+        # 6.8.4 起已修复，三平台统一用 6.8.4（本地 Windows 用 6.8.3 也可编译）
         uses: jurplel/install-qt-action@v4
         with:
-          version: "6.8.3"
+          version: "6.8.4"
           arch: ${{ matrix.qt_arch }}
           cache: true
 

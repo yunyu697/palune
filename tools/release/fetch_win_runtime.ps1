@@ -36,7 +36,7 @@ if (-not (Test-Path (Join-Path $mpvDir "libmpv-2.dll"))) {
 if (-not (Test-Path (Join-Path $sodiumDir "libsodium.dll"))) {
     Write-Output "下载 libsodium.dll ..."
     $zip = Join-Path $env:RUNNER_TEMP "libsodium.zip"
-    Invoke-WebRequest -Uri "https://download.libsodium.org/libsodium/releases/libsodium-1.0.20-RELEASE-VS.zip" -OutFile $zip -Headers $headers
+    Invoke-WebRequest -Uri "https://github.com/jedisct1/libsodium/releases/download/1.0.22-RELEASE/libsodium-1.0.22-msvc.zip" -OutFile $zip -Headers $headers
     $extract = Join-Path $env:RUNNER_TEMP "libsodium"
     Remove-Item -Recurse -Force $extract -ErrorAction SilentlyContinue
     & 7z x -y "-o$extract" $zip | Out-Null

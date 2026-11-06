@@ -41,6 +41,21 @@ macOS / Linux 依赖：`tools/ci/fetch_deps.sh`（brew / apt / dnf / pacman）�
 - Qt：三平台统一 `6.9.3`。原因：macOS 26 SDK 移除了 `AGL.framework`，而 Qt 6.8 线最后一版（6.8.3）的 macOS 构建仍带 `-framework AGL`，链接必然失败；Qt 6.9 起已移除该依赖。本地 Windows 仍可用 6.8.3。
 - 首次三平台全绿：https://github.com/yunyu697/palune/actions/runs/42216916696
 
+## 发布（release）
+
+`.github/workflows/release.yml`：三平台各自打包，产出更新清单与校验值。
+
+| 平台 | 产物 |
+|---|---|
+| Windows | `Palune-<版本>-win-x64.exe`（NSIS 安装器）、`Palune-<版本>-win-x64.msi` |
+| macOS | `Palune-<版本>-macos-arm64.dmg` |
+| Linux | `Palune-<版本>-linux-x86_64.AppImage`、`.deb`、`.rpm` |
+
+- 触发：打 tag 自动构建并创建 Release（预发布），或手动 `workflow_dispatch`（产物仍会作为 artifact 上传，便于无 tag 验收）
+- 每次运行都上传 `latest.json` 与 `SHA256SUMS`
+- `latest.json` 按 `UPDATER_SPEC.md` 的 payload + 分离签名结构生成；`artifacts` 每平台一条（exe / dmg / AppImage），msi/deb/rpm 放在 `extraArtifacts`
+- 签名私钥取仓库 Secret `PALUNE_UPDATE_PRIVATE_KEY`（PEM 或其 base64，或 32 字节种子 base64），缺失时清单标记 `signing.signed=false` 且产物不带签名，流程不因此变红
+
 ## 版本号规则（硬约束）
 
 - 开发期：`1.0.0-alphaN`，每次推进只递增 `N`；

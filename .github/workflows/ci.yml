@@ -72,7 +72,7 @@ jobs:
             --filter 'src/theme/ThemeRegistry' \
             --filter 'src/update/(UpdateManifest|Version|UpdateCrypto)' \
             --txt coverage.txt --xml coverage.xml --print-summary \
-            --fail-under-lines 70
+            --fail-under-line 70
           cat coverage.txt
 
       - name: 上传覆盖率
@@ -131,7 +131,10 @@ jobs:
       - name: 安装系统依赖（macOS）
         if: runner.os == 'macOS'
         run: |
-          brew install ffmpeg mpv
+          brew install ffmpeg mpv libsodium
+          # UpdateCrypto 通过 QLibrary 动态加载 libsodium；Homebrew 的 lib 目录
+          # 不在 dyld 默认搜索路径，测试与冒烟进程需要显式传入。
+          echo "DYLD_LIBRARY_PATH=$(brew --prefix libsodium)/lib" >> "$GITHUB_ENV"
 
       - name: 安装运行时依赖（Windows）
         if: runner.os == 'Windows'

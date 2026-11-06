@@ -15,7 +15,7 @@
 
 ## 构建（Windows）
 
-前置：Qt 6.8.3（MSVC 2022 64 位）、CMake ≥ 3.21、Visual Studio 2022+。
+前置：Qt 6.8+（本机验证用 6.8.3 MSVC 2022 64 位）、CMake ≥ 3.21、Visual Studio 2022+。
 
 ```powershell
 # 1) 恢复运行时依赖（libmpv-2.dll / libsodium.dll，不入库）
@@ -32,6 +32,14 @@ ctest --test-dir build -C Release --output-on-failure
 产物：`build/Release/Palune.exe`（同目录需有 `libmpv-2.dll`、`libsodium.dll`）。
 
 macOS / Linux 依赖：`tools/ci/fetch_deps.sh`（brew / apt / dnf / pacman）。Qt 与 libmpv 均为动态链接，**禁止静态链接**。
+
+## CI
+
+`.github/workflows/ci.yml`：先跑版本号校验，再并行构建三平台并跑单元测试（Windows / macOS 跑版本号规则，Linux 额外跑更新清单签名与哈希）。
+
+- Runner：`windows-latest` / `macos-latest`（当前为 `macos-26-arm64`）/ `ubuntu-latest`
+- Qt：三平台统一 `6.9.3`。原因：macOS 26 SDK 移除了 `AGL.framework`，而 Qt 6.8 线最后一版（6.8.3）的 macOS 构建仍带 `-framework AGL`，链接必然失败；Qt 6.9 起已移除该依赖。本地 Windows 仍可用 6.8.3。
+- 首次三平台全绿：https://github.com/yunyu697/palune/actions/runs/42216916696
 
 ## 版本号规则（硬约束）
 

@@ -277,9 +277,17 @@ void UpdateService::handleManifestReply(QNetworkReply *reply)
         return;
     }
 
-    const QString arch = m_manifest.arch.toLower();
-    const QString currentArch = QSysInfo::currentCpuArchitecture().toLower();
-    if (!arch.isEmpty() && arch != currentArch && !(arch == QStringLiteral("amd64") && currentArch == QStringLiteral("x86_64"))) {
+    auto canonicalArch = [](QString value) {
+        value = value.toLower();
+        if (value == QLatin1String("amd64") || value == QLatin1String("x64"))
+            return QStringLiteral("x86_64");
+        if (value == QLatin1String("arm64"))
+            return QStringLiteral("aarch64");
+        return value;
+    };
+    const QString arch = canonicalArch(m_manifest.arch);
+    const QString currentArch = canonicalArch(QSysInfo::currentCpuArchitecture());
+    if (!arch.isEmpty() && arch != currentArch) {
         fail(QStringLiteral("UPD-005"), QStringLiteral("清单架构 %1 / 当前 %2").arg(arch, currentArch));
         return;
     }
@@ -520,11 +528,10 @@ bool UpdateService::verifyPackage(const QString &path, QString *error)
         if (error) *error = f.errorString();
         return false;
     }
+    const QByteArray data = f.readAll();
+    f.close();
     QCryptographicHash hash(QCryptographicHash::Sha256);
-    if (!hash.addData(&f)) {
-        if (error) *error = QStringLiteral("读取安装包失败");
-        return false;
-    }
+    hash.addData(data);
     const QString actual = QString::fromLatin1(hash.result().toHex());
     if (actual.compare(m_manifest.sha256, Qt::CaseInsensitive) != 0) {
         if (error) *error = QStringLiteral("SHA-256 不匹配：期望 %1，实际 %2")
@@ -536,6 +543,14 @@ bool UpdateService::verifyPackage(const QString &path, QString *error)
     if (!verifyManifestSignature(&sigError)) {
         if (error) *error = QStringLiteral("清单签名复核失败：%1").arg(sigError);
         return false;
+    }
+    // 信封格式还要求产物本身带 Ed25519 签名（防镜像/仓库被替换安装包）。
+    if (!m_manifest.artifactSignatureBase64.isEmpty()) {
+        if (!UpdateCrypto::verifyEd25519Base64(data, m_manifest.artifactSignatureBase64.toUtf8(),
+                                               publicKey(), &sigError)) {
+            if (error) *error = QStringLiteral("安装包签名校验失败：%1").arg(sigError);
+            return false;
+        }
     }
     return true;
 }

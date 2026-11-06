@@ -1,0 +1,16 @@
+{
+    "coldStartToWindowMs": 574,
+    "firstFrameAfterOpenMs": 1433,
+    "frameDrops": 0,
+    "generatedAt": "2026-11-07T00:37:26",
+    "idleRssMb": 94.08984375,
+    "mistimedFrames": 0,
+    "mode": "m1-perf",
+    "platform": "Windows 11 Version 26H2",
+    "playingRssMb": 204.4765625,
+    "reachedSeconds": 7.999773242630319,
+    "verdict": "PASS",
+    "version": "1.0.0-alpha2",
+    "video": "D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/qa/runtime/samples/01-h264-1080p-aac.mp4",
+    "windowReadyMs": 574
+}

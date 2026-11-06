@@ -2,6 +2,7 @@
 
 #include <QObject>
 #include <QRect>
+#include <QVariantList>
 #include <QUrl>
 
 #include "window/OverlayWindow.h"
@@ -11,6 +12,11 @@ namespace palune {
 
 class MpvClient;
 class UpdateService;
+class Settings;
+class ThemeRegistry;
+class LayoutHost;
+class UiStateStore;
+class MediaLibraryService;
 
 // 双窗几何同步结果（M0 判据用）。
 struct ApplyResult {
@@ -25,9 +31,18 @@ class WindowController : public QObject
     Q_PROPERTY(bool fullscreen READ isFullscreen NOTIFY fullscreenChanged)
     Q_PROPERTY(QString windowTitle READ windowTitle NOTIFY windowTitleChanged)
     Q_PROPERTY(bool ready READ ready CONSTANT)
+    Q_PROPERTY(QVariantList recentFiles READ recentFiles NOTIFY recentFilesChanged)
+    Q_PROPERTY(QString version READ version CONSTANT)
+    Q_PROPERTY(QString configDir READ configDir CONSTANT)
+    Q_PROPERTY(QString crashDir READ crashDir CONSTANT)
+    Q_PROPERTY(QString logFile READ logFile CONSTANT)
 
 public:
-    WindowController(MpvClient *player, UpdateService *updater, QObject *parent = nullptr);
+    WindowController(MpvClient *player,
+                     UpdateService *updater,
+                     Settings *settings,
+                     MediaLibraryService *library,
+                     QObject *parent = nullptr);
     ~WindowController() override;
 
     bool start(int width, int height);
@@ -38,6 +53,21 @@ public:
 
     bool isFullscreen() const { return m_fullscreen; }
     QString windowTitle() const { return m_windowTitle; }
+    QVariantList recentFiles() const;
+    QString version() const;
+    QString configDir() const;
+    QString crashDir() const;
+    QString logFile() const;
+
+    ThemeRegistry *themeRegistry() const { return m_themeRegistry; }
+    LayoutHost *layoutHost() const { return m_layoutHost; }
+    UiStateStore *uiState() const { return m_uiState; }
+    Settings *settings() const { return m_settings; }
+
+    // 布局统一动作入口（布局只发动作名，不直接调用播放器）。
+    Q_INVOKABLE void action(const QString &name, const QVariant &value = QVariant());
+    Q_INVOKABLE void openFolderDialog();
+    Q_INVOKABLE void openRecentFile(const QString &path);
 
     ApplyResult applyGeometry(const QRect &rect);
     ApplyResult toggleFullscreenForTest();
@@ -64,14 +94,23 @@ public slots:
 signals:
     void fullscreenChanged();
     void windowTitleChanged();
+    void recentFilesChanged();
+    void uiActionRequested(const QString &name, const QVariant &value);
 
 private:
     bool loadQml();
     void updateTitle();
     void showWindows();
+    void saveWindowState();
+    void rememberFile(const QString &path);
 
     MpvClient *m_player = nullptr;
     UpdateService *m_updater = nullptr;
+    Settings *m_settings = nullptr;
+    MediaLibraryService *m_library = nullptr;
+    ThemeRegistry *m_themeRegistry = nullptr;
+    LayoutHost *m_layoutHost = nullptr;
+    UiStateStore *m_uiState = nullptr;
     VideoWindow *m_video = nullptr;
     OverlayWindow *m_overlay = nullptr;
     bool m_ready = false;

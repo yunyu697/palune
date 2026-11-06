@@ -14,6 +14,11 @@ Item {
     readonly property string mutedColor: "#9aa0a6"
     readonly property string lineColor: "#26ffffff"
 
+    // 截图模式没有 win 上下文；正常运行时提供版本与路径信息。
+    readonly property bool hasWindow: typeof win !== "undefined"
+    readonly property string appVersion: hasWindow ? win.version
+                                                    : (typeof updater !== "undefined" ? updater.currentVersion : "")
+
     Rectangle {
         anchors.fill: parent
         color: panelRoot.shotMode ? "#0b0c10" : "#99000000"
@@ -46,7 +51,7 @@ Item {
                         font.weight: Font.DemiBold
                     }
                     Text {
-                        text: "Palune " + updater.currentVersion + " · M0"
+                        text: "Palune " + panelRoot.appVersion + " · M1"
                         color: panelRoot.mutedColor
                         font.pixelSize: 11
                     }
@@ -97,6 +102,75 @@ Item {
                     font.pixelSize: 11
                 }
                 Item { Layout.fillWidth: true }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                height: 1
+                color: panelRoot.lineColor
+            }
+
+            // 外观：主题（A/B/C）
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 12
+                Text {
+                    text: "主题"
+                    color: panelRoot.textColor
+                    font.pixelSize: 14
+                }
+                Row {
+                    spacing: 8
+                    Repeater {
+                        model: typeof themeRegistry !== "undefined" ? themeRegistry.themes : []
+                        delegate: Rectangle {
+                            required property string modelData
+                            width: 46
+                            height: 28
+                            radius: 8
+                            color: (typeof themeRegistry !== "undefined"
+                                    && themeRegistry.currentTheme === modelData)
+                                   ? panelRoot.accent + "33" : "#10ffffff"
+                            border.width: 1
+                            border.color: (typeof themeRegistry !== "undefined"
+                                           && themeRegistry.currentTheme === modelData)
+                                          ? panelRoot.accent : panelRoot.lineColor
+                            Text {
+                                anchors.centerIn: parent
+                                text: "布局 " + parent.modelData
+                                color: panelRoot.textColor
+                                font.pixelSize: 11
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    if (panelRoot.hasWindow)
+                                        win.action("setTheme", parent.modelData)
+                                }
+                            }
+                        }
+                    }
+                }
+                Item { Layout.fillWidth: true }
+                Text {
+                    visible: typeof themeRegistry !== "undefined"
+                             && themeRegistry.fallbackReason !== ""
+                    text: typeof themeRegistry !== "undefined" ? themeRegistry.fallbackReason : ""
+                    color: panelRoot.accent
+                    font.pixelSize: 11
+                }
+            }
+
+            Text {
+                visible: panelRoot.hasWindow
+                text: panelRoot.hasWindow
+                      ? "配置：" + win.configDir + "   日志：" + win.logFile + "   崩溃：" + win.crashDir
+                      : ""
+                color: panelRoot.mutedColor
+                font.pixelSize: 10
+                elide: Text.ElideMiddle
+                Layout.fillWidth: true
             }
 
             Rectangle {

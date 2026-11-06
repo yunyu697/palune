@@ -1,0 +1,173 @@
+{
+    "generatedAt": "2026-11-07T00:31:42",
+    "items": [
+        {
+            "elapsedMs": 5003,
+            "file": "01-h264-1080p-aac.mp4",
+            "passed": true,
+            "path": "D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/qa/runtime/samples/01-h264-1080p-aac.mp4",
+            "reachedSeconds": 5,
+            "startFileDelta": 1
+        },
+        {
+            "elapsedMs": 0,
+            "file": "02-h264-720p-aac.mkv",
+            "passed": true,
+            "path": "D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/qa/runtime/samples/02-h264-720p-aac.mkv",
+            "reachedSeconds": 5,
+            "startFileDelta": 0
+        },
+        {
+            "elapsedMs": 0,
+            "file": "03-h264-480p-aac.mp4",
+            "passed": true,
+            "path": "D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/qa/runtime/samples/03-h264-480p-aac.mp4",
+            "reachedSeconds": 5,
+            "startFileDelta": 0
+        },
+        {
+            "elapsedMs": 0,
+            "file": "04-hevc-1080p-aac.mp4",
+            "passed": true,
+            "path": "D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/qa/runtime/samples/04-hevc-1080p-aac.mp4",
+            "reachedSeconds": 5,
+            "startFileDelta": 0
+        },
+        {
+            "elapsedMs": 0,
+            "file": "05-hevc-720p-aac.mkv",
+            "passed": true,
+            "path": "D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/qa/runtime/samples/05-hevc-720p-aac.mkv",
+            "reachedSeconds": 5,
+            "startFileDelta": 0
+        },
+        {
+            "elapsedMs": 0,
+            "file": "06-vp9-720p-opus.webm",
+            "passed": true,
+            "path": "D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/qa/runtime/samples/06-vp9-720p-opus.webm",
+            "reachedSeconds": 5,
+            "startFileDelta": 0
+        },
+        {
+            "elapsedMs": 0,
+            "file": "07-vp8-480p-vorbis.webm",
+            "passed": true,
+            "path": "D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/qa/runtime/samples/07-vp8-480p-vorbis.webm",
+            "reachedSeconds": 5,
+            "startFileDelta": 0
+        },
+        {
+            "elapsedMs": 0,
+            "file": "08-mpeg2-1080p-mp2.ts",
+            "passed": true,
+            "path": "D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/qa/runtime/samples/08-mpeg2-1080p-mp2.ts",
+            "reachedSeconds": 5,
+            "startFileDelta": 0
+        },
+        {
+            "elapsedMs": 0,
+            "file": "09-h264-1080p-ac3-51.mkv",
+            "passed": true,
+            "path": "D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/qa/runtime/samples/09-h264-1080p-ac3-51.mkv",
+            "reachedSeconds": 5,
+            "startFileDelta": 0
+        },
+        {
+            "elapsedMs": 0,
+            "file": "10-mpeg4-720p-mp3.avi",
+            "passed": true,
+            "path": "D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/qa/runtime/samples/10-mpeg4-720p-mp3.avi",
+            "reachedSeconds": 5,
+            "startFileDelta": 0
+        },
+        {
+            "elapsedMs": 0,
+            "file": "11-mjpeg-720p-pcm.mov",
+            "passed": true,
+            "path": "D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/qa/runtime/samples/11-mjpeg-720p-pcm.mov",
+            "reachedSeconds": 5,
+            "startFileDelta": 0
+        },
+        {
+            "elapsedMs": 0,
+            "file": "12-h264-1080p-multiaudio.mkv",
+            "passed": true,
+            "path": "D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/qa/runtime/samples/12-h264-1080p-multiaudio.mkv",
+            "reachedSeconds": 5,
+            "startFileDelta": 0
+        },
+        {
+            "elapsedMs": 0,
+            "file": "13-h264-1080p-subtitle.mkv",
+            "passed": true,
+            "path": "D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/qa/runtime/samples/13-h264-1080p-subtitle.mkv",
+            "reachedSeconds": 5,
+            "startFileDelta": 0
+        },
+        {
+            "elapsedMs": 0,
+            "file": "14-h264-720p-videoonly.mp4",
+            "passed": true,
+            "path": "D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/qa/runtime/samples/14-h264-720p-videoonly.mp4",
+            "reachedSeconds": 5,
+            "startFileDelta": 0
+        },
+        {
+            "elapsedMs": 0,
+            "file": "15-h264-1080p-60fps-aac.mp4",
+            "passed": true,
+            "path": "D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/qa/runtime/samples/15-h264-1080p-60fps-aac.mp4",
+            "reachedSeconds": 5,
+            "startFileDelta": 0
+        },
+        {
+            "elapsedMs": 0,
+            "file": "16-hevc-720p-opus.mkv",
+            "passed": true,
+            "path": "D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/qa/runtime/samples/16-hevc-720p-opus.mkv",
+            "reachedSeconds": 5,
+            "startFileDelta": 0
+        },
+        {
+            "elapsedMs": 0,
+            "file": "17-h264-720p-aac.ts",
+            "passed": true,
+            "path": "D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/qa/runtime/samples/17-h264-720p-aac.ts",
+            "reachedSeconds": 5,
+            "startFileDelta": 0
+        },
+        {
+            "elapsedMs": 0,
+            "file": "18-h264-480p-flac.mkv",
+            "passed": true,
+            "path": "D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/qa/runtime/samples/18-h264-480p-flac.mkv",
+            "reachedSeconds": 5,
+            "startFileDelta": 0
+        },
+        {
+            "elapsedMs": 0,
+            "file": "19-h264-1080p-aac-51.mp4",
+            "passed": true,
+            "path": "D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/qa/runtime/samples/19-h264-1080p-aac-51.mp4",
+            "reachedSeconds": 5,
+            "startFileDelta": 0
+        },
+        {
+            "elapsedMs": 0,
+            "file": "20-h264-1080p-wav.mkv",
+            "passed": true,
+            "path": "D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/qa/runtime/samples/20-h264-1080p-wav.mkv",
+            "reachedSeconds": 5,
+            "startFileDelta": 0
+        }
+    ],
+    "mode": "m1-smoke",
+    "mpv": "wid + d3d11 + gpu-next（Windows 主路径）",
+    "passed": 20,
+    "platform": "Windows 11 Version 26H2",
+    "samples": 20,
+    "threshold": 19,
+    "verdict": "PASS",
+    "version": "1.0.0-alpha2"
+}

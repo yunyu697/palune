@@ -1,10 +1,18 @@
 #include "window/WindowController.h"
 
+#include "core/AppPaths.h"
+#include "diag/CrashBreadcrumb.h"
 #include "diag/Log.h"
+#include "media/MediaLibraryService.h"
 #include "mpv/MpvClient.h"
+#include "settings/Settings.h"
+#include "theme/LayoutHost.h"
+#include "theme/ThemeRegistry.h"
+#include "ui/UiStateStore.h"
 #include "update/UpdateService.h"
 
 #include <QCoreApplication>
+#include <QDir>
 #include <QElapsedTimer>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -22,11 +30,34 @@
 
 namespace palune {
 
-WindowController::WindowController(MpvClient *player, UpdateService *updater, QObject *parent)
+namespace {
+const QStringList kMediaSuffixes = {
+    QStringLiteral("mp4"), QStringLiteral("mkv"), QStringLiteral("mov"), QStringLiteral("webm"),
+    QStringLiteral("avi"), QStringLiteral("ts"), QStringLiteral("m2ts"), QStringLiteral("flv"),
+    QStringLiteral("wmv"), QStringLiteral("mpg"), QStringLiteral("mpeg"), QStringLiteral("ogv"),
+    QStringLiteral("m4a"), QStringLiteral("mp3"), QStringLiteral("flac"), QStringLiteral("wav"),
+    QStringLiteral("aac"), QStringLiteral("opus")
+};
+
+bool isMediaFile(const QFileInfo &info)
+{
+    return info.isFile() && kMediaSuffixes.contains(info.suffix().toLower());
+}
+} // namespace
+
+WindowController::WindowController(MpvClient *player,
+                                   UpdateService *updater,
+                                   Settings *settings,
+                                   MediaLibraryService *library,
+                                   QObject *parent)
     : QObject(parent)
     , m_player(player)
     , m_updater(updater)
+    , m_settings(settings)
+    , m_library(library)
 {
+    m_themeRegistry = new ThemeRegistry(m_settings, {}, this);
+    m_uiState = new UiStateStore(m_settings, this);
 }
 
 WindowController::~WindowController()
@@ -50,10 +81,18 @@ bool WindowController::start(int width, int height)
     QScreen *screen = QGuiApplication::primaryScreen();
     const QRect available = screen ? screen->availableGeometry() : QRect(0, 0, 1280, 720);
     QRect r(available.center() - QPoint(width / 2, height / 2), QSize(width, height));
+    // 恢复上次窗口几何；越界（比如外接屏拔掉）时回退到主屏居中。
+    if (m_settings && m_settings->hasWindowGeometry()) {
+        const QRect saved = m_settings->windowGeometry();
+        if (available.intersects(saved) && saved.width() >= 480 && saved.height() >= 320)
+            r = saved;
+    }
     m_normalGeometry = r;
 
     m_video->show();
     m_overlay->show();
+    if (m_settings && m_settings->windowMaximized())
+        m_overlay->showMaximized();
     m_overlay->requestActivate();
     applyGeometry(r);
 
@@ -67,6 +106,7 @@ bool WindowController::start(int width, int height)
     }
 
     m_ready = true;
+    CrashBreadcrumb::record(QStringLiteral("主窗口已创建"));
     Log::info(QStringLiteral("主窗口已创建：%1x%2").arg(width).arg(height));
     return true;
 }
@@ -79,6 +119,9 @@ bool WindowController::loadQml()
     ctx->setContextProperty(QStringLiteral("player"), m_player);
     ctx->setContextProperty(QStringLiteral("updater"), m_updater);
     ctx->setContextProperty(QStringLiteral("win"), this);
+    ctx->setContextProperty(QStringLiteral("themeRegistry"), m_themeRegistry);
+    ctx->setContextProperty(QStringLiteral("uiState"), m_uiState);
+    ctx->setContextProperty(QStringLiteral("library"), m_library);
 
     m_overlay->setSource(QUrl(QStringLiteral("qrc:/qml/Main.qml")));
     if (m_overlay->status() != QQuickView::Ready) {
@@ -86,7 +129,81 @@ bool WindowController::loadQml()
             Log::error(QStringLiteral("QML: %1").arg(error.toString()));
         return false;
     }
+
+    // VideoHost 在布局树外：它由 Main.qml 的 shell 层持有，LayoutHost 只接管布局槽位。
+    QQuickItem *slot = m_overlay->rootObject()
+        ? m_overlay->rootObject()->findChild<QQuickItem *>(QStringLiteral("layoutSlot"))
+        : nullptr;
+    if (!slot) {
+        Log::error(QStringLiteral("QML 中缺少 layoutSlot，布局无法挂载"));
+        return false;
+    }
+    m_layoutHost = new LayoutHost(m_overlay->engine(), m_themeRegistry, this);
+    m_layoutHost->setHostItem(slot);
+    connect(m_layoutHost, &LayoutHost::layoutBuilt, this,
+            [](const QString &theme, double ms) {
+                Log::info(QStringLiteral("布局构建完成：%1（%2ms）")
+                              .arg(theme, QString::number(ms, 'f', 2)));
+            });
+    if (m_layoutHost->layoutContainsVideoHost())
+        Log::error(QStringLiteral("分层违规：VideoHost 出现在布局树内"));
     return true;
+}
+
+void WindowController::saveWindowState()
+{
+    if (!m_settings || !m_overlay)
+        return;
+    if (!m_fullscreen)
+        m_settings->setWindowGeometry(m_overlay->geometry());
+    m_settings->setWindowMaximized(m_overlay->visibility() == QWindow::Maximized);
+    QString error;
+    if (!m_settings->save(&error))
+        Log::warn(QStringLiteral("窗口状态保存失败：%1").arg(error));
+    else
+        CrashBreadcrumb::record(QStringLiteral("窗口状态已保存"));
+}
+
+void WindowController::rememberFile(const QString &path)
+{
+    if (!m_settings || path.isEmpty())
+        return;
+    m_settings->addRecentFile(path);
+    QString error;
+    if (!m_settings->save(&error))
+        Log::warn(QStringLiteral("最近文件保存失败：%1").arg(error));
+    emit recentFilesChanged();
+}
+
+QVariantList WindowController::recentFiles() const
+{
+    QVariantList list;
+    if (!m_settings)
+        return list;
+    for (const QString &path : m_settings->recentFiles())
+        list << QVariantMap{{QStringLiteral("path"), path},
+                            {QStringLiteral("name"), QFileInfo(path).fileName()}};
+    return list;
+}
+
+QString WindowController::version() const
+{
+    return QStringLiteral(PALUNE_VERSION);
+}
+
+QString WindowController::configDir() const
+{
+    return AppPaths::configDir();
+}
+
+QString WindowController::crashDir() const
+{
+    return AppPaths::crashDir();
+}
+
+QString WindowController::logFile() const
+{
+    return AppPaths::logFile();
 }
 
 void WindowController::updateTitle()
@@ -236,6 +353,8 @@ void WindowController::activate()
 
 void WindowController::close()
 {
+    saveWindowState();
+    CrashBreadcrumb::record(QStringLiteral("用户关闭窗口"));
     QCoreApplication::quit();
 }
 
@@ -251,9 +370,119 @@ void WindowController::openFileDialog()
 {
     const QString file = QFileDialog::getOpenFileName(
         nullptr, QStringLiteral("打开媒体文件"), QString(),
-        QStringLiteral("媒体文件 (*.mp4 *.mkv *.mov *.webm *.avi *.m4a *.mp3 *.flac *.wav);;所有文件 (*)"));
+        QStringLiteral("媒体文件 (*.mp4 *.mkv *.mov *.webm *.avi *.ts *.flv *.m4a *.mp3 *.flac *.wav);;所有文件 (*)"));
     if (!file.isEmpty())
         openFile(QUrl::fromLocalFile(file));
+}
+
+void WindowController::openFolderDialog()
+{
+    const QString dir = QFileDialog::getExistingDirectory(nullptr, QStringLiteral("打开媒体文件夹"));
+    if (dir.isEmpty())
+        return;
+    QDir folder(dir);
+    QFileInfoList entries = folder.entryInfoList(QDir::Files, QDir::Name);
+    QStringList media;
+    for (const QFileInfo &entry : entries) {
+        if (isMediaFile(entry))
+            media << entry.absoluteFilePath();
+    }
+    if (media.isEmpty()) {
+        Log::warn(QStringLiteral("文件夹中没有可播放的媒体：%1").arg(dir));
+        emit uiActionRequested(QStringLiteral("notice"),
+                               QStringLiteral("文件夹中没有可播放的媒体文件"));
+        return;
+    }
+    CrashBreadcrumb::record(QStringLiteral("打开文件夹：%1（%2 个媒体）").arg(dir).arg(media.size()));
+    openFile(QUrl::fromLocalFile(media.first()));
+}
+
+void WindowController::openRecentFile(const QString &path)
+{
+    if (!path.isEmpty())
+        openFile(QUrl::fromLocalFile(path));
+}
+
+void WindowController::action(const QString &name, const QVariant &value)
+{
+    if (!m_player)
+        return;
+    if (name == QLatin1String("openFile")) {
+        openFileDialog();
+    } else if (name == QLatin1String("openFolder")) {
+        openFolderDialog();
+    } else if (name == QLatin1String("playPause")) {
+        m_player->togglePause();
+        CrashBreadcrumb::record(m_player->paused() ? QStringLiteral("暂停") : QStringLiteral("播放"));
+    } else if (name == QLatin1String("seekTo")) {
+        m_player->seek(qMax(0.0, qMin(value.toDouble(), m_player->duration())));
+    } else if (name == QLatin1String("seekBy")) {
+        m_player->seek(qMax(0.0, m_player->position() + value.toDouble()));
+    } else if (name == QLatin1String("volumeSet")) {
+        m_player->setVolume(qBound(0.0, value.toDouble(), 100.0));
+    } else if (name == QLatin1String("volumeBy")) {
+        m_player->setVolume(qBound(0.0, m_player->volume() + value.toDouble(), 100.0));
+    } else if (name == QLatin1String("toggleMute")) {
+        m_player->toggleMute();
+    } else if (name == QLatin1String("speedSet")) {
+        m_player->setSpeed(value.toDouble());
+    } else if (name == QLatin1String("speedCycle")) {
+        static const double speeds[] = {0.5, 1.0, 1.25, 1.5, 2.0, 3.0};
+        int index = 1;
+        for (int i = 0; i < 6; ++i) {
+            if (qFuzzyCompare(m_player->speed() + 1.0, speeds[i] + 1.0)) {
+                index = (i + 1) % 6;
+                break;
+            }
+        }
+        m_player->setSpeed(speeds[index]);
+    } else if (name == QLatin1String("audioSet")) {
+        m_player->setAudioTrack(value.toInt());
+    } else if (name == QLatin1String("subtitleSet")) {
+        m_player->setSubtitleTrack(value.toInt());
+    } else if (name == QLatin1String("cycleAudio")) {
+        const QVariantList tracks = m_player->audioTracks();
+        if (tracks.size() > 1) {
+            int current = -1;
+            for (int i = 0; i < tracks.size(); ++i) {
+                if (tracks.at(i).toMap().value(QStringLiteral("selected")).toBool())
+                    current = i;
+            }
+            const int next = (current + 1) % tracks.size();
+            m_player->setAudioTrack(tracks.at(next).toMap().value(QStringLiteral("id")).toInt());
+        }
+    } else if (name == QLatin1String("cycleSubtitle")) {
+        const QVariantList tracks = m_player->subtitleTracks();
+        int current = -2;
+        for (int i = 0; i < tracks.size(); ++i) {
+            if (tracks.at(i).toMap().value(QStringLiteral("selected")).toBool())
+                current = i;
+        }
+        if (tracks.isEmpty()) {
+            m_player->setSubtitleTrack(-1);
+        } else if (current < 0) {
+            m_player->setSubtitleTrack(tracks.first().toMap().value(QStringLiteral("id")).toInt());
+        } else if (current + 1 >= tracks.size()) {
+            m_player->setSubtitleTrack(-1);
+        } else {
+            m_player->setSubtitleTrack(tracks.at(current + 1).toMap().value(QStringLiteral("id")).toInt());
+        }
+    } else if (name == QLatin1String("toggleFullscreen")) {
+        toggleFullscreen();
+    } else if (name == QLatin1String("exit")) {
+        close();
+    } else if (name == QLatin1String("cycleTheme")) {
+        m_themeRegistry->cycleTheme();
+        CrashBreadcrumb::record(QStringLiteral("切换主题为 %1").arg(m_themeRegistry->currentTheme()));
+    } else if (name == QLatin1String("setTheme")) {
+        m_themeRegistry->switchTo(value.toString());
+        CrashBreadcrumb::record(QStringLiteral("切换主题为 %1").arg(m_themeRegistry->currentTheme()));
+    } else if (name == QLatin1String("openRecent")) {
+        openRecentFile(value.toString());
+    } else {
+        // openSettings / openLibrary 等纯 UI 动作交给 QML shell 处理。
+        emit uiActionRequested(name, value);
+    }
 }
 
 void WindowController::openFile(const QUrl &url)
@@ -270,6 +499,8 @@ void WindowController::openFile(const QUrl &url)
         return;
     }
     Log::info(QStringLiteral("开始播放：%1").arg(path));
+    rememberFile(path);
+    CrashBreadcrumb::record(QStringLiteral("打开媒体：%1").arg(path));
     updateTitle();
 }
 

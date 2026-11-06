@@ -15,8 +15,28 @@ find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Widgets Quick QuickControls2 N
 qt_standard_project_setup()
 
 add_library(palune_core STATIC
+    src/core/AppPaths.cpp
+    src/core/AppPaths.h
+    src/core/ProcessMetrics.cpp
+    src/core/ProcessMetrics.h
+    src/core/StartupClock.cpp
+    src/core/StartupClock.h
     src/mpv/MpvClient.cpp
     src/mpv/MpvClient.h
+    src/settings/Settings.cpp
+    src/settings/Settings.h
+    src/settings/Toml.cpp
+    src/settings/Toml.h
+    src/theme/LayoutHost.cpp
+    src/theme/LayoutHost.h
+    src/theme/ThemeRegistry.cpp
+    src/theme/ThemeRegistry.h
+    src/ui/UiStateStore.cpp
+    src/ui/UiStateStore.h
+    src/media/MediaLibraryService.cpp
+    src/media/MediaLibraryService.h
+    src/media/MediaServerAdapter.h
+    src/media/Types.h
     src/update/UpdateManifest.cpp
     src/update/UpdateManifest.h
     src/update/UpdateCrypto.cpp
@@ -25,6 +45,8 @@ add_library(palune_core STATIC
     src/update/UpdateService.h
     src/update/Version.cpp
     src/update/Version.h
+    src/diag/CrashBreadcrumb.cpp
+    src/diag/CrashBreadcrumb.h
     src/diag/Log.cpp
     src/diag/Log.h
 )
@@ -42,7 +64,7 @@ target_compile_definitions(palune_core PUBLIC
     PALUNE_VERSION_NUMERIC_PATCH=0
 )
 if(WIN32)
-    target_link_libraries(palune_core PUBLIC user32 dwmapi shell32)
+    target_link_libraries(palune_core PUBLIC user32 dwmapi shell32 psapi)
 endif()
 
 qt_add_executable(Palune
@@ -65,6 +87,17 @@ qt_add_resources(Palune "app_resources"
         qml/Main.qml
         qml/SettingsPanel.qml
         qml/UpdateSection.qml
+        qml/LibraryPanel.qml
+        qml/tokens/Tokens.qml
+        qml/components/PillButton.qml
+        qml/components/SeekBar.qml
+        qml/components/VolumeBar.qml
+        qml/components/EmptyState.qml
+        qml/shell/VideoHost.qml
+        qml/layouts/LayoutA/LayoutA.qml
+        qml/layouts/LayoutB/LayoutB.qml
+        qml/layouts/LayoutC/LayoutC.qml
+        qml/library/MediaLibraryEmpty.qml
         resources/trust/update.pub
         resources/trust/test-update.pub
 )
@@ -73,8 +106,15 @@ if(WIN32)
     set_target_properties(Palune PROPERTIES WIN32_EXECUTABLE TRUE)
 elseif(APPLE)
     # 必须是 bundle，macdeployqt 才会部署 Qt 运行时（否则会跳过运行时部署）。
+    # 自定义 Info.plist：冻结 bundle id 与 palune:// 协议注册（M1 判据 13）。
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/packaging/macos/Info.plist.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/Info.plist"
+        @ONLY
+    )
     set_target_properties(Palune PROPERTIES
         MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_BINARY_DIR}/Info.plist"
         MACOSX_BUNDLE_BUNDLE_NAME "Palune"
         MACOSX_BUNDLE_GUI_IDENTIFIER "app.palune.player"
         MACOSX_BUNDLE_BUNDLE_VERSION "${PALUNE_VERSION}"
@@ -187,3 +227,18 @@ add_executable(tst_manifest tests/unit/tst_manifest.cpp)
 target_link_libraries(tst_manifest PRIVATE palune_core Qt6::Test)
 palune_copy_runtime_libs(tst_manifest)
 add_test(NAME manifest COMMAND tst_manifest)
+
+add_executable(tst_settings tests/unit/tst_settings.cpp)
+target_link_libraries(tst_settings PRIVATE palune_core Qt6::Test)
+palune_copy_runtime_libs(tst_settings)
+add_test(NAME settings COMMAND tst_settings)
+
+add_executable(tst_theme tests/unit/tst_theme.cpp)
+target_link_libraries(tst_theme PRIVATE palune_core Qt6::Test)
+palune_copy_runtime_libs(tst_theme)
+add_test(NAME theme COMMAND tst_theme)
+
+add_executable(tst_media tests/unit/tst_media.cpp)
+target_link_libraries(tst_media PRIVATE palune_core Qt6::Test)
+palune_copy_runtime_libs(tst_media)
+add_test(NAME media COMMAND tst_media)

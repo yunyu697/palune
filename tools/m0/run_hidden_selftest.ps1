@@ -1,10 +1,13 @@
-# 在独立 Windows 桌面上运行 Palune M0 自测：不占前台、不弹窗、不抢焦点。
+﻿# 在独立 Windows 桌面上运行 Palune 自测/证据采集：不占前台、不弹窗、不抢焦点。
 # 关键点：mpv 的 VO 线程不会继承 SetThreadDesktop，必须用 STARTUPINFO.lpDesktop
 # 让整个子进程（含其所有线程）创建在独立桌面上。
 param(
     [Parameter(Mandatory = $true)][string]$Exe,
     [Parameter(Mandatory = $true)][string]$Report,
+    [string]$Mode = "m0-selftest",
     [string]$Video = "",
+    [string]$Media = "",
+    [int]$SwitchCount = 0,
     [string]$WorkingDir = "",
     [int]$TimeoutSec = 240
 )
@@ -38,7 +41,7 @@ public static class PaluneHiddenDesktop {
 
     [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
     public static extern IntPtr CreateDesktopW(string name, string device, IntPtr devmode,
-        int flags, uint access);
+        int flags, uint access, IntPtr sa);
 
     [DllImport("user32.dll", SetLastError = true)]
     public static extern bool CloseDesktop(IntPtr desk);
@@ -60,7 +63,7 @@ public static class PaluneHiddenDesktop {
 "@
 
 $desktopName = "PaluneM0Test_" + (Get-Date -Format "HHmmss")
-$desk = [PaluneHiddenDesktop]::CreateDesktopW($desktopName, $null, [IntPtr]::Zero, 0, 0x10000000)
+$desk = [PaluneHiddenDesktop]::CreateDesktopW($desktopName, [NullString]::Value, [IntPtr]::Zero, 0, 0x1FF, [IntPtr]::Zero)
 if ($desk -eq [IntPtr]::Zero) {
     $err = [ComponentModel.Win32Exception]::new([Runtime.InteropServices.Marshal]::GetLastWin32Error())
     throw "CreateDesktopW 失败：$($err.Message)"
@@ -70,8 +73,10 @@ $si = New-Object -TypeName 'PaluneHiddenDesktop+STARTUPINFO'
 $si.cb = [Runtime.InteropServices.Marshal]::SizeOf([type][PaluneHiddenDesktop+STARTUPINFO])
 $si.lpDesktop = $desktopName
 
-$cmd = '"' + $Exe + '" --m0-selftest --hidden-desktop --report "' + $Report + '"'
+$cmd = '"' + $Exe + '" --' + $Mode + ' --hidden-desktop --report "' + $Report + '"'
 if ($Video) { $cmd += ' --video "' + $Video + '"' }
+if ($Media) { $cmd += ' --media "' + $Media + '"' }
+if ($SwitchCount -gt 0) { $cmd += ' --switch-count ' + $SwitchCount }
 
 $pi = New-Object -TypeName 'PaluneHiddenDesktop+PROCESS_INFORMATION'
 $ok = [PaluneHiddenDesktop]::CreateProcessW($Exe, $cmd, [IntPtr]::Zero, [IntPtr]::Zero,

@@ -64,27 +64,51 @@ def main() -> None:
     if args.variant == "bad-hash":
         digest = "0" * 64  # 签名覆盖该错误哈希，用错误包触发 UPD-006
 
-    manifest = {
-        "schema": 1,
+    manifest_payload = {
+        "schemaVersion": 1,
+        "channel": "alpha",
         "version": version,
         "publishedAt": "2026-11-06T09:30:00Z",
-        "arch": "x86_64",
-        "minOs": "10.0.17763",
-        "size": package.stat().st_size,
-        "url": package_name,
-        "sha256": digest,
-        "notes": "M0 技术验证版：完善全屏/DPI 切换与更新模块。",
+        "notes": {
+            "zh-CN": "M1 技术验证版：四层主题骨架与内容源抽象。",
+            "en": "M1 technical preview: layered themes and media source abstraction.",
+        },
         "installer": {"kind": "cmd", "args": ["--app", "{app}", "--marker", "{marker}"]},
         "mirrors": [
             {"name": f"镜像 {chr(65 + i)}", "url": f"mirror-{chr(97 + i)}/"} for i in range(args.mirrors)
         ],
+        "artifacts": [
+            {
+                "platform": "windows",
+                "arch": "x86_64",
+                "url": package_name,
+                "size": package.stat().st_size,
+                "sha256": digest,
+                "installer": "cmd",
+                "minOsVersion": "10.0.17763",
+                "signature": None,
+            }
+        ],
     }
 
     key = serialization.load_pem_private_key(KEY_PATH.read_bytes(), password=None)
-    signature = key.sign(canonical(manifest))
+    # 产物签名覆盖安装包原始字节；清单签名只覆盖 payload。
+    manifest_payload["artifacts"][0]["signature"] = {
+        "type": "ed25519",
+        "value": base64.b64encode(key.sign(package.read_bytes())).decode("ascii"),
+    }
+    manifest_signature = key.sign(canonical(manifest_payload))
     if args.variant == "bad-signature":
-        signature = b"\x00" * 64
-    manifest["signature"] = base64.b64encode(signature).decode("ascii")
+        manifest_signature = b"\x00" * 64
+
+    manifest = {
+        "payload": manifest_payload,
+        "signature": {
+            "type": "ed25519",
+            "keyId": "palune-test",
+            "value": base64.b64encode(manifest_signature).decode("ascii"),
+        },
+    }
 
     for i in range(args.mirrors):
         mirror_dir = out / f"mirror-{chr(97 + i)}"

@@ -24,6 +24,11 @@ class MpvClient : public QObject
     Q_PROPERTY(QString filePath READ filePath NOTIFY filePathChanged)
     Q_PROPERTY(bool available READ available CONSTANT)
     Q_PROPERTY(QString loadError READ loadError CONSTANT)
+    Q_PROPERTY(double speed READ speed NOTIFY speedChanged)
+    Q_PROPERTY(QVariantList audioTracks READ audioTracks NOTIFY tracksChanged)
+    Q_PROPERTY(QVariantList subtitleTracks READ subtitleTracks NOTIFY tracksChanged)
+    Q_PROPERTY(int startFileCount READ startFileCount NOTIFY playbackEventsChanged)
+    Q_PROPERTY(int endFileCount READ endFileCount NOTIFY playbackEventsChanged)
 
 public:
     explicit MpvClient(QObject *parent = nullptr);
@@ -43,6 +48,9 @@ public:
     Q_INVOKABLE void setVolume(double volume);
     Q_INVOKABLE void toggleMute();
     Q_INVOKABLE void stop();
+    Q_INVOKABLE void setSpeed(double speed);
+    Q_INVOKABLE void setAudioTrack(int id);
+    Q_INVOKABLE void setSubtitleTrack(int id); // -1 = 关闭字幕
 
     double position() const { return m_position; }
     double duration() const { return m_duration; }
@@ -51,6 +59,12 @@ public:
     bool muted() const { return m_muted; }
     QString title() const { return m_title; }
     QString filePath() const { return m_filePath; }
+    double speed() const { return m_speed; }
+    QVariantList audioTracks() const { return m_audioTracks; }
+    QVariantList subtitleTracks() const { return m_subtitleTracks; }
+    int startFileCount() const { return m_startFileCount; }
+    int endFileCount() const { return m_endFileCount; }
+    double audioPts() const { return m_audioPts; }
 
     // M0 证据采集
     bool sampleVideoLuminance(double *mean, int *width, int *height, QString *error);
@@ -68,6 +82,9 @@ signals:
     void mutedChanged();
     void titleChanged();
     void filePathChanged();
+    void speedChanged();
+    void tracksChanged();
+    void playbackEventsChanged();
     void fileLoaded();
     void endFile(const QString &reason);
     void errorOccurred(const QString &message);
@@ -81,6 +98,7 @@ private:
     void applyOptions(qintptr wid);
     void handleEvents();
     void updateProperties();
+    void refreshTrackList();
     template <typename T>
     bool resolve(T &fn, const char *name);
 
@@ -105,6 +123,13 @@ private:
     int m_videoReconfigCount = 0;
     bool m_initialized = false;
     bool m_pendingFile = false;
+    double m_speed = 1.0;
+    double m_audioPts = 0.0;
+    QVariantList m_audioTracks;
+    QVariantList m_subtitleTracks;
+    qint64 m_trackCount = -1;
+    int m_startFileCount = 0;
+    int m_endFileCount = 0;
 };
 
 } // namespace palune

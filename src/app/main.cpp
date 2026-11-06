@@ -1,12 +1,20 @@
 #include "app/AppController.h"
+
+#include "core/AppPaths.h"
+#include "core/StartupClock.h"
+#include "diag/CrashBreadcrumb.h"
 #include "diag/Log.h"
+#include "settings/Settings.h"
 
 #include <QApplication>
 #include <QCoreApplication>
 #include <QDir>
-#include <QStandardPaths>
+#include <QUrlQuery>
+
+#include <cstdio>
 
 #if defined(Q_OS_WIN)
+#include <shobjidl.h>
 #include <windows.h>
 #endif
 
@@ -32,10 +40,58 @@ QString valueArg(int argc, char **argv, const char *name)
     return {};
 }
 
+#if defined(Q_OS_WIN)
+void registerUrlScheme()
+{
+    const QString exe = QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
+    HKEY key = nullptr;
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\Classes\\palune", 0, nullptr, 0,
+                        KEY_WRITE, nullptr, &key, nullptr) != ERROR_SUCCESS) {
+        return;
+    }
+    const wchar_t description[] = L"URL:Palune Protocol";
+    RegSetValueExW(key, nullptr, 0, REG_SZ, reinterpret_cast<const BYTE *>(description),
+                   sizeof(description));
+    const wchar_t protocol[] = L"";
+    RegSetValueExW(key, L"URL Protocol", 0, REG_SZ, reinterpret_cast<const BYTE *>(protocol),
+                   sizeof(protocol));
+    RegCloseKey(key);
+
+    HKEY commandKey = nullptr;
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\Classes\\palune\\shell\\open\\command",
+                        0, nullptr, 0, KEY_WRITE, nullptr, &commandKey, nullptr) != ERROR_SUCCESS) {
+        return;
+    }
+    const QString command = QStringLiteral("\"%1\" \"%2\"").arg(exe, QStringLiteral("%1"));
+    RegSetValueExW(commandKey, nullptr, 0, REG_SZ,
+                   reinterpret_cast<const BYTE *>(command.utf16()),
+                   static_cast<DWORD>((command.size() + 1) * sizeof(wchar_t)));
+    RegCloseKey(commandKey);
+}
+#endif
+
+// palune://play?url=... —— 只接受一个 url 参数，交给正常播放入口。
+QString resolveProtocolUrl(const QString &path)
+{
+    if (!path.startsWith(QLatin1String("palune://")))
+        return path;
+    const QUrl url(path);
+    const QUrlQuery query(url);
+    const QString target = query.queryItemValue(QStringLiteral("url"), QUrl::FullyDecoded);
+    return target.isEmpty() ? QString() : target;
+}
+
 } // namespace
 
 int main(int argc, char *argv[])
 {
+    StartupClock::mark();
+    if (hasArg(argc, argv, "--version")) {
+        const QString version = QStringLiteral(PALUNE_VERSION);
+        std::printf("Palune %s\n", version.toUtf8().constData());
+        return 0;
+    }
+
     qputenv("QT_QUICK_CONTROLS_STYLE", "basic");
     QApplication::setHighDpiScaleFactorRoundingPolicy(
         Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
@@ -58,11 +114,29 @@ int main(int argc, char *argv[])
     app.setApplicationVersion(QStringLiteral(PALUNE_VERSION));
     app.setApplicationDisplayName(QStringLiteral("Palune"));
 
-    const QString logPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
-        + QStringLiteral("/logs/palune.log");
-    Log::init(logPath);
+    // 测试与自动化可以用 PALUNE_CONFIG_DIR 把配置、日志、崩溃目录重定向到临时目录。
+    const QString configOverride = qEnvironmentVariable("PALUNE_CONFIG_DIR");
+    if (!configOverride.isEmpty())
+        AppPaths::setConfigDirOverride(configOverride);
+
+    Settings settings;
+    QString settingsError;
+    settings.load(&settingsError);
+
+    Log::init(AppPaths::logFile());
+    if (!settingsError.isEmpty())
+        Log::warn(settingsError);
+    if (!Log::setMinimumLevelName(settings.rawLogLevel()))
+        Log::warn(QStringLiteral("settings.toml 中的 logLevel 非法，沿用 info"));
     Log::info(QStringLiteral("Palune %1 启动").arg(QStringLiteral(PALUNE_VERSION)));
-    Log::info(QStringLiteral("日志：%1").arg(logPath));
+    Log::info(QStringLiteral("配置目录：%1").arg(AppPaths::configDir()));
+    Log::info(QStringLiteral("日志级别：%1，日志：%2").arg(Log::minimumLevelName(), Log::filePath()));
+    CrashBreadcrumb::install(QStringLiteral(PALUNE_VERSION));
+    CrashBreadcrumb::record(QStringLiteral("进程启动"));
+
+#if defined(Q_OS_WIN)
+    SetCurrentProcessExplicitAppUserModelID(L"app.palune.player");
+#endif
 
     AppController::Options options;
     options.selftest = hasArg(argc, argv, "--m0-selftest");
@@ -77,10 +151,20 @@ int main(int argc, char *argv[])
     options.restartMarker = valueArg(argc, argv, "--e2e-marker");
     options.hiddenDesktop = hasArg(argc, argv, "--hidden-desktop");
     options.openPath = valueArg(argc, argv, "--open");
+    options.m1Smoke = hasArg(argc, argv, "--m1-smoke");
+    options.m1Perf = hasArg(argc, argv, "--m1-perf");
+    options.m1ThemeSwitch = hasArg(argc, argv, "--m1-theme-switch");
+    options.mediaPath = valueArg(argc, argv, "--media");
+    if (hasArg(argc, argv, "--switch-count"))
+        options.switchCount = valueArg(argc, argv, "--switch-count").toInt();
+
+    const bool automation = options.selftest || options.updateCheckOnly || !options.e2eMode.isEmpty()
+        || options.m1Smoke || options.m1Perf || options.m1ThemeSwitch || !options.shotDir.isEmpty();
 
     // 位置参数作为待打开文件（跳过已知的取值参数，避免把 flag 的值误当文件）
     const char *valueFlags[] = {"--video", "--report", "--ui-shot", "--update-url",
-                                "--download-dir", "--e2e-mode", "--e2e-marker", "--open"};
+                                "--download-dir", "--e2e-mode", "--e2e-marker", "--open",
+                                "--media", "--switch-count"};
     for (int i = 1; i < argc; ++i) {
         const QString arg = QString::fromLocal8Bit(argv[i]);
         bool isValueFlag = false;
@@ -95,10 +179,19 @@ int main(int argc, char *argv[])
             continue;
         options.openPath = arg;
     }
+    options.openPath = resolveProtocolUrl(options.openPath);
+
     if (options.reportPath.isEmpty() && options.selftest)
         options.reportPath = QDir::currentPath() + QStringLiteral("/m0-report.json");
 
-    AppController controller(options);
+#if defined(Q_OS_WIN)
+    if (!automation) {
+        registerUrlScheme();
+        CrashBreadcrumb::record(QStringLiteral("已确认 palune:// 协议注册"));
+    }
+#endif
+
+    AppController controller(options, &settings);
     controller.start();
     return app.exec();
 }

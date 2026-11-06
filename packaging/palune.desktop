@@ -10,5 +10,5 @@ Terminal=false
 StartupNotify=true
 StartupWMClass=Palune
 Categories=AudioVideo;Player;Video;
-MimeType=video/mp4;video/x-matroska;video/x-msvideo;video/mpeg;video/quicktime;audio/mpeg;audio/flac;audio/aac;audio/ogg;application/x-subrip;
+MimeType=video/mp4;video/x-matroska;video/x-msvideo;video/mpeg;video/quicktime;audio/mpeg;audio/flac;audio/aac;audio/ogg;application/x-subrip;x-scheme-handler/palune;
 Keywords=video;audio;player;media;mpv;

@@ -160,6 +160,9 @@ void MpvClient::applyOptions(qintptr wid)
 
     const QByteArray voEnv = qEnvironmentVariable("PALUNE_MPV_VO").toUtf8();
     opt("vo", voEnv.isEmpty() ? "gpu-next" : voEnv.constData());
+    const QByteArray aoEnv = qEnvironmentVariable("PALUNE_MPV_AO").toUtf8();
+    if (!aoEnv.isEmpty())
+        opt("ao", aoEnv.constData());
 #if defined(Q_OS_WIN)
     const QByteArray ctxEnv = qEnvironmentVariable("PALUNE_MPV_GPU_CONTEXT").toUtf8();
     opt("gpu-context", ctxEnv.isEmpty() ? "d3d11" : ctxEnv.constData());
@@ -237,7 +240,8 @@ bool MpvClient::openFile(const QString &path)
     }
     QFileInfo fi(path);
     const QString absolute = fi.absoluteFilePath();
-    const char *args[] = {"loadfile", absolute.toUtf8().constData(), "replace", nullptr};
+    const QByteArray fileUtf8 = absolute.toUtf8();
+    const char *args[] = {"loadfile", fileUtf8.constData(), "replace", nullptr};
     const int rc = m_api->command(m_mpv, args);
     if (rc < 0) {
         emit errorOccurred(QStringLiteral("打开文件失败：%1").arg(m_api->errorString(rc)));
@@ -304,12 +308,50 @@ void MpvClient::stop()
     m_api->command(m_mpv, args);
 }
 
+void MpvClient::setSpeed(double speed)
+{
+    if (!m_initialized)
+        return;
+    const double v = qBound(0.25, speed, 4.0);
+    double writable = v;
+    if (m_api->setProperty(m_mpv, "speed", MPV_FORMAT_DOUBLE, &writable) >= 0) {
+        m_speed = v;
+        emit speedChanged();
+        Log::info(QStringLiteral("播放速度设为 %1x").arg(v));
+    }
+}
+
+void MpvClient::setAudioTrack(int id)
+{
+    if (!m_initialized)
+        return;
+    const QByteArray value = QByteArray::number(id);
+    const char *args[] = {"set", "aid", value.constData(), nullptr};
+    if (m_api->command(m_mpv, args) < 0)
+        Log::warn(QStringLiteral("切换音轨失败：%1").arg(id));
+    else
+        Log::info(QStringLiteral("音轨切换为 %1").arg(id));
+}
+
+void MpvClient::setSubtitleTrack(int id)
+{
+    if (!m_initialized)
+        return;
+    const QByteArray value = id < 0 ? QByteArray("no") : QByteArray::number(id);
+    const char *args[] = {"set", "sid", value.constData(), nullptr};
+    if (m_api->command(m_mpv, args) < 0)
+        Log::warn(QStringLiteral("切换字幕轨失败：%1").arg(id));
+    else
+        Log::info(QStringLiteral("字幕轨切换为 %1").arg(id < 0 ? QStringLiteral("关闭") : QString::number(id)));
+}
+
 void MpvClient::poll()
 {
     if (!m_initialized)
         return;
     handleEvents();
     updateProperties();
+    refreshTrackList();
 }
 
 void MpvClient::handleEvents()
@@ -320,11 +362,17 @@ void MpvClient::handleEvents()
             break;
 
         switch (event->event_id) {
+        case MPV_EVENT_START_FILE:
+            ++m_startFileCount;
+            emit playbackEventsChanged();
+            break;
         case MPV_EVENT_FILE_LOADED:
             m_pendingFile = false;
             emit fileLoaded();
             break;
         case MPV_EVENT_END_FILE: {
+            ++m_endFileCount;
+            emit playbackEventsChanged();
             auto *end = static_cast<mpv_event_end_file *>(event->data);
             m_paused = true;
             emit pausedChanged();
@@ -406,6 +454,14 @@ void MpvClient::updateProperties()
     if (m_api->getProperty(m_mpv, "mistimed-frame-count", MPV_FORMAT_INT64, &i64) >= 0)
         m_mistimedFrameCount = i64;
 
+    if (m_api->getProperty(m_mpv, "speed", MPV_FORMAT_DOUBLE, &d) >= 0
+        && !qFuzzyCompare(d + 1.0, m_speed + 1.0)) {
+        m_speed = d;
+        emit speedChanged();
+    }
+    if (m_api->getProperty(m_mpv, "audio-pts", MPV_FORMAT_DOUBLE, &d) >= 0)
+        m_audioPts = d;
+
     char *title = m_api->getPropertyString(m_mpv, "media-title");
     if (title) {
         const QString t = QString::fromUtf8(title);
@@ -415,6 +471,65 @@ void MpvClient::updateProperties()
             emit titleChanged();
         }
     }
+}
+
+void MpvClient::refreshTrackList()
+{
+    int64_t count = 0;
+    if (m_api->getProperty(m_mpv, "track-list/count", MPV_FORMAT_INT64, &count) < 0)
+        return;
+    if (count == m_trackCount)
+        return;
+    m_trackCount = count;
+
+    mpv_node node;
+    memset(&node, 0, sizeof(node));
+    if (m_api->getProperty(m_mpv, "track-list", MPV_FORMAT_NODE, &node) < 0)
+        return;
+    if (node.format != MPV_FORMAT_NODE_ARRAY) {
+        m_api->freeNodeContents(&node);
+        return;
+    }
+
+    QVariantList audio;
+    QVariantList subtitles;
+    for (int i = 0; i < node.u.list->num; ++i) {
+        const mpv_node &entry = node.u.list->values[i];
+        if (entry.format != MPV_FORMAT_NODE_MAP)
+            continue;
+        QVariantMap track;
+        QString type;
+        for (int j = 0; j < entry.u.list->num; ++j) {
+            const QString key = QString::fromUtf8(entry.u.list->keys[j]);
+            const mpv_node &value = entry.u.list->values[j];
+            if (key == QLatin1String("id") && value.format == MPV_FORMAT_INT64)
+                track.insert(QStringLiteral("id"), static_cast<int>(value.u.int64));
+            else if (key == QLatin1String("type") && value.format == MPV_FORMAT_STRING)
+                type = QString::fromUtf8(value.u.string);
+            else if (key == QLatin1String("title") && value.format == MPV_FORMAT_STRING)
+                track.insert(QStringLiteral("title"), QString::fromUtf8(value.u.string));
+            else if (key == QLatin1String("lang") && value.format == MPV_FORMAT_STRING)
+                track.insert(QStringLiteral("lang"), QString::fromUtf8(value.u.string));
+            else if (key == QLatin1String("codec") && value.format == MPV_FORMAT_STRING)
+                track.insert(QStringLiteral("codec"), QString::fromUtf8(value.u.string));
+            else if (key == QLatin1String("selected") && value.format == MPV_FORMAT_FLAG)
+                track.insert(QStringLiteral("selected"), value.u.flag != 0);
+            else if (key == QLatin1String("external") && value.format == MPV_FORMAT_FLAG)
+                track.insert(QStringLiteral("external"), value.u.flag != 0);
+        }
+        if (track.contains(QStringLiteral("id"))) {
+            track.insert(QStringLiteral("type"), type);
+            if (type == QLatin1String("audio"))
+                audio << track;
+            else if (type == QLatin1String("sub"))
+                subtitles << track;
+        }
+    }
+    m_api->freeNodeContents(&node);
+
+    m_audioTracks = audio;
+    m_subtitleTracks = subtitles;
+    emit tracksChanged();
 }
 
 bool MpvClient::sampleVideoLuminance(double *mean, int *width, int *height, QString *error)

@@ -1,8 +1,38 @@
 # Palune
 
-轻量、无位图皮肤、面向 Windows 优先的桌面视频播放器。M0 阶段：Qt 6 + QML 骨架，libmpv **动态链接**，窗口内嵌播放区。
+轻量、无位图皮肤、面向 Windows 优先的桌面视频播放器。M1 阶段：四层主题骨架、最小播放 UI、内容源抽象与工程化验证。
 
-当前版本：**1.0.0-alpha1**（版本号唯一来源是仓库根目录 `VERSION`）。
+当前版本：**1.0.0-alpha2**（版本号唯一来源是仓库根目录 `VERSION`）。
+
+## 已完成（M1）
+
+- 四层主题：`qml/tokens`（L0 令牌）→ `qml/components`（L1 组件，只发信号）→ `qml/layouts/LayoutA|B|C`（L2 布局，只读播放器属性并调用 `win.action`）→ `ThemeRegistry` + `LayoutHost`（L3，只重建布局子树）
+- `VideoHost` 位于布局树外，切换布局不触碰视频承载窗口；主题持久化到 `settings.toml` 的 `[ui] theme`，缺键/非法值/资源缺失均回退 A
+- 最小 UI：打开文件/文件夹、拖拽、播放暂停、seek、音量、速度、音轨/字幕轨、全屏、退出、最近文件、三套布局
+- `settings.toml` 原子读写（保留未知键）、窗口几何恢复、`UiStateStore` 骨架
+- 内容源抽象：五组接口（认证/列表/取流/上报/能力）+ `MediaItem`/`UserState` + 适配器注册表，媒体库空状态页
+- 分级日志、崩溃面包屑（`crashes/breadcrumbs.txt` 与致命信号快照）、版本信息页
+- 更新清单升级为 payload + 分离签名信封，按 platform/arch 选择产物并校验产物签名
+- 命名与标识冻结：`app.palune.player`、`%APPDATA%\Palune`、日志前缀 `palune`、`Palune/crashes`、`palune://`、`https://updates.palune.app/{stable,beta}/latest.json`
+- CI：版本校验 → 分层静态检查 → 三平台构建 + 全部单测 + 20 样本 headless 冒烟
+
+## M1 实测结论（本机 Windows 11，独立桌面运行）
+
+报告：`docs/evidence/m1-smoke.json`、`docs/evidence/m1-perf.json`、`docs/evidence/m1-theme-switch.json`
+
+| 项目 | 判据 | 结果 | 实测 |
+| --- | --- | --- | --- |
+| 20 样本 × 5s 冒烟（Windows） | ≥19/20 通过 | **PASS** | 20/20 通过，覆盖 MP4/MKV/WEBM/TS/AVI/MOV 与 H.264/HEVC/VP9/VP8/MPEG-2/MPEG-4/MJPEG |
+| 冷启动 | ≤800ms | **PASS** | 574ms（进程启动→主窗口可交互）；首个 1080p 首帧 1433ms（单独记录，不计入冷启动） |
+| 空闲内存 | ≤300MB | **PASS** | 94.1MB |
+| 1080p 播放内存 | ≤500MB | **PASS** | 204.5MB（播放 15s 后），丢帧 0、错时帧 0 |
+| 主题切换 10 次（1080p） | 每次 ≤300ms、不断播、无黑帧 | **PASS** | 最大 104.1ms；布局构建 ≤6.7ms；亮度采样 125.7±1 全部非黑；`start-file`/`end-file` 增量均为 0；布局内无 `VideoHost` |
+| 主题回退与切换单测 | 缺键/非法/资源缺失回退 A；切换 <300ms | **PASS** | `tst_theme` 覆盖 7 组场景 |
+| 覆盖率 | ≥70% | **待验证** | 本地无插桩工具；CI 覆盖率为准 |
+| 20 样本 × 3 OS 冒烟 | macOS/Linux 各 ≥19/20 | **NOT_VERIFIED** | 本机仅有 Windows；CI headless 冒烟结果为准 |
+| 1h × 3 循环 RSS 漂移 | 无持续增长 | **NOT_VERIFIED** | 未做长时压测 |
+| 签名与更新通道 | 可签名、可回退 | **PARTIAL** | 清单/产物签名与校验链路具备且单测通过；无正式发布私钥、`updates.palune.app` 域名不受控 |
+| 安装包 ×3 OS + 干净虚拟机 | 三平台可装 | **NOT_VERIFIED** | 本机仅 Windows，无干净虚拟机环境 |
 
 ## 已完成（M0）
 
@@ -35,7 +65,7 @@ macOS / Linux 依赖：`tools/ci/fetch_deps.sh`（brew / apt / dnf / pacman）�
 
 ## CI
 
-`.github/workflows/ci.yml`：先跑版本号校验，再并行构建三平台并跑单元测试（Windows / macOS 跑版本号规则，Linux 额外跑更新清单签名与哈希）。
+`.github/workflows/ci.yml`：版本号校验 → 分层静态检查 → 三平台构建 + 全部单元测试 + 20 样本 headless 冒烟（`--m1-smoke`，报告作为 artifact 上传）。
 
 - Runner：`windows-latest` / `macos-latest`（当前为 `macos-26-arm64`）/ `ubuntu-latest`
 - Qt：三平台统一 `6.9.3`。原因：macOS 26 SDK 移除了 `AGL.framework`，而 Qt 6.8 线最后一版（6.8.3）的 macOS 构建仍带 `-framework AGL`，链接必然失败；Qt 6.9 起已移除该依赖。本地 Windows 仍可用 6.8.3。
@@ -119,14 +149,20 @@ build\Release\Palune.exe --m0-selftest --report qa\runtime\m0-report.json --vide
 ## 目录结构
 
 ```
-src/app/        进程入口与运行模式（正常 / 自测 / 截图 / 更新 e2e）
+src/app/        进程入口与运行模式（正常 / M0、M1 自测 / 截图 / 更新 e2e）
 src/window/     双窗架构：VideoWindow（视频承载）+ OverlayWindow（QML 界面）+ WindowController（几何与 Z 序同步）
 src/mpv/        libmpv 动态加载封装
-src/update/     版本号、更新清单、签名与哈希校验、下载/安装状态机
+src/settings/   settings.toml 读写、窗口几何、最近文件
+src/theme/      ThemeRegistry（主题选择/回退/持久化）+ LayoutHost（布局子树重建）
+src/ui/         UiStateStore（滚动、选中、面板宽度、chrome 可见性）
+src/media/      内容源抽象（接口、Item/UserState、适配器注册表）
+src/core/       路径、启动计时、进程内存指标
+src/diag/       日志与崩溃面包屑
+src/update/     版本号、更新清单信封、签名与哈希校验、下载/安装状态机
 src/m0/         M0 自测（全屏/DPI/Alt-Tab/Snap/命中）
-qml/            主界面与设置页
-tests/unit/     版本号规则、更新清单解析测试
-tools/          版本校验、依赖准备、自测运行、e2e 模拟服务
+qml/            tokens / components / layouts / shell / library 与主界面、设置页
+tests/unit/     版本、清单、settings、主题、内容源抽象测试
+tools/          版本校验、分层检查、样本生成、依赖准备、自测运行、e2e 模拟服务
 docs/evidence/  实测报告与截图
 ```
 

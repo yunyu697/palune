@@ -22,9 +22,65 @@ jobs:
       - name: 校验 VERSION 规则
         run: python tools/version/check_version.py
 
+  layers:
+    name: 分层静态检查
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 检查四层主题与内容源分层约束
+        run: python tools/ci/check_layers.py
+
+  coverage:
+    name: 单测覆盖率
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 Qt 6.9.3
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.9.3"
+          arch: linux_gcc_64
+          cache: true
+
+      - name: 安装依赖
+        run: |
+          sudo timeout 300 apt-get update || true
+          sudo timeout 240 apt-get install -y --no-install-recommends libsodium23 gcovr
+
+      - name: 覆盖率构建
+        run: |
+          cmake -S . -B build-cov -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_FLAGS="--coverage -O0" \
+            -DCMAKE_EXE_LINKER_FLAGS="--coverage"
+          cmake --build build-cov --parallel 4
+
+      - name: 运行全部单测
+        run: ctest --test-dir build-cov --output-on-failure
+
+      - name: 生成覆盖率报告
+        run: |
+          gcovr -r . --filter 'src/' --exclude 'src/m0/' \
+            --txt coverage.txt --xml coverage.xml --print-summary
+          cat coverage.txt
+
+      - name: 上传覆盖率
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            coverage.txt
+            coverage.xml
+          if-no-files-found: warn
+
   build:
     name: 构建与常规检查（${{ matrix.name }}）
-    needs: version
+    needs: [version, layers]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -42,6 +98,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - name: 安装 Qt 6.9.3
         # macOS 26 SDK 移除了 AGL.framework，Qt 6.8.3（6.8 线最后一版）仍带 -framework AGL，
         # 在 macos-26-arm64 运行时链接必然失败；6.9 起已移除该依赖，故 CI 统一用 6.9.3。
@@ -53,12 +114,24 @@ jobs:
           cache: true
 
       - name: 安装系统依赖（Linux）
-        if: runner.os == 'Linux'
-        # 只为「更新清单签名/哈希」单测准备 libsodium；编译用的 mpv 头文件已入库。
+        # libsodium 供清单签名单测；ffmpeg 生成冒烟样本；libmpv 供 headless 冒烟。
         # apt 镜像偶发卡住，加超时避免作业挂死。
+        if: runner.os == 'Linux'
         run: |
-          sudo timeout 240 apt-get update || echo "apt-get update 超时，沿用镜像自带索引"
-          sudo timeout 180 apt-get install -y --no-install-recommends libsodium23
+          sudo timeout 300 apt-get update || echo "apt-get update 超时，沿用镜像自带索引"
+          sudo timeout 240 apt-get install -y --no-install-recommends libsodium23 ffmpeg libmpv2
+
+      - name: 安装系统依赖（macOS）
+        if: runner.os == 'macOS'
+        run: |
+          brew install ffmpeg mpv
+
+      - name: 安装运行时依赖（Windows）
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          ./tools/release/fetch_win_runtime.ps1
+          choco install ffmpeg -y --no-progress
 
       - name: 配置
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
@@ -66,9 +139,46 @@ jobs:
       - name: 构建
         run: cmake --build build --config Release --parallel 4
 
-      - name: 单元测试（版本号规则）
-        run: ctest --test-dir build -C Release --output-on-failure -R version
+      - name: 全部单元测试
+        # Qt 运行时路径由 install-qt-action 注入 PATH，测试可找到 Qt6Test/平台插件。
+        run: ctest --test-dir build -C Release --output-on-failure
 
-      - name: 单元测试（更新清单签名与哈希）
+      - name: 生成 20 个冒烟样本
+        shell: bash
+        run: python tools/qa/gen_samples.py --out qa/runtime/samples
+
+      - name: headless 冒烟（Linux）
         if: runner.os == 'Linux'
-        run: ctest --test-dir build -C Release --output-on-failure -R manifest
+        env:
+          QT_QPA_PLATFORM: offscreen
+          PALUNE_CONFIG_DIR: ${{ github.workspace }}/qa/runtime/config-ci
+        run: |
+          ./build/Release/Palune --m1-smoke --media qa/runtime/samples --report qa/runtime/m1-smoke.json
+
+      - name: headless 冒烟（macOS）
+        if: runner.os == 'macOS'
+        env:
+          QT_QPA_PLATFORM: offscreen
+          PALUNE_CONFIG_DIR: ${{ github.workspace }}/qa/runtime/config-ci
+        run: |
+          APP=$(find build -type f -name Palune -path '*MacOS*' | head -1)
+          "$APP" --m1-smoke --media qa/runtime/samples --report qa/runtime/m1-smoke.json
+
+      - name: headless 冒烟（Windows）
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          PALUNE_CONFIG_DIR: ${{ github.workspace }}/qa/runtime/config-ci
+        run: |
+          $p = Start-Process -FilePath ./build/Release/Palune.exe `
+            -ArgumentList '--m1-smoke','--media','qa/runtime/samples','--report','qa/runtime/m1-smoke.json' `
+            -PassThru -Wait
+          exit $p.ExitCode
+
+      - name: 上传冒烟报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m1-smoke-${{ matrix.name }}
+          path: qa/runtime/m1-smoke.json
+          if-no-files-found: warn

@@ -71,6 +71,15 @@ qt_add_resources(Palune "app_resources"
 
 if(WIN32)
     set_target_properties(Palune PROPERTIES WIN32_EXECUTABLE TRUE)
+elseif(APPLE)
+    # 必须是 bundle，macdeployqt 才会部署 Qt 运行时（否则会跳过运行时部署）。
+    set_target_properties(Palune PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_BUNDLE_NAME "Palune"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "app.palune.player"
+        MACOSX_BUNDLE_BUNDLE_VERSION "${PALUNE_VERSION}"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0.0"
+    )
 endif()
 
 target_link_libraries(Palune PRIVATE palune_core)
@@ -149,7 +158,7 @@ set(CPACK_PACKAGE_VENDOR "Palune")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Palune 媒体播放器")
 set(CPACK_PACKAGE_VERSION "${PALUNE_VERSION}")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "Palune")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/NOTICE.md")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/packaging/LICENSE.txt")
 
 if(WIN32)
     set(CPACK_PACKAGE_FILE_NAME "Palune-${PALUNE_VERSION}-win-x64")

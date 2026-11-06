@@ -1,0 +1,12 @@
+Palune 许可证说明
+==================
+
+Palune 本体：MPL-2.0（详见仓库根目录 NOTICE.md）。
+
+打包随附的第三方组件：
+- Qt 6（LGPL-3.0）：动态链接，用户可替换。
+- libmpv / FFmpeg（LGPL-2.1-or-later）：动态链接（libmpv-2.dll / libmpv.dylib /
+  libmpv.so.2），未启用 GPL 组件；源码获取方式见 https://mpv.io 与 https://ffmpeg.org。
+- libsodium（ISC）：动态链接，仅用于更新包签名校验。
+
+完整第三方声明与源码获取说明见安装目录下的 NOTICE.md。

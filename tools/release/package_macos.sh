@@ -23,6 +23,7 @@ fi
 # libmpv 是 dlopen 加载，macdeployqt 不会处理它依赖的 ffmpeg 等动态库，
 # 用 dylibbundler 把这些库拷进 .app 并改写 install_name。
 if [ -f "$APP/Contents/MacOS/libmpv.dylib" ] && command -v dylibbundler >/dev/null 2>&1; then
+    mkdir -p "$APP/Contents/Frameworks"
     dylibbundler -of -b -x "$APP/Contents/MacOS/libmpv.dylib" \
                  -d "$APP/Contents/Frameworks" -p "@executable_path/../Frameworks" >/dev/null
 fi

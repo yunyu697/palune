@@ -47,7 +47,8 @@ ln -sf "$(basename "$TOOLS/linuxdeploy-plugin-qt-x86_64.AppImage")" "$TOOLS/linu
 export ARCH
 export PATH="$PWD/$TOOLS:$PATH"
 export APPIMAGE_EXTRACT_AND_RUN=1
-export OUTPUT="$PWD/$OUT"
+# OUTPUT 必须是最终文件路径；指向目录会被 mksquashfs 当成非法目标。
+export OUTPUT="$PWD/$OUT/Palune-${VERSION}-linux-x86_64.AppImage"
 
 LD_ARGS=(--appdir "$APPDIR" --plugin qt --output appimage)
 if [ -f third_party/libmpv/libmpv.so.2 ]; then

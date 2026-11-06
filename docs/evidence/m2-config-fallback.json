@@ -1,0 +1,67 @@
+{
+  "mode": "m2-config-fallback",
+  "exe": "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\palune\\build-m2\\Release\\Palune.exe",
+  "cases": [
+    {
+      "case": "no-settings",
+      "settings": null,
+      "expectedTheme": "A",
+      "exitCode": 0,
+      "theme": "A",
+      "fallbackReason": "缺少 [ui] theme，已回退到布局 A",
+      "parseFailed": false,
+      "windowReadyMs": 1449,
+      "played": true,
+      "verdict": "PASS"
+    },
+    {
+      "case": "no-ui",
+      "settings": "[window]\nwidth = 1180\nheight = 700\n",
+      "expectedTheme": "A",
+      "exitCode": 0,
+      "theme": "A",
+      "fallbackReason": "缺少 [ui] theme，已回退到布局 A",
+      "parseFailed": false,
+      "windowReadyMs": 1755,
+      "played": true,
+      "verdict": "PASS"
+    },
+    {
+      "case": "invalid-theme",
+      "settings": "[ui]\ntheme = \"Z\"\n",
+      "expectedTheme": "A",
+      "exitCode": 0,
+      "theme": "A",
+      "fallbackReason": "非法主题值 \"Z\"，已回退到布局 A",
+      "parseFailed": false,
+      "windowReadyMs": 1427,
+      "played": true,
+      "verdict": "PASS"
+    },
+    {
+      "case": "corrupt-toml",
+      "settings": "[ui\ntheme = \"B\"\n",
+      "expectedTheme": "A",
+      "exitCode": 0,
+      "theme": "A",
+      "fallbackReason": "缺少 [ui] theme，已回退到布局 A",
+      "parseFailed": true,
+      "windowReadyMs": 1188,
+      "played": true,
+      "verdict": "PASS"
+    },
+    {
+      "case": "valid-b",
+      "settings": "[ui]\ntheme = \"B\"\n",
+      "expectedTheme": "B",
+      "exitCode": 0,
+      "theme": "B",
+      "fallbackReason": "",
+      "parseFailed": false,
+      "windowReadyMs": 1370,
+      "played": true,
+      "verdict": "PASS"
+    }
+  ],
+  "verdict": "PASS"
+}

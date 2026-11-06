@@ -200,7 +200,9 @@ bool MpvClient::openTestPattern()
     const char *args[] = {"loadfile", "av://lavfi:testsrc=size=1280x720:rate=30", "replace", nullptr};
     const int rc = m_api->command(m_mpv, args);
     if (rc < 0) {
-        emit errorOccurred(QStringLiteral("测试图样打开失败：%1").arg(m_api->errorString(rc)));
+        m_errorMessage = QStringLiteral("测试图样打开失败：%1").arg(m_api->errorString(rc));
+        emit errorMessageChanged();
+        emit errorOccurred(m_errorMessage);
         return false;
     }
     m_filePath = QStringLiteral("lavfi:testsrc");
@@ -244,9 +246,13 @@ bool MpvClient::openFile(const QString &path)
     const char *args[] = {"loadfile", fileUtf8.constData(), "replace", nullptr};
     const int rc = m_api->command(m_mpv, args);
     if (rc < 0) {
-        emit errorOccurred(QStringLiteral("打开文件失败：%1").arg(m_api->errorString(rc)));
+        m_errorMessage = QStringLiteral("打开文件失败：%1").arg(m_api->errorString(rc));
+        emit errorMessageChanged();
+        emit errorOccurred(m_errorMessage);
         return false;
     }
+    m_errorMessage.clear();
+    emit errorMessageChanged();
     m_filePath = absolute;
     emit filePathChanged();
     return true;
@@ -345,6 +351,15 @@ void MpvClient::setSubtitleTrack(int id)
         Log::info(QStringLiteral("字幕轨切换为 %1").arg(id < 0 ? QStringLiteral("关闭") : QString::number(id)));
 }
 
+void MpvClient::setLoopFile(bool enabled)
+{
+    if (!m_initialized)
+        return;
+    const char *args[] = {"set", "loop-file", enabled ? "inf" : "no", nullptr};
+    if (m_api->command(m_mpv, args) < 0)
+        Log::warn(QStringLiteral("设置循环播放失败"));
+}
+
 void MpvClient::poll()
 {
     if (!m_initialized)
@@ -379,6 +394,8 @@ void MpvClient::handleEvents()
             if (end && end->reason == MPV_END_FILE_REASON_ERROR) {
                 const QString msg = QStringLiteral("播放失败：%1")
                                         .arg(m_api->errorString(end->error));
+                m_errorMessage = msg;
+                emit errorMessageChanged();
                 emit errorOccurred(msg);
                 emit endFile(msg);
             } else {

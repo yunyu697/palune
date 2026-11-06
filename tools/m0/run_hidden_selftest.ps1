@@ -8,6 +8,8 @@ param(
     [string]$Video = "",
     [string]$Media = "",
     [int]$SwitchCount = 0,
+    [int]$StateSwitchCount = 0,
+    [int]$SoakMinute = 0,
     [string]$WorkingDir = "",
     [int]$TimeoutSec = 240
 )
@@ -77,6 +79,8 @@ $cmd = '"' + $Exe + '" --' + $Mode + ' --hidden-desktop --report "' + $Report + 
 if ($Video) { $cmd += ' --video "' + $Video + '"' }
 if ($Media) { $cmd += ' --media "' + $Media + '"' }
 if ($SwitchCount -gt 0) { $cmd += ' --switch-count ' + $SwitchCount }
+if ($StateSwitchCount -gt 0) { $cmd += ' --state-switch-count ' + $StateSwitchCount }
+if ($SoakMinute -gt 0) { $cmd += ' --soak-minute ' + $SoakMinute }
 
 $pi = New-Object -TypeName 'PaluneHiddenDesktop+PROCESS_INFORMATION'
 $ok = [PaluneHiddenDesktop]::CreateProcessW($Exe, $cmd, [IntPtr]::Zero, [IntPtr]::Zero,

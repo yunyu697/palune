@@ -16,6 +16,7 @@ class Settings;
 class ThemeRegistry;
 class LayoutHost;
 class UiStateStore;
+class CompactController;
 class MediaLibraryService;
 
 // 双窗几何同步结果（M0 判据用）。
@@ -62,10 +63,13 @@ public:
     ThemeRegistry *themeRegistry() const { return m_themeRegistry; }
     LayoutHost *layoutHost() const { return m_layoutHost; }
     UiStateStore *uiState() const { return m_uiState; }
+    CompactController *compactMode() const { return m_compactMode; }
     Settings *settings() const { return m_settings; }
 
     // 布局统一动作入口（布局只发动作名，不直接调用播放器）。
-    Q_INVOKABLE void action(const QString &name, const QVariant &value = QVariant());
+    // QML 不填默认参数，按参数个数区分两个重载。
+    Q_INVOKABLE void action(const QString &name);
+    Q_INVOKABLE void action(const QString &name, const QVariant &value);
     Q_INVOKABLE void openFolderDialog();
     Q_INVOKABLE void openRecentFile(const QString &path);
 
@@ -99,6 +103,8 @@ signals:
 
 private:
     bool loadQml();
+    // 布局重建后按 UiStateStore 记录的动作 ID 恢复焦点（跨主题等价控件）。
+    void restoreFocus();
     void updateTitle();
     void showWindows();
     void saveWindowState();
@@ -111,6 +117,7 @@ private:
     ThemeRegistry *m_themeRegistry = nullptr;
     LayoutHost *m_layoutHost = nullptr;
     UiStateStore *m_uiState = nullptr;
+    CompactController *m_compactMode = nullptr;
     VideoWindow *m_video = nullptr;
     OverlayWindow *m_overlay = nullptr;
     bool m_ready = false;

@@ -8,11 +8,13 @@
 #include "settings/Settings.h"
 #include "theme/LayoutHost.h"
 #include "theme/ThemeRegistry.h"
+#include "ui/CompactController.h"
 #include "ui/UiStateStore.h"
 #include "update/UpdateService.h"
 
 #include <QCoreApplication>
 #include <QDir>
+#include <functional>
 #include <QElapsedTimer>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -58,6 +60,13 @@ WindowController::WindowController(MpvClient *player,
 {
     m_themeRegistry = new ThemeRegistry(m_settings, {}, this);
     m_uiState = new UiStateStore(m_settings, this);
+    m_compactMode = new CompactController(m_settings, this);
+    m_compactMode->setTheme(m_themeRegistry->currentTheme());
+    connect(m_themeRegistry, &ThemeRegistry::currentThemeChanged, this, [this]() {
+        m_compactMode->setTheme(m_themeRegistry->currentTheme());
+        if (m_overlay)
+            m_compactMode->feedWidth(m_overlay->width());
+    });
 }
 
 WindowController::~WindowController()
@@ -70,6 +79,8 @@ WindowController::~WindowController()
 
 bool WindowController::start(int width, int height)
 {
+    QElapsedTimer step;
+    step.start();
     m_video = new VideoWindow();
     m_overlay = new OverlayWindow();
 
@@ -77,6 +88,7 @@ bool WindowController::start(int width, int height)
         Log::error(QStringLiteral("QML 加载失败，无法启动窗口"));
         return false;
     }
+    Log::debug(QStringLiteral("启动计时：QML 加载完成 %1ms").arg(step.elapsed()));
 
     QScreen *screen = QGuiApplication::primaryScreen();
     const QRect available = screen ? screen->availableGeometry() : QRect(0, 0, 1280, 720);
@@ -90,7 +102,14 @@ bool WindowController::start(int width, int height)
     m_normalGeometry = r;
 
     m_video->show();
+    Log::debug(QStringLiteral("启动计时：视频窗口显示 %1ms").arg(step.elapsed()));
     m_overlay->show();
+    Log::debug(QStringLiteral("启动计时：覆盖窗口显示 %1ms").arg(step.elapsed()));
+    connect(m_overlay, &QWindow::widthChanged, this, [this]() {
+        if (m_compactMode && m_overlay)
+            m_compactMode->feedWidth(m_overlay->width());
+    });
+    m_compactMode->feedWidth(m_overlay->width());
     if (m_settings && m_settings->windowMaximized())
         m_overlay->showMaximized();
     m_overlay->requestActivate();
@@ -121,6 +140,7 @@ bool WindowController::loadQml()
     ctx->setContextProperty(QStringLiteral("win"), this);
     ctx->setContextProperty(QStringLiteral("themeRegistry"), m_themeRegistry);
     ctx->setContextProperty(QStringLiteral("uiState"), m_uiState);
+    ctx->setContextProperty(QStringLiteral("compactMode"), m_compactMode);
     ctx->setContextProperty(QStringLiteral("library"), m_library);
 
     m_overlay->setSource(QUrl(QStringLiteral("qrc:/qml/Main.qml")));
@@ -141,13 +161,50 @@ bool WindowController::loadQml()
     m_layoutHost = new LayoutHost(m_overlay->engine(), m_themeRegistry, this);
     m_layoutHost->setHostItem(slot);
     connect(m_layoutHost, &LayoutHost::layoutBuilt, this,
-            [](const QString &theme, double ms) {
+            [this](const QString &theme, double ms) {
                 Log::info(QStringLiteral("布局构建完成：%1（%2ms）")
                               .arg(theme, QString::number(ms, 'f', 2)));
+                restoreFocus();
             });
     if (m_layoutHost->layoutContainsVideoHost())
         Log::error(QStringLiteral("分层违规：VideoHost 出现在布局树内"));
     return true;
+}
+
+void WindowController::restoreFocus()
+{
+    if (!m_overlay || !m_uiState)
+        return;
+    QQuickItem *root = m_overlay->rootObject();
+    if (!root)
+        return;
+    const QString actionId = m_uiState->focusActionId();
+    if (actionId.isEmpty())
+        return;
+    // 布局重建后旧控件已销毁，新布局里同 actionId 的控件等价；按 ID 找回并确定性设置焦点。
+    // QML 侧 Component.onCompleted + Qt.callLater 依赖事件循环与窗口激活状态，不够可靠。
+    // 注意：QQmlComponent 创建的布局根没有 QObject 父对象，findChildren 找不到，
+    // 必须沿 QQuickItem 的 childItems() 树递归。
+    std::function<QQuickItem *(QQuickItem *)> findVisible =
+        [&](QQuickItem *item) -> QQuickItem * {
+            if (item->property("actionId").toString() == actionId && item->isVisible())
+                return item;
+            for (QQuickItem *child : item->childItems()) {
+                if (QQuickItem *found = findVisible(child))
+                    return found;
+            }
+            return nullptr;
+        };
+    QQuickItem *target = findVisible(root);
+    if (!target) {
+        Log::warn(QStringLiteral("焦点恢复失败：布局中找不到可见的动作 %1").arg(actionId));
+        return;
+    }
+    target->forceActiveFocus(Qt::OtherFocusReason);
+    Log::info(QStringLiteral("焦点恢复：%1（focus=%2，activeFocus=%3）")
+                  .arg(actionId)
+                  .arg(target->hasFocus() ? "true" : "false",
+                       target->hasActiveFocus() ? "true" : "false"));
 }
 
 void WindowController::saveWindowState()
@@ -401,6 +458,11 @@ void WindowController::openRecentFile(const QString &path)
 {
     if (!path.isEmpty())
         openFile(QUrl::fromLocalFile(path));
+}
+
+void WindowController::action(const QString &name)
+{
+    action(name, QVariant());
 }
 
 void WindowController::action(const QString &name, const QVariant &value)

@@ -7,6 +7,8 @@ import "../../components"
 Item {
     id: layoutC
 
+    readonly property bool compact: typeof compactMode !== "undefined" && compactMode.compact
+
     Tokens { id: tokens }
 
     EmptyState {
@@ -58,9 +60,9 @@ Item {
         visible: uiState.chromeVisible
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 26
-        height: tokens.capsuleHeight
-        width: capsuleRow.implicitWidth + 36
+        anchors.bottomMargin: layoutC.compact ? 12 : 26
+        height: layoutC.compact ? 44 : tokens.capsuleHeight
+        width: capsuleRow.implicitWidth + (layoutC.compact ? 20 : 36)
         radius: height / 2
         color: tokens.glass
         border.width: 1
@@ -74,34 +76,39 @@ Item {
             PillButton {
                 label: player.paused ? "播放" : "暂停"
                 highlighted: true
+                actionId: "playPause"
                 onClicked: win.action("playPause")
             }
-            PillButton { label: "-10"; onClicked: win.action("seekBy", -10) }
-            PillButton { label: "+10"; onClicked: win.action("seekBy", 10) }
+            PillButton { label: "-10"; actionId: "seekBack"; onClicked: win.action("seekBy", -10) }
+            PillButton { label: "+10"; actionId: "seekForward"; onClicked: win.action("seekBy", 10) }
             Text {
+                visible: !layoutC.compact
                 text: fmt(player.position) + " / " + fmt(player.duration)
                 color: tokens.textMuted
                 font.pixelSize: tokens.fontS
                 font.family: "Consolas"
             }
             VolumeBar {
+                visible: !layoutC.compact
                 value: player.muted ? 0 : player.volume
                 onVolumeSet: function (v) { win.action("volumeSet", v) }
             }
             PillButton {
                 label: Math.round(player.speed * 100) / 100 + "x"
+                actionId: "speedCycle"
                 onClicked: win.action("speedCycle")
             }
-            PillButton { label: "音轨"; onClicked: win.action("cycleAudio") }
-            PillButton { label: "字幕"; onClicked: win.action("cycleSubtitle") }
-            PillButton { label: "打开"; onClicked: win.action("openFile") }
-            PillButton { label: "切换布局"; onClicked: win.action("cycleTheme") }
-            PillButton { label: "设置"; onClicked: win.action("openSettings") }
+            PillButton { visible: !layoutC.compact; label: "音轨"; actionId: "cycleAudio"; onClicked: win.action("cycleAudio") }
+            PillButton { visible: !layoutC.compact; label: "字幕"; actionId: "cycleSubtitle"; onClicked: win.action("cycleSubtitle") }
+            PillButton { label: "打开"; actionId: "openFile"; onClicked: win.action("openFile") }
+            PillButton { label: "切换布局"; actionId: "cycleTheme"; onClicked: win.action("cycleTheme") }
+            PillButton { label: "设置"; actionId: "openSettings"; onClicked: win.action("openSettings") }
             PillButton {
                 label: win.fullscreen ? "还原" : "全屏"
+                actionId: "toggleFullscreen"
                 onClicked: win.action("toggleFullscreen")
             }
-            PillButton { label: "关闭"; onClicked: win.action("exit") }
+            PillButton { label: "关闭"; actionId: "exit"; onClicked: win.action("exit") }
         }
     }
 

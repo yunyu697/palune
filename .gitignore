@@ -1,5 +1,6 @@
 # 构建产物
 build/
+build-m2/
 out/
 dist/
 *.user
@@ -25,6 +26,7 @@ tools/update/test-key.pem
 *.log
 *.dmp
 qa/runtime/
+qa/coverage/
 
 # IDE / 系统
 .vs/

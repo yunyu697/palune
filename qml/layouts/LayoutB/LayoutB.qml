@@ -7,6 +7,13 @@ import "../../components"
 Item {
     id: layoutB
 
+    readonly property bool compact: typeof compactMode !== "undefined" && compactMode.compact
+    // 拖动中的临时宽度；松手后写入 UiStateStore（按主题独立持久化）。
+    property real dragWidth: 0
+    readonly property int storedWidth: typeof uiState !== "undefined" ? uiState.panelWidth("B") : 320
+    readonly property int dockWidth: layoutB.compact ? 220
+        : (dragWidth > 0 ? dragWidth : storedWidth)
+
     Tokens { id: tokens }
 
     EmptyState {
@@ -24,9 +31,9 @@ Item {
         anchors.margins: tokens.spaceM
         spacing: tokens.spaceS
 
-        PillButton { label: "PALUNE · 工作台"; highlighted: true; onClicked: win.action("openLibrary") }
-        PillButton { label: "打开"; onClicked: win.action("openFile") }
-        PillButton { label: "文件夹"; onClicked: win.action("openFolder") }
+        PillButton { label: "PALUNE · 工作台"; highlighted: true; actionId: "openLibrary"; onClicked: win.action("openLibrary") }
+        PillButton { label: "打开"; actionId: "openFile"; onClicked: win.action("openFile") }
+        PillButton { visible: !layoutB.compact; label: "文件夹"; actionId: "openFolder"; onClicked: win.action("openFolder") }
     }
 
     Row {
@@ -39,17 +46,19 @@ Item {
 
         PillButton {
             label: win.fullscreen ? "退出全屏" : "全屏"
+            actionId: "toggleFullscreen"
             onClicked: win.action("toggleFullscreen")
         }
-        PillButton { label: "设置"; onClicked: win.action("openSettings") }
-        PillButton { label: "关闭"; onClicked: win.action("exit") }
+        PillButton { label: "设置"; actionId: "openSettings"; onClicked: win.action("openSettings") }
+        PillButton { label: "关闭"; actionId: "exit"; onClicked: win.action("exit") }
     }
 
     // 左坞
     Rectangle {
         id: dock
+        objectName: "dockB"
         visible: uiState.chromeVisible
-        width: uiState.panelWidth("B")
+        width: layoutB.dockWidth
         anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
         color: tokens.glassSoft
         border.width: 1
@@ -82,7 +91,7 @@ Item {
                 elide: Text.ElideMiddle
             }
 
-            Rectangle { Layout.fillWidth: true; height: 1; color: tokens.border }
+            Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: tokens.border }
 
             Text {
                 text: "最近打开"
@@ -92,18 +101,32 @@ Item {
 
             ListView {
                 id: recentList
+                objectName: "recentListB"
                 Layout.fillWidth: true
-                Layout.preferredHeight: 160
+                Layout.preferredHeight: layoutB.compact ? 110 : 160
                 clip: true
                 model: win.recentFiles
                 spacing: 2
+                // 与 UiStateStore 双向同步：切换布局重建后回到同一项。
+                currentIndex: typeof uiState !== "undefined" ? uiState.scrollIndex : -1
+                onCurrentIndexChanged: {
+                    // 模型尚未装载时 ListView 会把 currentIndex 压成 -1/0，别把这当成用户滚动。
+                    if (typeof uiState !== "undefined" && currentIndex >= 0
+                            && recentList.count > 0)
+                        uiState.scrollIndex = currentIndex
+                }
 
                 delegate: Rectangle {
+                    id: recentRow
                     required property var modelData
+                    required property int index
                     width: recentList.width
                     height: 30
                     radius: tokens.radiusS
-                    color: recentHover.containsMouse ? "#22ffffff" : "transparent"
+                    readonly property bool selected: typeof uiState !== "undefined"
+                                                      && uiState.selectedItemId === modelData.path
+                    color: selected ? tokens.accentSoft
+                                    : (recentHover.containsMouse ? "#22ffffff" : "transparent")
 
                     Text {
                         anchors.fill: parent
@@ -111,7 +134,7 @@ Item {
                         anchors.rightMargin: 8
                         verticalAlignment: Text.AlignVCenter
                         text: modelData.name
-                        color: tokens.text
+                        color: selected ? tokens.accent : tokens.text
                         font.pixelSize: tokens.fontS
                         elide: Text.ElideMiddle
                     }
@@ -120,7 +143,12 @@ Item {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: win.action("openRecent", modelData.path)
+                        onClicked: {
+                            recentList.currentIndex = recentRow.index
+                            if (typeof uiState !== "undefined")
+                                uiState.selectedItemId = recentRow.modelData.path
+                            win.action("openRecent", recentRow.modelData.path)
+                        }
                     }
                 }
             }
@@ -140,13 +168,15 @@ Item {
                 PillButton {
                     label: player.paused ? "播放" : "暂停"
                     highlighted: true
+                    actionId: "playPause"
                     onClicked: win.action("playPause")
                 }
-                PillButton { label: "-10s"; onClicked: win.action("seekBy", -10) }
-                PillButton { label: "+10s"; onClicked: win.action("seekBy", 10) }
+                PillButton { label: "-10s"; actionId: "seekBack"; onClicked: win.action("seekBy", -10) }
+                PillButton { label: "+10s"; actionId: "seekForward"; onClicked: win.action("seekBy", 10) }
                 Item { Layout.fillWidth: true }
                 PillButton {
                     label: Math.round(player.speed * 100) / 100 + "x"
+                    actionId: "speedCycle"
                     onClicked: win.action("speedCycle")
                 }
             }
@@ -154,10 +184,45 @@ Item {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: tokens.spaceS
-                PillButton { label: "音轨"; onClicked: win.action("cycleAudio") }
-                PillButton { label: "字幕"; onClicked: win.action("cycleSubtitle") }
+                PillButton { label: "音轨"; actionId: "cycleAudio"; onClicked: win.action("cycleAudio") }
+                PillButton { label: "字幕"; actionId: "cycleSubtitle"; onClicked: win.action("cycleSubtitle") }
                 Item { Layout.fillWidth: true }
-                PillButton { label: "切换布局"; onClicked: win.action("cycleTheme") }
+                PillButton { label: "切换布局"; actionId: "cycleTheme"; onClicked: win.action("cycleTheme") }
+            }
+        }
+
+        // 右边缘拖拽改检查器宽度（紧凑模式固定宽度，不提供拖拽）
+        Rectangle {
+            id: resizeHandle
+            visible: !layoutB.compact
+            width: 6
+            anchors { right: parent.right; top: parent.top; bottom: parent.bottom }
+            color: "transparent"
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.SizeHorCursor
+                property real startMouseX: 0
+                property int startWidth: 0
+                property bool dragging: false
+                onPressed: function (mouse) {
+                    dragging = true
+                    startWidth = dock.width
+                    startMouseX = mapToItem(layoutB, mouse.x, 0).x
+                }
+                onPositionChanged: function (mouse) {
+                    if (!dragging)
+                        return
+                    const globalX = mapToItem(layoutB, mouse.x, 0).x
+                    layoutB.dragWidth = Math.max(160,
+                                                 Math.min(720, startWidth + globalX - startMouseX))
+                }
+                onReleased: {
+                    dragging = false
+                    if (typeof uiState !== "undefined" && layoutB.dragWidth > 0)
+                        uiState.setPanelWidth("B", layoutB.dragWidth)
+                }
+                onCanceled: dragging = false
             }
         }
     }
@@ -165,13 +230,13 @@ Item {
     // 底部运输条
     Rectangle {
         visible: uiState.chromeVisible
-        height: tokens.transportHeight - 20
+        height: layoutB.compact ? tokens.transportHeight - 32 : tokens.transportHeight - 20
         anchors { left: dock.right; right: parent.right; bottom: parent.bottom }
         color: tokens.glass
 
         RowLayout {
             anchors.fill: parent
-            anchors.margins: 14
+            anchors.margins: layoutB.compact ? 8 : 14
             spacing: tokens.spaceM
 
             SeekBar {

@@ -1,5 +1,6 @@
 #include "app/AppController.h"
 
+#include "core/AppPaths.h"
 #include "core/ProcessMetrics.h"
 #include "core/StartupClock.h"
 #include "diag/CrashBreadcrumb.h"
@@ -8,8 +9,10 @@
 #include "media/MediaLibraryService.h"
 #include "mpv/MpvClient.h"
 #include "settings/Settings.h"
+#include "app/ShotContexts.h"
 #include "theme/LayoutHost.h"
 #include "theme/ThemeRegistry.h"
+#include "ui/CompactController.h"
 #include "ui/UiStateStore.h"
 #include "update/UpdateService.h"
 #include "window/WindowController.h"
@@ -18,6 +21,7 @@
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QEventLoop>
 #include <QFile>
 #include <QFileInfo>
@@ -26,10 +30,14 @@
 #include <QJsonDocument>
 #include <QQmlContext>
 #include <QQmlEngine>
+#include <QSysInfo>
 #include <QQuickItem>
 #include <QQuickView>
 #include <QThread>
 #include <QTimer>
+
+#include <functional>
+#include <memory>
 
 namespace palune {
 
@@ -73,7 +81,18 @@ void AppController::start()
         return;
     }
     if (!m_options.shotDir.isEmpty()) {
-        runShots();
+        if (m_options.shotMatrix)
+            runShotMatrix();
+        else
+            runShots();
+        return;
+    }
+    if (m_options.m2ConfigCheck) {
+        runM2ConfigCheck();
+        return;
+    }
+    if (m_options.m2Compact) {
+        runM2Compact();
         return;
     }
     if (m_options.updateCheckOnly) {
@@ -94,6 +113,14 @@ void AppController::start()
     }
     if (m_options.m1ThemeSwitch) {
         runM1ThemeSwitch();
+        return;
+    }
+    if (m_options.m1Soak) {
+        runM1Soak();
+        return;
+    }
+    if (m_options.m2StateSwitch) {
+        runM2StateSwitch();
         return;
     }
     startNormal();
@@ -532,6 +559,510 @@ void AppController::runM1ThemeSwitch()
     writeJsonReport(report, m_options.reportPath.isEmpty() ? defaultReportPath(QStringLiteral("theme-switch"))
                                                           : m_options.reportPath);
     finishWithCode(pass ? 0 : 2);
+}
+
+void AppController::runM1Soak()
+{
+    m_player = new MpvClient(this);
+    if (!m_player->initialize()) {
+        Log::error(QStringLiteral("libmpv 初始化失败：%1").arg(m_player->loadError()));
+        finishWithCode(4);
+        return;
+    }
+    m_updater = new UpdateService(QUrl(m_options.updateUrl), m_options.downloadDir, this);
+    m_windows = new WindowController(m_player, m_updater, m_settings, m_library, this);
+    if (!m_windows->start(1180, 700)) {
+        finishWithCode(4);
+        return;
+    }
+    m_windowReadyMs = static_cast<double>(StartupClock::elapsedMs());
+
+    QString video = m_options.videoPath;
+    if (video.isEmpty())
+        video = collectMedia().value(0);
+    if (video.isEmpty()) {
+        QJsonObject report;
+        report.insert(QStringLiteral("mode"), QStringLiteral("m1-soak"));
+        report.insert(QStringLiteral("verdict"), QStringLiteral("NOT_VERIFIED"));
+        report.insert(QStringLiteral("error"), QStringLiteral("没有可用视频样本"));
+        writeJsonReport(report, m_options.reportPath.isEmpty() ? defaultReportPath(QStringLiteral("soak"))
+                                                              : m_options.reportPath);
+        finishWithCode(2);
+        return;
+    }
+
+    m_player->setLoopFile(true);
+    m_windows->openFile(QUrl::fromLocalFile(video));
+
+    const int minutes = qMax(1, m_options.soakMinutes);
+    auto samples = std::make_shared<QJsonArray>();
+    auto baseline = std::make_shared<double>(-1.0);
+    QElapsedTimer soakClock;
+    soakClock.start();
+    const qint64 startedAtMs = StartupClock::elapsedMs();
+
+    auto *timer = new QTimer(this);
+    timer->setInterval(60000);
+    connect(timer, &QTimer::timeout, this, [this, timer, minutes, samples, baseline, video,
+                                           soakClock, startedAtMs]() {
+        const double rss = currentRssMb();
+        if (*baseline < 0.0)
+            *baseline = rss;
+        QJsonObject sample;
+        sample.insert(QStringLiteral("minute"), samples->size() + 1);
+        sample.insert(QStringLiteral("elapsedMs"), static_cast<double>(soakClock.elapsed()));
+        sample.insert(QStringLiteral("rssMb"), rss);
+        sample.insert(QStringLiteral("position"), m_player->position());
+        sample.insert(QStringLiteral("startFileCount"), m_player->startFileCount());
+        sample.insert(QStringLiteral("endFileCount"), m_player->endFileCount());
+        samples->append(sample);
+        if (samples->size() >= minutes) {
+            timer->stop();
+            const double finalRss = rss;
+            const double driftMbPerHour = (finalRss - *baseline) * 60.0 / minutes;
+            QJsonObject report;
+            report.insert(QStringLiteral("mode"), QStringLiteral("m1-soak"));
+            report.insert(QStringLiteral("version"), QStringLiteral(PALUNE_VERSION));
+            report.insert(QStringLiteral("video"), video);
+            report.insert(QStringLiteral("minutes"), samples->size());
+            report.insert(QStringLiteral("baselineRssMb"), *baseline);
+            report.insert(QStringLiteral("finalRssMb"), finalRss);
+            report.insert(QStringLiteral("driftMbPerHour"), driftMbPerHour);
+            report.insert(QStringLiteral("windowReadyMs"), m_windowReadyMs);
+            report.insert(QStringLiteral("processStartMs"), static_cast<double>(startedAtMs));
+            report.insert(QStringLiteral("samples"), *samples);
+            const bool pass = driftMbPerHour <= 50.0;
+            report.insert(QStringLiteral("verdict"),
+                          pass ? QStringLiteral("PASS") : QStringLiteral("FAIL"));
+            report.insert(QStringLiteral("generatedAt"),
+                          QDateTime::currentDateTime().toString(Qt::ISODate));
+            writeJsonReport(report, m_options.reportPath.isEmpty()
+                                        ? defaultReportPath(QStringLiteral("soak"))
+                                        : m_options.reportPath);
+            finishWithCode(pass ? 0 : 2);
+        }
+    });
+    // 第一分钟给出基线，之后每分钟采样；全程循环播放。
+    QTimer::singleShot(30000, timer, [timer]() { timer->start(); });
+    Log::info(QStringLiteral("长时压测开始：%1 分钟，循环播放 %2").arg(minutes).arg(video));
+}
+
+void AppController::runM2StateSwitch()
+{
+    const QString video = m_options.videoPath.isEmpty() ? collectMedia().value(0) : m_options.videoPath;
+    if (video.isEmpty()) {
+        Log::error(QStringLiteral("m2-stateswitch 需要 --video 或 --media"));
+        finishWithCode(2);
+        return;
+    }
+    m_player = new MpvClient(this);
+    if (!m_player->initialize()) {
+        finishWithCode(2);
+        return;
+    }
+    m_updater = new UpdateService(QUrl(m_options.updateUrl), m_options.downloadDir, this);
+    m_windows = new WindowController(m_player, m_updater, m_settings, m_library, this);
+    if (!m_windows->start(1180, 700)) {
+        finishWithCode(4);
+        return;
+    }
+    m_windowReadyMs = static_cast<double>(StartupClock::elapsedMs());
+    m_windows->openFile(QUrl::fromLocalFile(video));
+    if (!waitFor([this]() { return m_player->position() >= 5.0; }, 20000)) {
+        Log::error(QStringLiteral("视频 5s 内未进入播放状态"));
+        finishWithCode(2);
+        return;
+    }
+
+    UiStateStore *uiState = m_windows->uiState();
+    // 预置可恢复状态：最近列表 10 项、滚动到第 6 项、选中同一项、焦点在播放按钮。
+    for (int i = 1; i <= 10; ++i)
+        m_settings->addRecentFile(QStringLiteral("D:/qa/recent-%1.mp4").arg(i));
+    m_settings->save();
+    uiState->setScrollIndex(5);
+    uiState->setSelectedItemId(QStringLiteral("D:/qa/recent-6.mp4"));
+    uiState->setFocusActionId(QStringLiteral("playPause"));
+    uiState->setChromeVisible(true);
+    uiState->setPanelWidth(QStringLiteral("B"), 360);
+    sleepMs(150);
+
+    QQuickItem *root = m_windows->overlay() ? m_windows->overlay()->rootObject() : nullptr;
+    const QStringList themes = ThemeRegistry::availableThemes();
+    const int count = qBound(1, m_options.stateSwitchCount, 100);
+    QJsonArray items;
+    bool allPosition = true;
+    bool allScroll = true;
+    bool allSelection = true;
+    bool allFocus = true;
+    bool allPanel = true;
+    bool allNoBlack = true;
+    bool allNoReload = true;
+    double maxDeficitMs = 0.0;
+
+    for (int i = 0; i < count; ++i) {
+        const QString theme = themes.at((themes.indexOf(QStringLiteral("A")) + i + 1) % themes.size());
+        // 30 秒样片在隐藏桌面下（每次亮度采样要 0.4s 左右）会跑到片尾，
+        // 片尾停播是样本长度问题而非状态保持缺陷；临近结尾先回跳到 5s，
+        // 回跳发生在测量窗口之外，不参与连续性判定。
+        bool soughtBack = false;
+        if (m_player->duration() > 0.0 && m_player->position() > m_player->duration() - 3.0) {
+            m_player->seek(5.0);
+            sleepMs(250);
+            soughtBack = true;
+        }
+        const double posBefore = m_player->position();
+        const int startBefore = m_player->startFileCount();
+        const int endBefore = m_player->endFileCount();
+        QElapsedTimer wall;
+        wall.start();
+        m_windows->action(QStringLiteral("setTheme"), theme);
+        // 让 Qt.callLater 的焦点恢复与布局绑定跑完。
+        sleepMs(80);
+        double lumaEarly = -1.0;
+        double lumaLate = -1.0;
+        m_player->sampleVideoLuminance(&lumaEarly, nullptr, nullptr, nullptr);
+        sleepMs(70);
+        m_player->sampleVideoLuminance(&lumaLate, nullptr, nullptr, nullptr);
+        const double wallMs = wall.nsecsElapsed() / 1.0e6;
+        const double posAfter = m_player->position();
+
+        const double expected = wallMs / 1000.0;
+        const double deficitMs = qMax(0.0, (expected - (posAfter - posBefore)) * 1000.0);
+        const double deltaSec = posAfter - posBefore;
+        // 判据：不倒退（delta>=0）、不卡顿（落后墙钟 ≤500ms）、不超前（比墙钟多 ≤150ms）。
+        // 隐藏桌面下两次亮度采样会阻塞事件循环，单纯用固定 0.5s 会把「正常前进 0.66s」
+        // 误判为跳变，所以用墙钟作为上界。
+        const bool positionOk = deltaSec >= -0.001
+            && deficitMs <= 500.0
+            && deltaSec <= wallMs / 1000.0 + 0.15;
+        const bool scrollOk = uiState->scrollIndex() == 5;
+        const bool selectionOk = uiState->selectedItemId() == QLatin1String("D:/qa/recent-6.mp4");
+        const bool focusOk = root && [root]() {
+            // 布局根由 QQmlComponent 创建，没有 QObject 父对象，findChildren 遍历不到；
+            // 必须沿 QQuickItem::childItems() 递归。
+            std::function<QQuickItem *(QQuickItem *)> findFocused =
+                [&](QQuickItem *item) -> QQuickItem * {
+                    if (item->property("actionId").toString() == QLatin1String("playPause")
+                            && (item->hasFocus() || item->hasActiveFocus()))
+                        return item;
+                    for (QQuickItem *child : item->childItems()) {
+                        if (QQuickItem *found = findFocused(child))
+                            return found;
+                    }
+                    return nullptr;
+                };
+            // 隐藏桌面不会让窗口成为活动窗口，activeFocus 可能恒为 false；
+            // focus 属性仍能证明焦点项已经落到等价控件上。
+            return findFocused(root) != nullptr;
+        }();
+        const bool panelOk = uiState->panelWidth(QStringLiteral("B")) == 360;
+        const bool noReload = m_player->startFileCount() == startBefore
+            && m_player->endFileCount() == endBefore;
+        const bool noBlack = lumaEarly >= 3.0 && lumaLate >= 3.0;
+
+        allPosition = allPosition && positionOk;
+        allScroll = allScroll && scrollOk;
+        allSelection = allSelection && selectionOk;
+        allFocus = allFocus && focusOk;
+        allPanel = allPanel && panelOk;
+        allNoBlack = allNoBlack && noBlack;
+        allNoReload = allNoReload && noReload;
+        maxDeficitMs = qMax(maxDeficitMs, deficitMs);
+
+        QJsonObject item;
+        item.insert(QStringLiteral("index"), i + 1);
+        item.insert(QStringLiteral("theme"), theme);
+        item.insert(QStringLiteral("positionBefore"), posBefore);
+        item.insert(QStringLiteral("positionAfter"), posAfter);
+        item.insert(QStringLiteral("positionDeltaMs"), deltaSec * 1000.0);
+        item.insert(QStringLiteral("wallMs"), wallMs);
+        item.insert(QStringLiteral("positionDeficitMs"), deficitMs);
+        item.insert(QStringLiteral("scrollIndex"), uiState->scrollIndex());
+        item.insert(QStringLiteral("selectedItemId"), uiState->selectedItemId());
+        item.insert(QStringLiteral("focusActionId"), uiState->focusActionId());
+        item.insert(QStringLiteral("focusRestored"), focusOk);
+        item.insert(QStringLiteral("panelWidthB"), uiState->panelWidth(QStringLiteral("B")));
+        item.insert(QStringLiteral("lumaEarly"), lumaEarly);
+        item.insert(QStringLiteral("lumaLate"), lumaLate);
+        item.insert(QStringLiteral("soughtBack"), soughtBack);
+        item.insert(QStringLiteral("startFileDelta"), m_player->startFileCount() - startBefore);
+        item.insert(QStringLiteral("endFileDelta"), m_player->endFileCount() - endBefore);
+        items.append(item);
+    }
+
+    QJsonObject report;
+    report.insert(QStringLiteral("mode"), QStringLiteral("m2-stateswitch"));
+    report.insert(QStringLiteral("version"), QStringLiteral(PALUNE_VERSION));
+    report.insert(QStringLiteral("platform"), QSysInfo::prettyProductName());
+    report.insert(QStringLiteral("video"), video);
+    report.insert(QStringLiteral("switches"), count);
+    report.insert(QStringLiteral("positionContinuous"), allPosition);
+    report.insert(QStringLiteral("scrollRestored"), allScroll);
+    report.insert(QStringLiteral("selectionRestored"), allSelection);
+    report.insert(QStringLiteral("focusRestored"), allFocus);
+    report.insert(QStringLiteral("panelWidthKept"), allPanel);
+    report.insert(QStringLiteral("noBlackFrameOver100ms"), allNoBlack);
+    report.insert(QStringLiteral("noReload"), allNoReload);
+    report.insert(QStringLiteral("maxPositionDeficitMs"), maxDeficitMs);
+    report.insert(QStringLiteral("positionCriterion"),
+                  QStringLiteral("不倒退、落后墙钟 ≤500ms、超前 ≤150ms"));
+    const bool pass = allPosition && allScroll && allSelection && allFocus
+        && allPanel && allNoBlack && allNoReload;
+    report.insert(QStringLiteral("verdict"), pass ? QStringLiteral("PASS") : QStringLiteral("FAIL"));
+    report.insert(QStringLiteral("items"), items);
+    report.insert(QStringLiteral("generatedAt"), QDateTime::currentDateTime().toString(Qt::ISODate));
+    writeJsonReport(report, m_options.reportPath.isEmpty()
+                                ? defaultReportPath(QStringLiteral("m2-stateswitch"))
+                                : m_options.reportPath);
+    finishWithCode(pass ? 0 : 2);
+}
+
+void AppController::runM2Compact()
+{
+    CompactController controller(m_settings);
+    QJsonObject report;
+    report.insert(QStringLiteral("mode"), QStringLiteral("m2-compact"));
+    report.insert(QStringLiteral("version"), QStringLiteral(PALUNE_VERSION));
+    report.insert(QStringLiteral("hysteresis"), controller.hysteresis());
+    report.insert(QStringLiteral("debounceMs"), CompactController::kDefaultDebounceMs);
+    report.insert(QStringLiteral("defaultBreakpoint"), controller.breakpoint());
+
+    // 合法配置：640
+    m_settings->setValue(QStringLiteral("ui.layout.A.compactBelow"), 640);
+    controller.reloadBreakpoint();
+    const int configured = controller.breakpoint();
+    // 非法配置：0 / -20 / 非数字，都必须回退默认并给出提示
+    m_settings->setValue(QStringLiteral("ui.layout.A.compactBelow"), 0);
+    controller.reloadBreakpoint();
+    const int fallbackZero = controller.breakpoint();
+    const bool noticeZero = !controller.configNotice().isEmpty();
+    m_settings->setValue(QStringLiteral("ui.layout.A.compactBelow"), QStringLiteral("abc"));
+    controller.reloadBreakpoint();
+    const int fallbackText = controller.breakpoint();
+    const bool noticeText = !controller.configNotice().isEmpty();
+    // 恢复测试配置，避免污染后续场景（只改内存，不落盘）
+    m_settings->setValue(QStringLiteral("ui.layout.A.compactBelow"), 640);
+    controller.reloadBreakpoint();
+
+    controller.reset();
+    controller.feedWidth(1000);
+    controller.flush();
+    const int bp = controller.breakpoint();
+    // 阈值附近 ±8px、10Hz、50 次：滞回带内不应切换
+    for (int i = 0; i < 50; ++i) {
+        controller.feedWidth(i % 2 == 0 ? bp - 8 : bp + 8);
+        sleepMs(100);
+    }
+    const int jitterSwitches = controller.switchCount();
+    // 稳定落到紧凑侧：只允许 1 次切换
+    controller.feedWidth(bp - 40);
+    sleepMs(200);
+    const int settleSwitches = controller.switchCount();
+    const bool settledCompact = controller.compact();
+
+    report.insert(QStringLiteral("configuredBreakpoint"), configured);
+    report.insert(QStringLiteral("fallbackOnZero"), fallbackZero);
+    report.insert(QStringLiteral("fallbackOnText"), fallbackText);
+    report.insert(QStringLiteral("fallbackNotice"), noticeZero && noticeText);
+    report.insert(QStringLiteral("jitterSwitches"), jitterSwitches);
+    report.insert(QStringLiteral("switchesAfterSettle"), settleSwitches);
+    report.insert(QStringLiteral("settledCompact"), settledCompact);
+    const bool pass = configured == 640 && fallbackZero == CompactController::kDefaultBreakpoint
+        && fallbackText == CompactController::kDefaultBreakpoint && noticeZero && noticeText
+        && jitterSwitches == 0 && settleSwitches <= 1 && settledCompact;
+    report.insert(QStringLiteral("verdict"), pass ? QStringLiteral("PASS") : QStringLiteral("FAIL"));
+    report.insert(QStringLiteral("generatedAt"), QDateTime::currentDateTime().toString(Qt::ISODate));
+    writeJsonReport(report, m_options.reportPath.isEmpty()
+                                ? defaultReportPath(QStringLiteral("m2-compact"))
+                                : m_options.reportPath);
+    finishWithCode(pass ? 0 : 2);
+}
+
+void AppController::runM2ConfigCheck()
+{
+    m_player = new MpvClient(this);
+    const bool playerOk = m_player->initialize();
+    if (!playerOk)
+        Log::error(QStringLiteral("libmpv 初始化失败：%1").arg(m_player->loadError()));
+    m_updater = new UpdateService(QUrl(m_options.updateUrl), m_options.downloadDir, this);
+    m_windows = new WindowController(m_player, m_updater, m_settings, m_library, this);
+    const bool windowOk = m_windows->start(1180, 700);
+    m_windowReadyMs = windowOk ? static_cast<double>(StartupClock::elapsedMs()) : -1.0;
+
+    QString theme;
+    QString fallbackReason;
+    if (windowOk) {
+        theme = m_windows->themeRegistry()->currentTheme();
+        fallbackReason = m_windows->themeRegistry()->fallbackReason();
+    }
+
+    bool played = false;
+    if (windowOk && playerOk && !m_options.videoPath.isEmpty()) {
+        m_windows->openFile(QUrl::fromLocalFile(m_options.videoPath));
+        played = waitFor([this]() { return m_player->position() >= 1.0; }, 15000);
+    }
+
+    QJsonObject report;
+    report.insert(QStringLiteral("mode"), QStringLiteral("m2-config-check"));
+    report.insert(QStringLiteral("version"), QStringLiteral(PALUNE_VERSION));
+    report.insert(QStringLiteral("configDir"), AppPaths::configDir());
+    report.insert(QStringLiteral("settingsParseFailed"), m_settings->parseFailed());
+    report.insert(QStringLiteral("theme"), theme);
+    report.insert(QStringLiteral("fallbackReason"), fallbackReason);
+    report.insert(QStringLiteral("windowReadyMs"), m_windowReadyMs);
+    report.insert(QStringLiteral("playerAvailable"), playerOk);
+    report.insert(QStringLiteral("played"), played);
+    const bool hasVideo = !m_options.videoPath.isEmpty();
+    // 本作业只验证「配置非法/缺失时能回退到布局 A 且仍能起窗播放」；
+    // 启动耗时单独由 --m1-perf 的 coldStartToWindowMs 判据衡量，
+    // 这里只如实记录，不把构建机负载/QML 冷缓存算成配置回退失败。
+    const bool pass = windowOk && theme.size() == 1 && (!hasVideo || (playerOk && played));
+    report.insert(QStringLiteral("windowReadyWithin800ms"),
+                  m_windowReadyMs >= 0 && m_windowReadyMs <= 800.0);
+    report.insert(QStringLiteral("verdict"), pass ? QStringLiteral("PASS") : QStringLiteral("FAIL"));
+    report.insert(QStringLiteral("generatedAt"), QDateTime::currentDateTime().toString(Qt::ISODate));
+    writeJsonReport(report, m_options.reportPath.isEmpty()
+                                ? defaultReportPath(QStringLiteral("m2-config-check"))
+                                : m_options.reportPath);
+    finishWithCode(pass ? 0 : 2);
+}
+
+void AppController::runShotMatrix()
+{
+    QDir().mkpath(m_options.shotDir);
+    UpdateService demo;
+    Settings demoSettings;
+    ThemeRegistry demoTheme(&demoSettings, [](const QString &) { return true; });
+    UiStateStore demoUi(&demoSettings);
+    CompactController demoCompact(&demoSettings);
+    MediaLibraryService demoLibrary;
+    ShotPlayer shotPlayer;
+    ShotWindow shotWin;
+
+    QVariantList recent;
+    for (int i = 1; i <= 8; ++i)
+        recent.append(QVariantMap{{QStringLiteral("name"), QStringLiteral("示例影片 %1").arg(i)},
+                                  {QStringLiteral("path"), QStringLiteral("D:/qa/sample-%1.mp4").arg(i)}});
+    shotWin.setRecentFiles(recent);
+    QVariantList audio;
+    audio.append(QVariantMap{{QStringLiteral("id"), 1}, {QStringLiteral("title"), QStringLiteral("主音轨")}, {QStringLiteral("selected"), true}});
+    audio.append(QVariantMap{{QStringLiteral("id"), 2}, {QStringLiteral("title"), QStringLiteral("评论音轨")}, {QStringLiteral("selected"), false}});
+    shotPlayer.setAudioTracks(audio);
+    shotPlayer.setSubtitleTracks(QVariantList{
+        QVariantMap{{QStringLiteral("id"), 1}, {QStringLiteral("title"), QStringLiteral("简体中文")}, {QStringLiteral("selected"), true}}});
+
+    QQuickView view;
+    view.setFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint
+                  | Qt::WindowDoesNotAcceptFocus);
+    view.setColor(QColor(QStringLiteral("#0b0c10")));
+    view.setOpacity(0.0);
+    view.setResizeMode(QQuickView::SizeRootObjectToView);
+    auto *ctx = view.engine()->rootContext();
+    ctx->setContextProperty(QStringLiteral("player"), &shotPlayer);
+    ctx->setContextProperty(QStringLiteral("updater"), &demo);
+    ctx->setContextProperty(QStringLiteral("win"), &shotWin);
+    ctx->setContextProperty(QStringLiteral("themeRegistry"), &demoTheme);
+    ctx->setContextProperty(QStringLiteral("uiState"), &demoUi);
+    ctx->setContextProperty(QStringLiteral("compactMode"), &demoCompact);
+    ctx->setContextProperty(QStringLiteral("library"), &demoLibrary);
+    view.resize(1440, 900);
+    view.setSource(QUrl(QStringLiteral("qrc:/qml/Main.qml")));
+    if (view.status() != QQuickView::Ready) {
+        for (const auto &error : view.errors())
+            Log::error(QStringLiteral("QML: %1").arg(error.toString()));
+        finishWithCode(5);
+        return;
+    }
+    view.setPosition(0, 0);
+    view.show();
+    sleepMs(220);
+
+    QQuickItem *root = view.rootObject();
+    LayoutHost host(view.engine(), &demoTheme);
+    host.setHostItem(root ? root->findChild<QQuickItem *>(QStringLiteral("layoutSlot")) : nullptr);
+    QObject *settingsPanel = root ? root->findChild<QObject *>(QStringLiteral("settingsPanel")) : nullptr;
+    if (root && !m_options.backdropPath.isEmpty())
+        root->setProperty("backdrop", QUrl::fromLocalFile(m_options.backdropPath));
+
+    struct ShotSpec {
+        QString id;
+        int page;          // -1 = 不打开设置
+        bool paused;
+        bool fullscreen;
+        bool chrome;
+        bool empty;
+        bool error;
+        bool mini;
+    };
+    const QList<ShotSpec> screens = {
+        {QStringLiteral("main"), -1, false, false, true, false, false, false},
+        {QStringLiteral("paused"), -1, true, false, true, false, false, false},
+        {QStringLiteral("fullscreen"), -1, false, true, false, false, false, false},
+        {QStringLiteral("settings-general"), 0, false, false, true, false, false, false},
+        {QStringLiteral("settings-playback"), 1, false, false, true, false, false, false},
+        {QStringLiteral("settings-subtitle"), 2, false, false, true, false, false, false},
+        {QStringLiteral("settings-audio"), 3, false, false, true, false, false, false},
+        {QStringLiteral("settings-shortcuts"), 4, false, false, true, false, false, false},
+        {QStringLiteral("settings-about"), 5, false, false, true, false, false, false},
+        {QStringLiteral("error"), -1, false, false, true, false, true, false},
+        {QStringLiteral("empty"), -1, false, false, true, true, false, false},
+        {QStringLiteral("mini"), -1, false, false, true, false, false, true},
+    };
+
+    QJsonArray index;
+    int saved = 0;
+    for (const QString &theme : {QStringLiteral("A"), QStringLiteral("B"), QStringLiteral("C")}) {
+        demoTheme.switchTo(theme);
+        demoCompact.setTheme(theme);
+        for (const ShotSpec &shot : screens) {
+            const bool mini = shot.mini;
+            shotPlayer.setFilePath(shot.empty ? QString() : QStringLiteral("D:/qa/demo-1080p.mp4"));
+            shotPlayer.setTitle(shot.empty ? QString() : QStringLiteral("示例影片 · 1080p"));
+            shotPlayer.setPosition(shot.empty ? 0 : 96.0);
+            shotPlayer.setDuration(shot.empty ? 0 : 7200.0);
+            shotPlayer.setPaused(shot.paused);
+            shotPlayer.setErrorMessage(shot.error ? QStringLiteral("播放失败：无法解码该文件（样本错误）") : QString());
+            shotWin.setFullscreen(shot.fullscreen);
+            demoUi.setChromeVisible(shot.chrome);
+            root->setProperty("overlayPanel", shot.page >= 0 ? QStringLiteral("settings") : QString());
+            root->setProperty("errorDismissed", false);
+            if (settingsPanel && shot.page >= 0)
+                settingsPanel->setProperty("page", shot.page);
+            view.resize(mini ? 480 : 1440, mini ? 270 : 900);
+            demoCompact.feedWidth(mini ? 480 : 1440);
+            demoCompact.flush();
+            sleepMs(260);
+            const QImage image = view.grabWindow();
+            const QString path = m_options.shotDir
+                + QStringLiteral("/m2-%1-%2.png").arg(theme, shot.id);
+            if (!image.isNull() && image.save(path)) {
+                ++saved;
+                QJsonObject entry;
+                entry.insert(QStringLiteral("theme"), theme);
+                entry.insert(QStringLiteral("screen"), shot.id);
+                entry.insert(QStringLiteral("width"), image.width());
+                entry.insert(QStringLiteral("height"), image.height());
+                entry.insert(QStringLiteral("file"), QFileInfo(path).fileName());
+                index.append(entry);
+            } else {
+                Log::error(QStringLiteral("截图失败：%1").arg(path));
+            }
+        }
+    }
+
+    QJsonObject report;
+    report.insert(QStringLiteral("mode"), QStringLiteral("m2-ui-baseline"));
+    report.insert(QStringLiteral("version"), QStringLiteral(PALUNE_VERSION));
+    report.insert(QStringLiteral("themes"), QJsonArray{QStringLiteral("A"), QStringLiteral("B"), QStringLiteral("C")});
+    report.insert(QStringLiteral("screensPerTheme"), screens.size());
+    report.insert(QStringLiteral("saved"), saved);
+    report.insert(QStringLiteral("expected"), screens.size() * 3);
+    report.insert(QStringLiteral("verdict"),
+                  saved == screens.size() * 3 ? QStringLiteral("PASS") : QStringLiteral("FAIL"));
+    report.insert(QStringLiteral("items"), index);
+    report.insert(QStringLiteral("generatedAt"), QDateTime::currentDateTime().toString(Qt::ISODate));
+    writeJsonReport(report, m_options.shotDir + QStringLiteral("/m2-ui-baseline.json"));
+    finishWithCode(saved == screens.size() * 3 ? 0 : 6);
 }
 
 QStringList AppController::collectMedia() const

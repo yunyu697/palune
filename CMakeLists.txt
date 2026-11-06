@@ -33,6 +33,8 @@ add_library(palune_core STATIC
     src/theme/ThemeRegistry.h
     src/ui/UiStateStore.cpp
     src/ui/UiStateStore.h
+    src/ui/CompactController.cpp
+    src/ui/CompactController.h
     src/media/MediaLibraryService.cpp
     src/media/MediaLibraryService.h
     src/media/MediaServerAdapter.h
@@ -71,6 +73,8 @@ qt_add_executable(Palune
     src/app/main.cpp
     src/app/AppController.cpp
     src/app/AppController.h
+    src/app/ShotContexts.cpp
+    src/app/ShotContexts.h
     src/window/VideoWindow.cpp
     src/window/VideoWindow.h
     src/window/OverlayWindow.cpp
@@ -167,6 +171,50 @@ install(FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/VERSION"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/palune"
 )
+# 许可说明里承诺「安装目录下的 NOTICE.md」，所以 bin 旁也放一份。
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/NOTICE.md" DESTINATION "${CMAKE_INSTALL_BINDIR}")
+
+# MSVC 运行时 vcruntime140 / msvcp140 必须随包安装，否则干净机器双击 0xC0000135。
+# windeployqt 的 --compiler-runtime 只部署 vc_redist.x64.exe（还要再跑一次安装器），
+# 这里直接从 VC Redist 目录取 CRT DLL，确定性更高。
+set(PALUNE_MSVC_CRT_DLLS "")
+if(MSVC AND WIN32)
+    set(_palune_vc_root "")
+    if(DEFINED ENV{VCINSTALLDIR} AND EXISTS "$ENV{VCINSTALLDIR}/Redist")
+        set(_palune_vc_root "$ENV{VCINSTALLDIR}")
+    endif()
+    if(NOT _palune_vc_root AND CMAKE_CXX_COMPILER)
+        set(_palune_probe "${CMAKE_CXX_COMPILER}")
+        foreach(_i RANGE 7)
+            get_filename_component(_palune_probe "${_palune_probe}" DIRECTORY)
+            if(EXISTS "${_palune_probe}/Redist")
+                set(_palune_vc_root "${_palune_probe}")
+                break()
+            endif()
+        endforeach()
+    endif()
+    if(_palune_vc_root)
+        file(GLOB _palune_crt
+            "${_palune_vc_root}/Redist/MSVC/*/x64/Microsoft.VC*.CRT/*.dll")
+        list(SORT _palune_crt)
+        foreach(_name IN ITEMS vcruntime140.dll vcruntime140_1.dll msvcp140.dll
+                               msvcp140_1.dll msvcp140_2.dll concrt140.dll)
+            foreach(_file IN LISTS _palune_crt)
+                get_filename_component(_base "${_file}" NAME)
+                if(_base STREQUAL _name)
+                    list(APPEND PALUNE_MSVC_CRT_DLLS "${_file}")
+                endif()
+            endforeach()
+        endforeach()
+    endif()
+    if(PALUNE_MSVC_CRT_DLLS)
+        message(STATUS "MSVC 运行时随安装包部署：${_palune_vc_root}")
+        install(FILES ${PALUNE_MSVC_CRT_DLLS} DESTINATION "${CMAKE_INSTALL_BINDIR}")
+    else()
+        message(WARNING "未找到 MSVC 运行时（VCINSTALLDIR / 编译器路径），"
+                        "干净机器可能缺 vcruntime140.dll")
+    endif()
+endif()
 
 # libmpv / libsodium 是运行时 dlopen 加载的动态库，安装器不会自动带上，必须显式安装。
 if(APPLE)
@@ -187,10 +235,33 @@ foreach(_lib
     endif()
 endforeach()
 
-# 把 Qt 运行时依赖部署进安装树（Windows 用 windeployqt，macOS 用 macdeployqt）。
-qt_generate_deploy_app_script(TARGET Palune OUTPUT_SCRIPT PALUNE_DEPLOY_SCRIPT
-    NO_UNSUPPORTED_PLATFORM_ERROR)
-install(SCRIPT ${PALUNE_DEPLOY_SCRIPT})
+# 把 Qt 运行时依赖部署进安装树。
+# Windows 不用 qt_generate_deploy_app_script：它生成的脚本对含空格路径（"Program Files"、
+# 用户名带空格）不加引号，cpack 的 install 阶段会直接失败；统一改用下面的 windeployqt。
+# 非 Windows 仍走官方脚本（macOS 的 macdeployqt 由它调用）。
+if(NOT WIN32)
+    qt_generate_deploy_app_script(TARGET Palune OUTPUT_SCRIPT PALUNE_DEPLOY_SCRIPT
+        NO_UNSUPPORTED_PLATFORM_ERROR
+        DEPLOY_TOOL_OPTIONS --compiler-runtime)
+    install(SCRIPT ${PALUNE_DEPLOY_SCRIPT})
+endif()
+
+# Windows：windeployqt 一次补齐 Qt DLL、platforms 插件与 QML 模块。
+# MSVC 运行时由上面的 install(FILES) 直接部署；这里用 --no-compiler-runtime 避免
+# 把 vc_redist.x64.exe 塞进 bin。--qmldir 让 QtQuick.Controls.Basic 等 QML 模块进安装树。
+if(WIN32 AND WINDEPLOYQT_EXECUTABLE)
+    install(CODE "
+        set(_palune_bin \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}\")
+        message(STATUS \"windeployqt --qmldir -> \${_palune_bin}\")
+        execute_process(
+            COMMAND \"${WINDEPLOYQT_EXECUTABLE}\" --qmldir \"${CMAKE_CURRENT_SOURCE_DIR}/qml\"
+                    --no-compiler-runtime --dir \"\${_palune_bin}\" \"\${_palune_bin}/Palune.exe\"
+            RESULT_VARIABLE _palune_wdq_result)
+        if(NOT _palune_wdq_result EQUAL 0)
+            message(FATAL_ERROR \"windeployqt 部署 QML 模块失败：\${_palune_wdq_result}\")
+        endif()
+    ")
+endif()
 
 # CPack：Windows 产出 NSIS 安装器与 MSI。
 set(CPACK_PACKAGE_NAME "Palune")
@@ -198,7 +269,8 @@ set(CPACK_PACKAGE_VENDOR "Palune")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Palune 媒体播放器")
 set(CPACK_PACKAGE_VERSION "${PALUNE_VERSION}")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "Palune")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/packaging/LICENSE.txt")
+# 许可页必须给 RTF：中文纯文本在 NSIS/WiX 里会按代码页解码成乱码。
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/packaging/LICENSE.rtf")
 
 if(WIN32)
     set(CPACK_PACKAGE_FILE_NAME "Palune-${PALUNE_VERSION}-win-x64")
@@ -207,6 +279,19 @@ if(WIN32)
     set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
     set(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\Palune.exe")
     set(CPACK_NSIS_MUI_FINISHPAGE_RUN "bin\\\\Palune.exe")
+    # CPack 默认不为 bin 下的可执行文件建快捷方式，必须显式创建；
+    # 开始菜单文件夹里同时放主程序和卸载项，桌面再放一份主程序。
+    # NSIS 字符串用单引号，避免 CPackConfig.cmake 里双引号未转义导致语法错误。
+    set(CPACK_NSIS_CREATE_ICONS_EXTRA
+"CreateDirectory '$SMPROGRAMS\\\\Palune'
+CreateShortCut '$SMPROGRAMS\\\\Palune\\\\Palune.lnk' '$INSTDIR\\\\bin\\\\Palune.exe'
+CreateShortCut '$SMPROGRAMS\\\\Palune\\\\Uninstall Palune.lnk' '$INSTDIR\\\\uninstall.exe'
+CreateShortCut '$DESKTOP\\\\Palune.lnk' '$INSTDIR\\\\bin\\\\Palune.exe'")
+    set(CPACK_NSIS_DELETE_ICONS_EXTRA
+"Delete '$SMPROGRAMS\\\\Palune\\\\Palune.lnk'
+Delete '$SMPROGRAMS\\\\Palune\\\\Uninstall Palune.lnk'
+RMDir '$SMPROGRAMS\\\\Palune'
+Delete '$DESKTOP\\\\Palune.lnk'")
     # MSI 的 ProductVersion 必须是纯数字版本，alpha 后缀交给文件名表达。
     set(CPACK_WIX_PRODUCT_GUID "5B0D3C11-7E10-4E1C-9A46-2C6C2C0A0F01")
     set(CPACK_WIX_UPGRADE_GUID "9E3A2D41-1B3F-4E57-8C2B-6F0A7D1C2E34")
@@ -242,3 +327,7 @@ add_executable(tst_media tests/unit/tst_media.cpp)
 target_link_libraries(tst_media PRIVATE palune_core Qt6::Test)
 palune_copy_runtime_libs(tst_media)
 add_test(NAME media COMMAND tst_media)
+
+add_executable(tst_core tests/unit/tst_core.cpp)
+target_link_libraries(tst_core PRIVATE palune_core Qt6::Test)
+add_test(NAME core COMMAND tst_core)

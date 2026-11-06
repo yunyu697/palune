@@ -29,6 +29,7 @@ class MpvClient : public QObject
     Q_PROPERTY(QVariantList subtitleTracks READ subtitleTracks NOTIFY tracksChanged)
     Q_PROPERTY(int startFileCount READ startFileCount NOTIFY playbackEventsChanged)
     Q_PROPERTY(int endFileCount READ endFileCount NOTIFY playbackEventsChanged)
+    Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
 
 public:
     explicit MpvClient(QObject *parent = nullptr);
@@ -51,6 +52,8 @@ public:
     Q_INVOKABLE void setSpeed(double speed);
     Q_INVOKABLE void setAudioTrack(int id);
     Q_INVOKABLE void setSubtitleTrack(int id); // -1 = 关闭字幕
+    // 长时压测用：循环播放避免样本先于压测时长结束（产品默认关闭）。
+    void setLoopFile(bool enabled);
 
     double position() const { return m_position; }
     double duration() const { return m_duration; }
@@ -64,6 +67,7 @@ public:
     QVariantList subtitleTracks() const { return m_subtitleTracks; }
     int startFileCount() const { return m_startFileCount; }
     int endFileCount() const { return m_endFileCount; }
+    QString errorMessage() const { return m_errorMessage; }
     double audioPts() const { return m_audioPts; }
 
     // M0 证据采集
@@ -88,6 +92,7 @@ signals:
     void fileLoaded();
     void endFile(const QString &reason);
     void errorOccurred(const QString &message);
+    void errorMessageChanged();
 
 private slots:
     void poll();
@@ -130,6 +135,7 @@ private:
     qint64 m_trackCount = -1;
     int m_startFileCount = 0;
     int m_endFileCount = 0;
+    QString m_errorMessage;
 };
 
 } // namespace palune

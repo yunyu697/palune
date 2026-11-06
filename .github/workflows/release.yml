@@ -74,9 +74,30 @@ jobs:
       - name: 单元测试
         run: ctest --test-dir build -C Release --output-on-failure -R "version|manifest"
 
+      - name: 校验许可 RTF 与源文本一致
+        shell: pwsh
+        run: |
+          python tools/release/make_license_rtf.py
+          if (git status --porcelain packaging/LICENSE.rtf) {
+            throw "LICENSE.rtf 未随 LICENSE.txt 重新生成"
+          }
+
       - name: 打包（NSIS + MSI）
         shell: pwsh
         run: ./tools/release/package_windows.ps1 -BuildDir build -OutDir dist
+
+      - name: 安装 → 启动 → 卸载验证
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem dist -Filter "*-win-x64.exe" | Select-Object -First 1
+          ./tools/release/verify_windows_install.ps1 -Installer $installer.FullName -OutDir dist/verify
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-install-evidence
+          path: dist/verify/*
+          if-no-files-found: warn
 
       - uses: actions/upload-artifact@v4
         with:

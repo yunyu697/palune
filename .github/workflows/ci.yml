@@ -62,10 +62,17 @@ jobs:
       - name: 运行全部单测
         run: ctest --test-dir build-cov --output-on-failure
 
-      - name: 生成覆盖率报告
+      - name: 生成覆盖率报告（关键路径）
+        # 关键路径范围：settings/theme(ThemeRegistry)/ui/media/core/diag 与更新清单/版本/签名。
+        # 排除 GUI 装配层（app/window/mpv）、LayoutHost（QML 宿主）与需要真实网络/安装器的
+        # UpdateService 状态机；这些由 M1 冒烟/性能证据覆盖，不计入行覆盖率。
         run: |
-          gcovr -r . --filter 'src/' --exclude 'src/m0/' \
-            --txt coverage.txt --xml coverage.xml --print-summary
+          gcovr -r . \
+            --filter 'src/(settings|ui|media|core|diag)/' \
+            --filter 'src/theme/ThemeRegistry' \
+            --filter 'src/update/(UpdateManifest|Version|UpdateCrypto)' \
+            --txt coverage.txt --xml coverage.xml --print-summary \
+            --fail-under-lines 70
           cat coverage.txt
 
       - name: 上传覆盖率
@@ -153,7 +160,9 @@ jobs:
           QT_QPA_PLATFORM: offscreen
           PALUNE_CONFIG_DIR: ${{ github.workspace }}/qa/runtime/config-ci
         run: |
-          ./build/Release/Palune --m1-smoke --media qa/runtime/samples --report qa/runtime/m1-smoke.json
+          BIN=$(find build -maxdepth 3 -type f -name Palune -perm -u+x | head -1)
+          echo "二进制：$BIN"
+          "$BIN" --m1-smoke --media qa/runtime/samples --report qa/runtime/m1-smoke.json
 
       - name: headless 冒烟（macOS）
         if: runner.os == 'macOS'

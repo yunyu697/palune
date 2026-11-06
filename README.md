@@ -1,8 +1,8 @@
 # Palune
 
-轻量、无位图皮肤、面向 Windows 优先的桌面视频播放器。M1 阶段：四层主题骨架、最小播放 UI、内容源抽象与工程化验证。
+轻量、无位图皮肤、面向 Windows 优先的桌面视频播放器。M2 阶段：三主题验收矩阵（36 界面基线、50 次切换状态保持、紧凑降级、配置回退）与 Windows 安装器修复。
 
-当前版本：**1.0.0-alpha2**（版本号唯一来源是仓库根目录 `VERSION`）。
+当前版本：**1.0.0-alpha4**（版本号唯一来源是仓库根目录 `VERSION`）。
 
 ## 已完成（M1）
 
@@ -28,11 +28,29 @@
 | 1080p 播放内存 | ≤500MB | **PASS** | 204.5MB（播放 15s 后），丢帧 0、错时帧 0 |
 | 主题切换 10 次（1080p） | 每次 ≤300ms、不断播、无黑帧 | **PASS** | 最大 104.1ms；布局构建 ≤6.7ms；亮度采样 125.7±1 全部非黑；`start-file`/`end-file` 增量均为 0；布局内无 `VideoHost` |
 | 主题回退与切换单测 | 缺键/非法/资源缺失回退 A；切换 <300ms | **PASS** | `tst_theme` 覆盖 7 组场景 |
-| 覆盖率 | ≥70% | **待验证** | 本地无插桩工具；CI 覆盖率为准 |
-| 20 样本 × 3 OS 冒烟 | macOS/Linux 各 ≥19/20 | **NOT_VERIFIED** | 本机仅有 Windows；CI headless 冒烟结果为准 |
-| 1h × 3 循环 RSS 漂移 | 无持续增长 | **NOT_VERIFIED** | 未做长时压测 |
+| 覆盖率 | ≥70% | **待验证** | 已补 `tst_core` 与关键路径过滤，等待新 CI 出数 |
+| 20 样本 × 3 OS 冒烟 | macOS/Linux 各 ≥19/20 | **待验证** | 本机仅有 Windows；CI headless 冒烟结果为准 |
+| 1h × 3 循环 RSS 漂移 | 无持续增长 | **PARTIAL** | 已完成 1 轮 60 分钟：RSS 218MB→190MB，漂移 -28.3MB/h（无增长）；仍缺 2 轮 |
 | 签名与更新通道 | 可签名、可回退 | **PARTIAL** | 清单/产物签名与校验链路具备且单测通过；无正式发布私钥、`updates.palune.app` 域名不受控 |
-| 安装包 ×3 OS + 干净虚拟机 | 三平台可装 | **NOT_VERIFIED** | 本机仅 Windows，无干净虚拟机环境 |
+| 安装包 ×3 OS + 干净虚拟机 | 三平台可装 | **PARTIAL** | Windows 已完成真实安装→启动→卸载（见下）；macOS/Linux 未验证 |
+
+## 已完成（M2）
+
+- 三主题界面评审基线：A/B/C × 12 个界面 = 36 张 2880×1800 截图（mini 960×540），清单 `docs/evidence/m2-ui-baseline.json`，代表图 `docs/evidence/shots/m2-baseline/`
+- 50 次主题切换状态保持：滚动位置、选中项、面板宽度、播放位置、焦点全部保持；无黑帧 >100ms、无重新加载、`position` 不倒退
+- 紧凑模式自动降级：默认断点 560px、`settings.toml` 可配（非法值回退并提示）、±24px 滞回、60ms 防抖；10Hz 抖动 50 次切换数为 0
+- 配置回退矩阵（5 场景）：无 settings / 无 `[ui]` / 非法主题 Z / TOML 损坏 / 合法 B，全部回退 A 并给出原因
+- 报告：`docs/evidence/m2-stateswitch.json`、`m2-compact.json`、`m2-config-fallback.json`、`m2-ui-baseline.json`
+
+## Windows 安装器修复（alpha4）
+
+| 用户问题 | 根因 | 修复与证据 |
+| --- | --- | --- |
+| 装完程序无法运行 | 安装树缺 MSVC 运行时（`vcruntime140.dll` 等）与 QML 模块（`windeployqt` 缺 `--qmldir`） | 从 VC Redist 直接安装 CRT DLL；`windeployqt --qmldir qml`；在无 Qt PATH 的干净会话下启动安装产物并成功播放（`docs/evidence/windows-install-launch.json`） |
+| 开始菜单/桌面无快捷方式 | CPack 默认不为 `bin/` 下可执行文件建快捷方式 | 显式创建开始菜单「Palune」文件夹（主程序 + 卸载项）与桌面快捷方式，并配套删除；真实安装校验三处 TargetPath 均正确、卸载后全部清除（`docs/evidence/windows-install-evidence.json`） |
+| 许可协议乱码 | 中文 UTF-8 纯文本按安装器代码页解码 | 生成 RTF（`\ansicpg936` + `\uN?` 转义），`CPACK_RESOURCE_FILE_LICENSE` 指向 RTF；渲染比对与源文本逐字一致（`docs/evidence/shots/license-rtf-alpha4.png`） |
+
+校验脚本 `tools/release/verify_windows_install.ps1` 在 release 工作流中对每次 Windows 打包执行同样的真实安装→启动→卸载流程。
 
 ## 已完成（M0）
 

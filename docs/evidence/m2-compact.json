@@ -1,0 +1,16 @@
+{
+    "configuredBreakpoint": 640,
+    "debounceMs": 60,
+    "defaultBreakpoint": 560,
+    "fallbackNotice": true,
+    "fallbackOnText": 560,
+    "fallbackOnZero": 560,
+    "generatedAt": "2026-11-07T06:12:24",
+    "hysteresis": 24,
+    "jitterSwitches": 0,
+    "mode": "m2-compact",
+    "settledCompact": true,
+    "switchesAfterSettle": 1,
+    "verdict": "PASS",
+    "version": "1.0.0-alpha3"
+}

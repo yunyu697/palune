@@ -1,5 +1,7 @@
 import QtQuick
 import "shell"
+import "tokens"
+import "components"
 
 // shell：视频承载 + 布局槽位 + 覆盖层。
 // 布局由 C++ LayoutHost 挂到 layoutSlot；VideoHost 永远在布局树外。
@@ -9,6 +11,13 @@ Item {
 
     property string overlayPanel: ""
     property string toastText: ""
+    // 截图基线用静态背景；正常运行时为空，画面由 VideoHost 下方的原生窗口提供。
+    property url backdrop: ""
+    property bool errorDismissed: false
+
+    readonly property string errorMessage: typeof player !== "undefined" ? player.errorMessage : ""
+
+    Tokens { id: tokens }
 
     function openPanel(name) {
         root.overlayPanel = name
@@ -23,6 +32,14 @@ Item {
     function showToast(text) {
         root.toastText = text
         toastTimer.restart()
+    }
+
+    Image {
+        anchors.fill: parent
+        visible: root.backdrop.toString() !== ""
+        source: root.backdrop
+        fillMode: Image.PreserveAspectCrop
+        asynchronous: false
     }
 
     VideoHost {
@@ -80,7 +97,59 @@ Item {
         onTriggered: root.toastText = ""
     }
 
+    // 播放错误页：真实绑定 MpvClient.errorMessage，不让失败静默。
+    Rectangle {
+        id: errorCard
+        visible: root.errorMessage !== "" && !root.errorDismissed
+        anchors.centerIn: parent
+        width: 520
+        height: 168
+        radius: tokens.radiusL
+        color: "#f2160f12"
+        border.width: 1
+        border.color: "#66e7b27c"
+
+        Column {
+            anchors.centerIn: parent
+            width: parent.width - 48
+            spacing: 10
+
+            Text {
+                text: "播放失败"
+                color: tokens.accent
+                font.pixelSize: 16
+                font.weight: Font.DemiBold
+            }
+            Text {
+                width: parent.width
+                text: root.errorMessage
+                color: tokens.text
+                font.pixelSize: 12
+                wrapMode: Text.WordWrap
+            }
+            Row {
+                spacing: 10
+                PillButton {
+                    label: "打开其他文件"
+                    highlighted: true
+                    actionId: "openFile"
+                    onClicked: win.action("openFile")
+                }
+                PillButton {
+                    label: "知道了"
+                    onClicked: root.errorDismissed = true
+                }
+            }
+        }
+    }
+
+    Connections {
+        target: typeof player !== "undefined" ? player : null
+        function onErrorMessageChanged() { root.errorDismissed = false }
+    }
+
     SettingsPanel {
+        objectName: "settingsPanel"
         anchors.fill: parent
         visible: root.overlayPanel === "settings"
         onCloseRequested: root.closePanel()

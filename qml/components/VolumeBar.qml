@@ -9,7 +9,6 @@ Row {
     signal volumeSet(real value)
 
     spacing: 8
-    implicitHeight: 26
 
     Tokens { id: tokens }
 

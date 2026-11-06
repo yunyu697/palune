@@ -1,0 +1,495 @@
+{
+    "baselineRssMb": 218.2109375,
+    "driftMbPerHour": -28.29296875,
+    "finalRssMb": 189.91796875,
+    "generatedAt": "2026-11-07T06:37:42",
+    "minutes": 60,
+    "mode": "m1-soak",
+    "processStartMs": 715,
+    "samples": [
+        {
+            "elapsedMs": 89991,
+            "endFileCount": 0,
+            "minute": 1,
+            "position": 29.433333333333334,
+            "rssMb": 218.2109375,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 149991,
+            "endFileCount": 0,
+            "minute": 2,
+            "position": 29.4,
+            "rssMb": 227.09765625,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 209990,
+            "endFileCount": 0,
+            "minute": 3,
+            "position": 29.4,
+            "rssMb": 227.2109375,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 269992,
+            "endFileCount": 0,
+            "minute": 4,
+            "position": 29.366666666666667,
+            "rssMb": 227.078125,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 329991,
+            "endFileCount": 0,
+            "minute": 5,
+            "position": 29.366666666666667,
+            "rssMb": 227.5703125,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 389990,
+            "endFileCount": 0,
+            "minute": 6,
+            "position": 29.333333333333332,
+            "rssMb": 227.76171875,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 449990,
+            "endFileCount": 0,
+            "minute": 7,
+            "position": 29.333333333333332,
+            "rssMb": 233.93359375,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 509991,
+            "endFileCount": 0,
+            "minute": 8,
+            "position": 29.3,
+            "rssMb": 233.81640625,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 569991,
+            "endFileCount": 0,
+            "minute": 9,
+            "position": 29.266666666666666,
+            "rssMb": 234.01171875,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 629991,
+            "endFileCount": 0,
+            "minute": 10,
+            "position": 29.266666666666666,
+            "rssMb": 233.88671875,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 689991,
+            "endFileCount": 0,
+            "minute": 11,
+            "position": 29.266666666666666,
+            "rssMb": 233.7734375,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 749992,
+            "endFileCount": 0,
+            "minute": 12,
+            "position": 29.2,
+            "rssMb": 233.859375,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 809991,
+            "endFileCount": 0,
+            "minute": 13,
+            "position": 29.2,
+            "rssMb": 232.09765625,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 869991,
+            "endFileCount": 0,
+            "minute": 14,
+            "position": 29.166666666666668,
+            "rssMb": 231.18359375,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 929992,
+            "endFileCount": 0,
+            "minute": 15,
+            "position": 29.166666666666668,
+            "rssMb": 230.9296875,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 989992,
+            "endFileCount": 0,
+            "minute": 16,
+            "position": 29.133333333333333,
+            "rssMb": 230.9453125,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 1049991,
+            "endFileCount": 0,
+            "minute": 17,
+            "position": 29.099999999999998,
+            "rssMb": 230.75390625,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 1109991,
+            "endFileCount": 0,
+            "minute": 18,
+            "position": 29.099999999999998,
+            "rssMb": 230.984375,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 1169992,
+            "endFileCount": 0,
+            "minute": 19,
+            "position": 29.099999999999998,
+            "rssMb": 228.18359375,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 1229991,
+            "endFileCount": 0,
+            "minute": 20,
+            "position": 29.066666666666666,
+            "rssMb": 228.14453125,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 1289991,
+            "endFileCount": 0,
+            "minute": 21,
+            "position": 29.03333333333333,
+            "rssMb": 228.21875,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 1349990,
+            "endFileCount": 0,
+            "minute": 22,
+            "position": 29.03333333333333,
+            "rssMb": 228.33984375,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 1409991,
+            "endFileCount": 0,
+            "minute": 23,
+            "position": 28.333333333333332,
+            "rssMb": 237.46875,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 1469991,
+            "endFileCount": 0,
+            "minute": 24,
+            "position": 28.266666666666666,
+            "rssMb": 237.5546875,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 1529992,
+            "endFileCount": 0,
+            "minute": 25,
+            "position": 28.266666666666666,
+            "rssMb": 237.0625,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 1589993,
+            "endFileCount": 0,
+            "minute": 26,
+            "position": 28.266666666666666,
+            "rssMb": 204.1484375,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 1649990,
+            "endFileCount": 0,
+            "minute": 27,
+            "position": 28.233333333333334,
+            "rssMb": 223.43359375,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 1709991,
+            "endFileCount": 0,
+            "minute": 28,
+            "position": 28.2,
+            "rssMb": 223.375,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 1769991,
+            "endFileCount": 0,
+            "minute": 29,
+            "position": 28.166666666666668,
+            "rssMb": 223.35546875,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 1829993,
+            "endFileCount": 0,
+            "minute": 30,
+            "position": 28.166666666666668,
+            "rssMb": 223.58984375,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 1889990,
+            "endFileCount": 0,
+            "minute": 31,
+            "position": 28.133333333333333,
+            "rssMb": 223.55859375,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 1949992,
+            "endFileCount": 0,
+            "minute": 32,
+            "position": 28.099999999999998,
+            "rssMb": 223.484375,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 2009991,
+            "endFileCount": 0,
+            "minute": 33,
+            "position": 28.099999999999998,
+            "rssMb": 223.41015625,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 2069990,
+            "endFileCount": 0,
+            "minute": 34,
+            "position": 28.066666666666666,
+            "rssMb": 223.4453125,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 2129993,
+            "endFileCount": 0,
+            "minute": 35,
+            "position": 28.066666666666666,
+            "rssMb": 223.5,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 2189992,
+            "endFileCount": 0,
+            "minute": 36,
+            "position": 28.03333333333333,
+            "rssMb": 223.625,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 2249992,
+            "endFileCount": 0,
+            "minute": 37,
+            "position": 28.03333333333333,
+            "rssMb": 223.453125,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 2309993,
+            "endFileCount": 0,
+            "minute": 38,
+            "position": 27.9,
+            "rssMb": 181.5546875,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 2369993,
+            "endFileCount": 0,
+            "minute": 39,
+            "position": 27.866666666666667,
+            "rssMb": 181.5390625,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 2429990,
+            "endFileCount": 0,
+            "minute": 40,
+            "position": 27.8,
+            "rssMb": 181.54296875,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 2489992,
+            "endFileCount": 0,
+            "minute": 41,
+            "position": 27.766666666666666,
+            "rssMb": 181.6796875,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 2549990,
+            "endFileCount": 0,
+            "minute": 42,
+            "position": 27.766666666666666,
+            "rssMb": 181.63671875,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 2609991,
+            "endFileCount": 0,
+            "minute": 43,
+            "position": 27.733333333333334,
+            "rssMb": 138.18359375,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 2669992,
+            "endFileCount": 0,
+            "minute": 44,
+            "position": 27.733333333333334,
+            "rssMb": 138.03125,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 2729990,
+            "endFileCount": 0,
+            "minute": 45,
+            "position": 27.666666666666668,
+            "rssMb": 138.05078125,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 2789992,
+            "endFileCount": 0,
+            "minute": 46,
+            "position": 27.666666666666668,
+            "rssMb": 138.08984375,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 2849991,
+            "endFileCount": 0,
+            "minute": 47,
+            "position": 27.666666666666668,
+            "rssMb": 138.19921875,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 2909990,
+            "endFileCount": 0,
+            "minute": 48,
+            "position": 27.633333333333333,
+            "rssMb": 138.1796875,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 2969991,
+            "endFileCount": 0,
+            "minute": 49,
+            "position": 27.599999999999998,
+            "rssMb": 138.23046875,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 3029992,
+            "endFileCount": 0,
+            "minute": 50,
+            "position": 27.566666666666666,
+            "rssMb": 138.30078125,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 3089991,
+            "endFileCount": 0,
+            "minute": 51,
+            "position": 27.566666666666666,
+            "rssMb": 138.22265625,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 3149991,
+            "endFileCount": 0,
+            "minute": 52,
+            "position": 27.566666666666666,
+            "rssMb": 138.2421875,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 3209991,
+            "endFileCount": 0,
+            "minute": 53,
+            "position": 27.53333333333333,
+            "rssMb": 190.0078125,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 3269991,
+            "endFileCount": 0,
+            "minute": 54,
+            "position": 27.5,
+            "rssMb": 190.1171875,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 3329992,
+            "endFileCount": 0,
+            "minute": 55,
+            "position": 27.5,
+            "rssMb": 190.14453125,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 3389991,
+            "endFileCount": 0,
+            "minute": 56,
+            "position": 27.466666666666665,
+            "rssMb": 190.078125,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 3449990,
+            "endFileCount": 0,
+            "minute": 57,
+            "position": 27.433333333333334,
+            "rssMb": 190.15234375,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 3509991,
+            "endFileCount": 0,
+            "minute": 58,
+            "position": 27.433333333333334,
+            "rssMb": 189.86328125,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 3569991,
+            "endFileCount": 0,
+            "minute": 59,
+            "position": 27.4,
+            "rssMb": 189.890625,
+            "startFileCount": 1
+        },
+        {
+            "elapsedMs": 3629993,
+            "endFileCount": 0,
+            "minute": 60,
+            "position": 27.366666666666667,
+            "rssMb": 189.91796875,
+            "startFileCount": 1
+        }
+    ],
+    "verdict": "PASS",
+    "version": "1.0.0-alpha2",
+    "video": "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\palune\\qa\\runtime\\theme-1080p-30s.mp4",
+    "windowReadyMs": 644
+}

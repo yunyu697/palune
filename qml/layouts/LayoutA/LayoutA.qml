@@ -7,6 +7,8 @@ import "../../components"
 Item {
     id: layoutA
 
+    readonly property bool compact: typeof compactMode !== "undefined" && compactMode.compact
+
     Tokens { id: tokens }
 
     EmptyState {
@@ -60,15 +62,16 @@ Item {
             }
             Item { Layout.fillWidth: true }
 
-            PillButton { label: "打开"; onClicked: win.action("openFile") }
-            PillButton { label: "文件夹"; onClicked: win.action("openFolder") }
-            PillButton { label: "媒体库"; onClicked: win.action("openLibrary") }
-            PillButton { label: "设置"; onClicked: win.action("openSettings") }
+            PillButton { label: "打开"; actionId: "openFile"; onClicked: win.action("openFile") }
+            PillButton { visible: !layoutA.compact; label: "文件夹"; actionId: "openFolder"; onClicked: win.action("openFolder") }
+            PillButton { visible: !layoutA.compact; label: "媒体库"; actionId: "openLibrary"; onClicked: win.action("openLibrary") }
+            PillButton { label: "设置"; actionId: "openSettings"; onClicked: win.action("openSettings") }
             PillButton {
                 label: win.fullscreen ? "退出全屏" : "全屏"
+                actionId: "toggleFullscreen"
                 onClicked: win.action("toggleFullscreen")
             }
-            PillButton { label: "关闭"; onClicked: win.action("exit") }
+            PillButton { label: "关闭"; actionId: "exit"; onClicked: win.action("exit") }
         }
     }
 
@@ -76,7 +79,7 @@ Item {
     Rectangle {
         id: bottomBar
         visible: uiState.chromeVisible
-        height: tokens.transportHeight
+        height: layoutA.compact ? 64 : tokens.transportHeight
         anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
         color: tokens.glass
 
@@ -102,22 +105,26 @@ Item {
                 PillButton {
                     label: player.paused ? "播放" : "暂停"
                     highlighted: true
+                    actionId: "playPause"
                     onClicked: win.action("playPause")
                 }
-                PillButton { label: "-10s"; onClicked: win.action("seekBy", -10) }
-                PillButton { label: "+10s"; onClicked: win.action("seekBy", 10) }
+                PillButton { label: "-10s"; actionId: "seekBack"; onClicked: win.action("seekBy", -10) }
+                PillButton { label: "+10s"; actionId: "seekForward"; onClicked: win.action("seekBy", 10) }
 
                 Text {
+                    visible: !layoutA.compact
                     text: player.muted ? "已静音" : "音量"
                     color: tokens.textMuted
                     font.pixelSize: tokens.fontS
                 }
                 VolumeBar {
+                    visible: !layoutA.compact
                     value: player.muted ? 0 : player.volume
                     onVolumeSet: function (v) { win.action("volumeSet", v) }
                 }
                 PillButton {
                     label: player.muted ? "取消静音" : "静音"
+                    actionId: "toggleMute"
                     onClicked: win.action("toggleMute")
                 }
 
@@ -125,18 +132,24 @@ Item {
 
                 PillButton {
                     label: Math.round(player.speed * 100) / 100 + "x"
+                    actionId: "speedCycle"
                     onClicked: win.action("speedCycle")
                 }
                 PillButton {
+                    visible: !layoutA.compact
                     label: "音轨 " + player.audioTracks.length
+                    actionId: "cycleAudio"
                     onClicked: win.action("cycleAudio")
                 }
                 PillButton {
+                    visible: !layoutA.compact
                     label: "字幕 " + player.subtitleTracks.length
+                    actionId: "cycleSubtitle"
                     onClicked: win.action("cycleSubtitle")
                 }
                 PillButton {
                     label: "切换布局"
+                    actionId: "cycleTheme"
                     onClicked: win.action("cycleTheme")
                 }
             }

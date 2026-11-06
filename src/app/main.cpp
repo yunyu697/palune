@@ -154,17 +154,31 @@ int main(int argc, char *argv[])
     options.m1Smoke = hasArg(argc, argv, "--m1-smoke");
     options.m1Perf = hasArg(argc, argv, "--m1-perf");
     options.m1ThemeSwitch = hasArg(argc, argv, "--m1-theme-switch");
+    options.m1Soak = hasArg(argc, argv, "--m1-soak");
     options.mediaPath = valueArg(argc, argv, "--media");
     if (hasArg(argc, argv, "--switch-count"))
         options.switchCount = valueArg(argc, argv, "--switch-count").toInt();
+    if (hasArg(argc, argv, "--soak-minute"))
+        options.soakMinutes = valueArg(argc, argv, "--soak-minute").toInt();
+
+    options.m2StateSwitch = hasArg(argc, argv, "--m2-stateswitch");
+    options.m2Compact = hasArg(argc, argv, "--m2-compact");
+    options.m2ConfigCheck = hasArg(argc, argv, "--m2-config-check");
+    options.shotMatrix = hasArg(argc, argv, "--shot-matrix");
+    options.backdropPath = valueArg(argc, argv, "--shot-backdrop");
+    if (hasArg(argc, argv, "--state-switch-count"))
+        options.stateSwitchCount = valueArg(argc, argv, "--state-switch-count").toInt();
 
     const bool automation = options.selftest || options.updateCheckOnly || !options.e2eMode.isEmpty()
-        || options.m1Smoke || options.m1Perf || options.m1ThemeSwitch || !options.shotDir.isEmpty();
+        || options.m1Smoke || options.m1Perf || options.m1ThemeSwitch || options.m1Soak
+        || options.m2StateSwitch || options.m2Compact || options.m2ConfigCheck
+        || !options.shotDir.isEmpty();
 
     // 位置参数作为待打开文件（跳过已知的取值参数，避免把 flag 的值误当文件）
     const char *valueFlags[] = {"--video", "--report", "--ui-shot", "--update-url",
                                 "--download-dir", "--e2e-mode", "--e2e-marker", "--open",
-                                "--media", "--switch-count"};
+                                "--media", "--switch-count", "--soak-minute",
+                                "--state-switch-count", "--shot-backdrop"};
     for (int i = 1; i < argc; ++i) {
         const QString arg = QString::fromLocal8Bit(argv[i]);
         bool isValueFlag = false;

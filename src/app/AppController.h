@@ -37,8 +37,18 @@ public:
         bool m1Smoke = false;        // --m1-smoke
         bool m1Perf = false;         // --m1-perf
         bool m1ThemeSwitch = false;  // --m1-theme-switch
+        bool m1Soak = false;         // --m1-soak：长时播放 RSS 漂移
         QString mediaPath;           // --media：目录或单文件
         int switchCount = 10;
+        int soakMinutes = 60;
+
+        // M2 证据采集
+        bool m2StateSwitch = false;  // --m2-stateswitch：50 次跨主题状态保持
+        bool m2Compact = false;      // --m2-compact：断点/滞回/防抖
+        bool m2ConfigCheck = false;  // --m2-config-check：配置回退（子进程场景用）
+        bool shotMatrix = false;     // --shot-matrix：3 主题 × 12 界面截图
+        int stateSwitchCount = 50;
+        QString backdropPath;        // --shot-backdrop：截图静态背景
     };
 
     AppController(const Options &options, Settings *settings, QObject *parent = nullptr);
@@ -59,6 +69,11 @@ private:
     void runM1Smoke();
     void runM1Perf();
     void runM1ThemeSwitch();
+    void runM1Soak();
+    void runM2StateSwitch();
+    void runM2Compact();
+    void runM2ConfigCheck();
+    void runShotMatrix();
     QStringList collectMedia() const;
     bool waitFor(const std::function<bool()> &predicate, int timeoutMs);
     void sleepMs(int ms);

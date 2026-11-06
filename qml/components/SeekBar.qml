@@ -9,8 +9,7 @@ Item {
     property real duration: 0
     signal seekRequested(real value)
 
-    implicitHeight: 30
-    implicitWidth: 200
+
 
     Tokens { id: tokens }
 

@@ -53,7 +53,8 @@ def main() -> None:
         rel = path.relative_to(ROOT)
         if rel.as_posix() == "tools/version/check_version.py":
             continue
-        if any(part in {"build", ".git", "third_party", "qa", "tests", "tools"} for part in rel.parts):
+        if any(part in {"build", "build-m2", ".git", "third_party", "qa", "tests", "tools"}
+               for part in rel.parts):
             continue
         if path.suffix.lower() not in {".txt", ".md", ".json", ".yml", ".yaml", ".cmake", ".py", ".cpp", ".h", ".qml"}:
             continue

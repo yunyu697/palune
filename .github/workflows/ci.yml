@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  version:
+    name: 版本号校验
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 校验 VERSION 规则
+        run: python tools/version/check_version.py
+
+  build:
+    name: 构建与常规检查（${{ matrix.name }}）
+    needs: version
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows
+            os: windows-latest
+            qt_arch: win64_msvc2022_64
+          - name: macOS
+            os: macos-latest
+            qt_arch: clang_64
+          - name: Linux
+            os: ubuntu-latest
+            qt_arch: linux_gcc_64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 Qt 6.8.3
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.8.3"
+          arch: ${{ matrix.qt_arch }}
+          cache: true
+
+      - name: 安装系统依赖（Linux）
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libmpv-dev libsodium23
+
+      - name: 安装系统依赖（macOS）
+        if: runner.os == 'macOS'
+        run: brew install mpv libsodium
+
+      - name: 配置
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: 构建
+        run: cmake --build build --config Release --parallel 4
+
+      - name: 单元测试（版本号规则）
+        run: ctest --test-dir build -C Release --output-on-failure -R version
+
+      - name: 单元测试（更新清单签名与哈希）
+        if: runner.os == 'Linux'
+        run: ctest --test-dir build -C Release --output-on-failure -R manifest

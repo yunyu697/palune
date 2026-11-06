@@ -145,9 +145,18 @@ jobs:
 
       - name: 安装系统依赖
         run: |
-          set -euo pipefail
-          sudo timeout 240 apt-get update || echo "apt-get update 超时，沿用自带索引"
-          sudo timeout 300 apt-get install -y --no-install-recommends libmpv2 libsodium23 rpm file
+          set -uo pipefail
+          sudo apt-get -o Acquire::Retries=5 update || echo "apt-get update 失败，沿用自带索引"
+          ok=0
+          for attempt in 1 2 3; do
+            if sudo timeout 420 apt-get install -y --no-install-recommends libmpv2 libsodium23 rpm file; then
+              ok=1; break
+            fi
+            echo "第 $attempt 次 apt 安装失败，10 秒后重试"
+            sudo rm -f /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock /var/cache/apt/archives/lock || true
+            sleep 10
+          done
+          if [ "$ok" != "1" ]; then echo "[FAIL] apt 安装依赖三次仍未成功" >&2; exit 1; fi
           mkdir -p third_party/libmpv third_party/libsodium
           cp /usr/lib/x86_64-linux-gnu/libmpv.so.2 third_party/libmpv/libmpv.so.2
           cp /usr/lib/x86_64-linux-gnu/libsodium.so.23 third_party/libsodium/libsodium.so.23

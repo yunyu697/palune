@@ -102,10 +102,12 @@ if command -v rpmbuild >/dev/null 2>&1; then
     RPM_TOP="${BUILD_DIR}/rpmbuild"
     rm -rf "$RPM_TOP"
     mkdir -p "$RPM_TOP"/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+    # rpm 的 Release 不允许出现 '-'，alpha 后缀改成 ".alphaN"。
+    RPM_RELEASE="0.${VERSION#1.0.0-}"
     cat > "$RPM_TOP/SPECS/palune.spec" <<EOF
 Name: palune
 Version: 1.0.0
-Release: 0.palune${VERSION#1.0.0}
+Release: ${RPM_RELEASE}
 Summary: Palune media player
 License: LGPL-3.0-or-later
 BuildArch: x86_64

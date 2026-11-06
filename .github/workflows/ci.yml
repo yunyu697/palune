@@ -42,12 +42,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 安装 Qt 6.8.4
-        # macOS 26 SDK 移除了 AGL.framework，Qt 6.8.3 仍带 -framework AGL 会链接失败；
-        # 6.8.4 起已修复，三平台统一用 6.8.4（本地 Windows 用 6.8.3 也可编译）
+      - name: 安装 Qt 6.9.3
+        # macOS 26 SDK 移除了 AGL.framework，Qt 6.8.3（6.8 线最后一版）仍带 -framework AGL，
+        # 在 macos-26-arm64 运行时链接必然失败；6.9 起已移除该依赖，故 CI 统一用 6.9.3。
+        # 本地 Windows 仍可使用 Qt 6.8.3（CMake 要求 >= 6.8）。
         uses: jurplel/install-qt-action@v4
         with:
-          version: "6.8.4"
+          version: "6.9.3"
           arch: ${{ matrix.qt_arch }}
           cache: true
 

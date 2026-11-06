@@ -1,0 +1,245 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  version:
+    name: 版本号校验
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      channel: ${{ steps.v.outputs.channel }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 校验 VERSION 规则（不合规直接失败）
+        run: python tools/version/check_version.py
+      - name: 取出版本号与通道
+        id: v
+        run: |
+          set -euo pipefail
+          VERSION="$(tr -d '\r\n' < VERSION)"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          case "$VERSION" in
+            *-alpha*) echo "channel=alpha" >> "$GITHUB_OUTPUT" ;;
+            *)        echo "channel=stable" >> "$GITHUB_OUTPUT" ;;
+          esac
+          echo "版本 $VERSION"
+
+  windows:
+    name: Windows 打包
+    needs: version
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 Qt 6.9.3
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.9.3"
+          arch: win64_msvc2022_64
+          cache: true
+
+      - name: 准备运行时依赖（libmpv / libsodium）
+        shell: pwsh
+        run: ./tools/release/fetch_win_runtime.ps1
+
+      - name: 确保 NSIS 可用
+        shell: pwsh
+        run: |
+          if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) {
+            choco install nsis -y --no-progress
+          }
+
+      - name: 配置
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: 构建
+        run: cmake --build build --config Release --parallel 4
+
+      - name: 单元测试
+        run: ctest --test-dir build -C Release --output-on-failure -R "version|manifest"
+
+      - name: 打包（NSIS + MSI）
+        shell: pwsh
+        run: ./tools/release/package_windows.ps1 -BuildDir build -OutDir dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-dist
+          path: dist/*
+          if-no-files-found: error
+
+  macos:
+    name: macOS 打包
+    needs: version
+    runs-on: macos-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 Qt 6.9.3
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.9.3"
+          arch: clang_64
+          cache: true
+
+      - name: 准备运行时依赖（brew 的 libmpv / libsodium）
+        run: |
+          set -euo pipefail
+          brew install mpv libsodium dylibbundler
+          mkdir -p third_party/libmpv third_party/libsodium
+          MPV_LIB="$(brew --prefix mpv)/lib/libmpv.dylib"
+          [ -f "$MPV_LIB" ] || MPV_LIB="$(brew --prefix)/lib/libmpv.dylib"
+          cp "$MPV_LIB" third_party/libmpv/libmpv.dylib
+          cp "$(brew --prefix)/lib/libsodium.dylib" third_party/libsodium/libsodium.dylib
+          ls -l third_party/libmpv third_party/libsodium
+
+      - name: 配置
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: 构建
+        run: cmake --build build --config Release --parallel 4
+
+      - name: 单元测试
+        run: ctest --test-dir build -C Release --output-on-failure -R "version|manifest"
+
+      - name: 打包（dmg）
+        run: bash tools/release/package_macos.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-dist
+          path: dist/*
+          if-no-files-found: error
+
+  linux:
+    name: Linux 打包
+    needs: version
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 Qt 6.9.3
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.9.3"
+          arch: linux_gcc_64
+          cache: true
+
+      - name: 安装系统依赖
+        run: |
+          set -euo pipefail
+          sudo timeout 240 apt-get update || echo "apt-get update 超时，沿用自带索引"
+          sudo timeout 300 apt-get install -y --no-install-recommends libmpv2 libsodium23 rpm file
+          mkdir -p third_party/libmpv third_party/libsodium
+          cp /usr/lib/x86_64-linux-gnu/libmpv.so.2 third_party/libmpv/libmpv.so.2
+          cp /usr/lib/x86_64-linux-gnu/libsodium.so.23 third_party/libsodium/libsodium.so.23
+          ls -l third_party/libmpv third_party/libsodium
+
+      - name: 配置
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: 构建
+        run: cmake --build build --config Release --parallel 4
+
+      - name: 单元测试
+        run: ctest --test-dir build -C Release --output-on-failure -R "version|manifest"
+
+      - name: 打包（AppImage + deb + rpm）
+        run: bash tools/release/package_linux.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-dist
+          path: dist/*
+          if-no-files-found: error
+
+  manifest:
+    name: 生成 latest.json 与 SHA256SUMS
+    needs: [version, windows, macos, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 安装签名依赖
+        run: python -m pip install --quiet cryptography
+
+      - name: 生成清单
+        env:
+          PALUNE_UPDATE_PRIVATE_KEY: ${{ secrets.PALUNE_UPDATE_PRIVATE_KEY }}
+          PALUNE_UPDATE_KEY_ID: ${{ secrets.PALUNE_UPDATE_KEY_ID }}
+          VERSION: ${{ needs.version.outputs.version }}
+          CHANNEL: ${{ needs.version.outputs.channel }}
+        run: |
+          set -euo pipefail
+          NOTES="$(git log -1 --pretty=%s)"
+          python tools/release/gen_manifest.py \
+            --dist dist \
+            --version "$VERSION" \
+            --channel "$CHANNEL" \
+            --base-url "https://github.com/${GITHUB_REPOSITORY}/releases/download/${VERSION}" \
+            --notes "$NOTES"
+          echo "--- latest.json ---"
+          cat dist/latest.json
+          echo "--- SHA256SUMS ---"
+          cat dist/SHA256SUMS
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-dist
+          path: dist/*
+          if-no-files-found: error
+
+  publish:
+    name: 创建 GitHub Release
+    needs: [version, manifest]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-dist
+          path: dist
+
+      - name: 上传到 Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
+          else
+            gh release create "$TAG" dist/* \
+              --title "Palune $VERSION" \
+              --notes "Palune $VERSION 自动构建产物。更新清单见 latest.json，校验值见 SHA256SUMS。" \
+              --prerelease
+          fi
+          gh release view "$TAG" --json assets --jq '.assets[].name'

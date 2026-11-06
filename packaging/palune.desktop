@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=Palune
+GenericName=Media Player
+Comment=Palune 媒体播放器
+Exec=palune %U
+TryExec=palune
+Icon=palune
+Terminal=false
+StartupNotify=true
+StartupWMClass=Palune
+Categories=AudioVideo;Player;Video;
+MimeType=video/mp4;video/x-matroska;video/x-msvideo;video/mpeg;video/quicktime;audio/mpeg;audio/flac;audio/aac;audio/ogg;application/x-subrip;
+Keywords=video;audio;player;media;mpv;

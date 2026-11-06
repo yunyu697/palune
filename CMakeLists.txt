@@ -94,6 +94,71 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/libsodium/libsodium.dll")
     )
 endif()
 
+# ---------------------------------------------------------------------------
+# 安装与打包（release 工作流使用：Windows NSIS/MSI、macOS dmg、Linux AppImage/deb/rpm）
+# ---------------------------------------------------------------------------
+include(GNUInstallDirs)
+
+install(TARGETS Palune
+    BUNDLE  DESTINATION .
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+install(FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/README.md"
+    "${CMAKE_CURRENT_SOURCE_DIR}/NOTICE.md"
+    "${CMAKE_CURRENT_SOURCE_DIR}/VERSION"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/palune"
+)
+
+# libmpv / libsodium 是运行时 dlopen 加载的动态库，安装器不会自动带上，必须显式安装。
+if(APPLE)
+    set(PALUNE_RUNTIME_DIR "Palune.app/Contents/MacOS")
+else()
+    set(PALUNE_RUNTIME_DIR "${CMAKE_INSTALL_BINDIR}")
+endif()
+foreach(_lib
+        "third_party/libmpv/libmpv-2.dll"
+        "third_party/libmpv/libmpv.dylib"
+        "third_party/libmpv/libmpv.2.dylib"
+        "third_party/libmpv/libmpv.so.2"
+        "third_party/libsodium/libsodium.dll"
+        "third_party/libsodium/libsodium.dylib"
+        "third_party/libsodium/libsodium.so.23")
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_lib}")
+        install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/${_lib}" DESTINATION "${PALUNE_RUNTIME_DIR}")
+    endif()
+endforeach()
+
+# 把 Qt 运行时依赖部署进安装树（Windows 用 windeployqt，macOS 用 macdeployqt）。
+qt_generate_deploy_app_script(TARGET Palune OUTPUT_SCRIPT PALUNE_DEPLOY_SCRIPT
+    NO_UNSUPPORTED_PLATFORM_ERROR)
+install(SCRIPT ${PALUNE_DEPLOY_SCRIPT})
+
+# CPack：Windows 产出 NSIS 安装器与 MSI。
+set(CPACK_PACKAGE_NAME "Palune")
+set(CPACK_PACKAGE_VENDOR "Palune")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Palune 媒体播放器")
+set(CPACK_PACKAGE_VERSION "${PALUNE_VERSION}")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "Palune")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/NOTICE.md")
+
+if(WIN32)
+    set(CPACK_PACKAGE_FILE_NAME "Palune-${PALUNE_VERSION}-win-x64")
+    set(CPACK_NSIS_DISPLAY_NAME "Palune")
+    set(CPACK_NSIS_PACKAGE_NAME "Palune")
+    set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+    set(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\Palune.exe")
+    set(CPACK_NSIS_MUI_FINISHPAGE_RUN "bin\\\\Palune.exe")
+    # MSI 的 ProductVersion 必须是纯数字版本，alpha 后缀交给文件名表达。
+    set(CPACK_WIX_PRODUCT_GUID "5B0D3C11-7E10-4E1C-9A46-2C6C2C0A0F01")
+    set(CPACK_WIX_UPGRADE_GUID "9E3A2D41-1B3F-4E57-8C2B-6F0A7D1C2E34")
+    set(CPACK_WIX_PROGRAM_MENU_FOLDER "Palune")
+elseif(APPLE)
+    set(CPACK_PACKAGE_FILE_NAME "Palune-${PALUNE_VERSION}-macos-arm64")
+endif()
+
+include(CPack)
+
 enable_testing()
 
 add_executable(tst_version tests/unit/tst_version.cpp)

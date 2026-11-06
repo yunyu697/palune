@@ -54,9 +54,11 @@ jobs:
 
       - name: 安装系统依赖（Linux）
         if: runner.os == 'Linux'
+        # 只为「更新清单签名/哈希」单测准备 libsodium；编译用的 mpv 头文件已入库。
+        # apt 镜像偶发卡住，加超时避免作业挂死。
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libmpv-dev libsodium23
+          sudo timeout 240 apt-get update || echo "apt-get update 超时，沿用镜像自带索引"
+          sudo timeout 180 apt-get install -y --no-install-recommends libsodium23
 
       - name: 配置
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release

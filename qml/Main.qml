@@ -16,6 +16,9 @@ Item {
     property bool errorDismissed: false
 
     readonly property string errorMessage: typeof player !== "undefined" ? player.errorMessage : ""
+    readonly property string themeId: typeof themeRegistry !== "undefined" ? themeRegistry.currentTheme : "A"
+    // 每个主题顶部可拖拽区的高度（A 浮动标题条 84 + 外边距，B 52，C 标题胶囊 40）。
+    readonly property int dragStripHeight: root.themeId === "B" ? 52 : (root.themeId === "C" ? 44 : 94)
 
     Tokens { id: tokens }
 
@@ -46,19 +49,100 @@ Item {
         anchors.fill: parent
     }
 
-    // 布局槽位（LayoutHost 只接管这里）
-    Item {
-        objectName: "layoutSlot"
-        anchors.fill: parent
-    }
-
-    // 点击空白显示/隐藏控件；双击全屏
+    // 点击空白显示/隐藏控件；双击全屏。
+    // 必须位于 layoutSlot **之下**：旧版把它放在布局之后，整窗 MouseArea 盖住了所有按钮，
+    // 点击按钮只会切换控件显示（实机「按钮点不动 / 看不到」的原因之一）。
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton
         enabled: root.overlayPanel === ""
         onClicked: uiState.chromeVisible = !uiState.chromeVisible
         onDoubleClicked: win.action("toggleFullscreen")
+    }
+
+    // 无边框窗口拖拽：走系统移动循环（startSystemMove），保留 Aero Snap 与跨 DPI 行为。
+    // 位于背景之上、布局之下：布局里的按钮优先接收点击，标题栏空白处落到这里。
+    Item {
+        id: dragStrip
+        anchors { top: parent.top; left: parent.left; right: parent.right }
+        height: root.dragStripHeight
+        visible: !win.fullscreen
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton
+            onPressed: win.startSystemMove()
+            onDoubleClicked: win.toggleMaximize()
+        }
+    }
+
+    // 布局槽位（LayoutHost 只接管这里）
+    Item {
+        objectName: "layoutSlot"
+        anchors.fill: parent
+    }
+
+    // 无边框窗口缩放：四条边 + 四角，交给系统缩放循环。
+    Item {
+        anchors.fill: parent
+        visible: !win.fullscreen
+        MouseArea {
+            width: 8
+            anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
+            cursorShape: Qt.SizeHorCursor
+            onPressed: win.startSystemResize(Qt.LeftEdge)
+        }
+        MouseArea {
+            width: 8
+            anchors { right: parent.right; top: parent.top; bottom: parent.bottom }
+            cursorShape: Qt.SizeHorCursor
+            onPressed: win.startSystemResize(Qt.RightEdge)
+        }
+        MouseArea {
+            height: 8
+            anchors { top: parent.top; left: parent.left; right: parent.right }
+            cursorShape: Qt.SizeVerCursor
+            onPressed: win.startSystemResize(Qt.TopEdge)
+        }
+        MouseArea {
+            height: 8
+            anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
+            cursorShape: Qt.SizeVerCursor
+            onPressed: win.startSystemResize(Qt.BottomEdge)
+        }
+        MouseArea {
+            width: 12; height: 12
+            anchors { left: parent.left; top: parent.top }
+            cursorShape: Qt.SizeFDiagCursor
+            onPressed: win.startSystemResize(Qt.LeftEdge | Qt.TopEdge)
+        }
+        MouseArea {
+            width: 12; height: 12
+            anchors { right: parent.right; top: parent.top }
+            cursorShape: Qt.SizeDiagCursor
+            onPressed: win.startSystemResize(Qt.RightEdge | Qt.TopEdge)
+        }
+        MouseArea {
+            width: 12; height: 12
+            anchors { left: parent.left; bottom: parent.bottom }
+            cursorShape: Qt.SizeDiagCursor
+            onPressed: win.startSystemResize(Qt.LeftEdge | Qt.BottomEdge)
+        }
+        MouseArea {
+            width: 12; height: 12
+            anchors { right: parent.right; bottom: parent.bottom }
+            cursorShape: Qt.SizeFDiagCursor
+            onPressed: win.startSystemResize(Qt.RightEdge | Qt.BottomEdge)
+        }
+    }
+
+    // 窗口描边：与原生 Region 同一圆角，弥补 DWM 不会给无边框透明窗做圆角。
+    Rectangle {
+        anchors.fill: parent
+        visible: !win.fullscreen
+        radius: win.windowRadius
+        color: "transparent"
+        border.width: 1
+        border.color: "#33ffffff"
     }
 
     DropArea {

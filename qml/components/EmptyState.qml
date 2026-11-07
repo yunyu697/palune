@@ -8,13 +8,19 @@ Rectangle {
     signal openRequested()
 
     width: 460
-    height: 156
+    height: 168
     radius: tokens.radiusL
     color: tokens.glass
     border.width: 1
     border.color: tokens.border
 
     Tokens { id: tokens }
+
+    MouseArea {
+        anchors.fill: parent
+        cursorShape: Qt.PointingHandCursor
+        onClicked: empty.openRequested()
+    }
 
     Column {
         anchors.centerIn: parent
@@ -34,17 +40,25 @@ Rectangle {
             color: tokens.textMuted
             font.pixelSize: tokens.fontM
         }
-        PillButton {
+        Row {
             anchors.horizontalCenter: parent.horizontalCenter
-            label: qsTr("打开文件")
-            highlighted: true
-            onClicked: empty.openRequested()
+            spacing: 10
+            PillButton {
+                label: qsTr("打开文件")
+                highlighted: true
+                actionId: "openFile"
+                onClicked: empty.openRequested()
+            }
+            PillButton {
+                label: qsTr("设置")
+                actionId: "openSettings"
+                onClicked: win.action("openSettings")
+            }
+            PillButton {
+                label: qsTr("媒体库")
+                actionId: "openLibrary"
+                onClicked: win.action("openLibrary")
+            }
         }
-    }
-
-    MouseArea {
-        anchors.fill: parent
-        cursorShape: Qt.PointingHandCursor
-        onClicked: empty.openRequested()
     }
 }

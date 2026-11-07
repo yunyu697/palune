@@ -1,0 +1,28 @@
+﻿{
+    "version":  "1.0.0-alpha5",
+    "exe":  "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\palune\\build\\Release\\Palune.exe",
+    "dpi":  192,
+    "startRect":  {
+                      "y":  20,
+                      "w":  2360,
+                      "h":  1400,
+                      "x":  20
+                  },
+    "drag":  {
+                 "pass":  true,
+                 "actual":  [
+                                200,
+                                100
+                            ],
+                 "requested":  [
+                                   200,
+                                   100
+                               ]
+             },
+    "resize":  {
+                   "pass":  true,
+                   "actualWidthDelta":  300,
+                   "requested":  300
+               },
+    "verdict":  "PASS"
+}

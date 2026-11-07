@@ -9,6 +9,7 @@
 #include <QApplication>
 #include <QCoreApplication>
 #include <QDir>
+#include <QIcon>
 #include <QLocale>
 #include <QTranslator>
 #include <QUrlQuery>
@@ -120,6 +121,8 @@ int main(int argc, char *argv[])
     std::setlocale(LC_NUMERIC, "C");
     app.setApplicationVersion(QStringLiteral(PALUNE_VERSION));
     app.setApplicationDisplayName(QStringLiteral("Palune"));
+    // 窗口/任务栏图标：与 exe 资源同一份折角图标，避免 QML 窗口落回默认空白图标。
+    app.setWindowIcon(QIcon(QStringLiteral(":/packaging/palune-256.png")));
 
     // 测试与自动化可以用 PALUNE_CONFIG_DIR 把配置、日志、崩溃目录重定向到临时目录。
     const QString configOverride = qEnvironmentVariable("PALUNE_CONFIG_DIR");

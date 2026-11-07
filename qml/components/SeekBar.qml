@@ -1,15 +1,24 @@
 import QtQuick
-import QtQuick.Controls.Basic
+import QtQuick.Layouts
 import "../tokens"
 
 // L1：进度条。位置与时长只读，拖动结束后发 seekRequested。
+// 设计稿 8.2：轨道 2px、滑块 9px；时间标签左右对齐，整行固定 24px，
+// 不再依赖 Controls Slider 的隐式高度（旧版在 ColumnLayout 里高度为 0，滑块压到按钮上）。
 Item {
     id: seek
     property real position: 0
     property real duration: 0
+    // <0 表示当前不在拖动；>=0 时显示拖动中的预览位置。
+    property real dragRatio: -1
     signal seekRequested(real value)
 
+    implicitHeight: 24
+    Layout.preferredHeight: 24
 
+    readonly property real ratio: seek.duration > 0
+        ? Math.min(1, Math.max(0, seek.position / seek.duration)) : 0
+    readonly property real shownRatio: seek.dragRatio >= 0 ? seek.dragRatio : seek.ratio
 
     Tokens { id: tokens }
 
@@ -18,7 +27,7 @@ Item {
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         width: 52
-        text: fmtTime(seek.position)
+        text: fmtTime(seek.dragRatio >= 0 ? seek.dragRatio * seek.duration : seek.position)
         color: tokens.text
         font.pixelSize: tokens.fontM
         font.family: "Consolas"
@@ -36,30 +45,60 @@ Item {
         font.family: "Consolas"
     }
 
-    Slider {
-        id: slider
+    Item {
+        id: trackArea
         anchors.left: currentText.right
         anchors.right: totalText.left
-        anchors.leftMargin: 8
-        anchors.rightMargin: 8
+        anchors.leftMargin: 10
+        anchors.rightMargin: 10
         anchors.verticalCenter: parent.verticalCenter
-        from: 0
-        to: Math.max(1, seek.duration)
+        height: 18
 
-        property bool userSeeking: false
-
-        Binding on value {
-            when: !slider.userSeeking
-            value: seek.position
+        Rectangle {
+            id: trackBg
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width
+            height: 2
+            radius: 1
+            color: "#33ffffff"
         }
 
-        onPressedChanged: {
-            if (pressed) {
-                userSeeking = true
-            } else if (userSeeking) {
-                userSeeking = false
+        Rectangle {
+            id: trackFill
+            anchors.verticalCenter: parent.verticalCenter
+            width: Math.max(0, trackBg.width * seek.shownRatio)
+            height: 2
+            radius: 1
+            color: tokens.accent
+        }
+
+        Rectangle {
+            id: knob
+            width: 9
+            height: 9
+            radius: 4.5
+            color: tokens.accent
+            anchors.verticalCenter: parent.verticalCenter
+            x: Math.min(trackBg.width - width, Math.max(0, trackBg.width * seek.shownRatio - width / 2))
+        }
+
+        // 命中区域比轨道高，方便点击；拖动时只更新预览，松手才 seek。
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onPressed: function (mouse) {
+                seek.dragRatio = Math.max(0, Math.min(1, mouse.x / trackBg.width))
+            }
+            onPositionChanged: function (mouse) {
+                if (pressed)
+                    seek.dragRatio = Math.max(0, Math.min(1, mouse.x / trackBg.width))
+            }
+            onReleased: {
+                const value = seek.dragRatio * seek.duration
+                seek.dragRatio = -1
                 seek.seekRequested(value)
             }
+            onCanceled: seek.dragRatio = -1
         }
     }
 

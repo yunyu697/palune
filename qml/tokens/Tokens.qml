@@ -25,9 +25,10 @@ QtObject {
     readonly property int fontM: 12
     readonly property int fontL: 20
 
-    readonly property int topBarHeight: 56
-    readonly property int transportHeight: 92
-    readonly property int capsuleHeight: 56
+    // 设计稿 7.1 / 8.2：A 顶部悬浮标题条 84、底部控制栏 86、C 胶囊 62。
+    readonly property int topBarHeight: 84
+    readonly property int transportHeight: 86
+    readonly property int capsuleHeight: 62
 
     readonly property int durationFast: 120
     readonly property int durationNormal: 220

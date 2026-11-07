@@ -3,11 +3,14 @@ import QtQuick.Layouts
 import "../../tokens"
 import "../../components"
 
-// 布局 A：经典播放器。顶部标题栏 + 底部控制栏。
+// 布局 A：经典播放器（设计稿 3.A）。
+// 顶部悬浮标题条 84px（品牌 / 居中标题 / 窗口按钮），底部双行控制栏 86px。
+// 拖拽与边缘缩放由 Main.qml 的壳层统一接管，布局内不再自己算位移。
 Item {
     id: layoutA
 
     readonly property bool compact: typeof compactMode !== "undefined" && compactMode.compact
+    readonly property bool showSecondary: width >= 900 && !layoutA.compact
 
     Tokens { id: tokens }
 
@@ -17,79 +20,76 @@ Item {
         onOpenRequested: win.action("openFile")
     }
 
-    // 顶部栏
+    // 顶部悬浮标题条
     Rectangle {
         id: topBar
-        visible: uiState.chromeVisible && player.filePath !== ""
+        visible: uiState.chromeVisible
+        anchors {
+            top: parent.top
+            left: parent.left
+            right: parent.right
+            margins: 10
+        }
         height: tokens.topBarHeight
-        anchors { top: parent.top; left: parent.left; right: parent.right }
+        radius: 16
         color: tokens.glass
+        border.width: 1
+        border.color: tokens.border
 
-        MouseArea {
-            id: dragArea
-            anchors.fill: parent
-            property real lastX: 0
-            property real lastY: 0
-            onPressed: function (mouse) {
-                lastX = mouse.x
-                lastY = mouse.y
-            }
-            onPositionChanged: function (mouse) {
-                win.moveBy(mouse.x - lastX, mouse.y - lastY)
-            }
+        Text {
+            id: brand
+            anchors.left: parent.left
+            anchors.leftMargin: 24
+            anchors.verticalCenter: parent.verticalCenter
+            text: "PALUNE"
+            color: tokens.accent
+            font.pixelSize: tokens.fontS
+            font.letterSpacing: 3
+            font.weight: Font.DemiBold
         }
 
-        RowLayout {
-            z: 1
-            anchors.fill: parent
-            anchors.leftMargin: tokens.spaceL
-            anchors.rightMargin: tokens.spaceM
-            spacing: tokens.spaceS
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
+            width: Math.min(parent.width - 320, 520)
+            horizontalAlignment: Text.AlignHCenter
+            text: player.title === "" ? qsTr("未打开文件") : player.title
+            color: tokens.text
+            font.pixelSize: 15
+            elide: Text.ElideRight
+        }
 
-            Text {
-                text: "PALUNE"
-                color: tokens.accent
-                font.pixelSize: tokens.fontS
-                font.letterSpacing: 3
-                font.weight: Font.DemiBold
-            }
-            Text {
-                text: player.title === "" ? qsTr("未打开文件") : player.title
-                color: tokens.text
-                font.pixelSize: tokens.fontM
-                elide: Text.ElideRight
-                Layout.maximumWidth: 520
-            }
-            Item { Layout.fillWidth: true }
-
-            PillButton { label: qsTr("打开"); actionId: "openFile"; onClicked: win.action("openFile") }
-            PillButton { visible: !layoutA.compact; label: qsTr("文件夹"); actionId: "openFolder"; onClicked: win.action("openFolder") }
-            PillButton { visible: !layoutA.compact; label: qsTr("媒体库"); actionId: "openLibrary"; onClicked: win.action("openLibrary") }
-            PillButton { label: qsTr("设置"); actionId: "openSettings"; onClicked: win.action("openSettings") }
-            PillButton {
-                label: win.fullscreen ? qsTr("退出全屏") : qsTr("全屏")
-                actionId: "toggleFullscreen"
-                onClicked: win.action("toggleFullscreen")
-            }
-            PillButton { label: qsTr("关闭"); actionId: "exit"; onClicked: win.action("exit") }
+        WindowButtons {
+            anchors.right: parent.right
+            anchors.rightMargin: 18
+            anchors.verticalCenter: parent.verticalCenter
+            compact: layoutA.compact
         }
     }
 
-    // 底部控制栏
+    // 底部双行控制栏
     Rectangle {
         id: bottomBar
         visible: uiState.chromeVisible
+        anchors {
+            bottom: parent.bottom
+            left: parent.left
+            right: parent.right
+            margins: 10
+        }
         height: layoutA.compact ? 64 : tokens.transportHeight
-        anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
+        radius: 16
         color: tokens.glass
+        border.width: 1
+        border.color: tokens.border
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.leftMargin: 22
-            anchors.rightMargin: 22
-            anchors.topMargin: 10
-            anchors.bottomMargin: 10
-            spacing: tokens.spaceS
+            anchors.leftMargin: 20
+            anchors.rightMargin: 20
+            anchors.topMargin: 8
+            anchors.bottomMargin: 8
+            spacing: 2
 
             SeekBar {
                 Layout.fillWidth: true
@@ -100,7 +100,7 @@ Item {
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 10
+                spacing: 8
 
                 PillButton {
                     label: player.paused ? qsTr("播放") : qsTr("暂停")
@@ -111,14 +111,10 @@ Item {
                 PillButton { label: "-10s"; actionId: "seekBack10"; onClicked: win.action("seekBack10") }
                 PillButton { label: "+10s"; actionId: "seekForward10"; onClicked: win.action("seekForward10") }
 
-                Text {
-                    visible: !layoutA.compact
-                    text: player.muted ? qsTr("已静音") : qsTr("音量")
-                    color: tokens.textMuted
-                    font.pixelSize: tokens.fontS
-                }
                 VolumeBar {
-                    visible: !layoutA.compact
+                    visible: layoutA.showSecondary
+                    Layout.preferredWidth: 110
+                    Layout.alignment: Qt.AlignVCenter
                     value: player.muted ? 0 : player.volume
                     onVolumeSet: function (v) { win.action("volumeSet", v) }
                 }
@@ -136,21 +132,23 @@ Item {
                     onClicked: win.action("speedUp")
                 }
                 PillButton {
-                    visible: !layoutA.compact
+                    visible: layoutA.showSecondary
                     label: qsTr("音轨 ") + player.audioTracks.length
                     actionId: "cycleAudio"
                     onClicked: win.action("cycleAudio")
                 }
                 PillButton {
-                    visible: !layoutA.compact
+                    visible: layoutA.showSecondary
                     label: qsTr("字幕 ") + player.subtitleTracks.length
                     actionId: "cycleSubtitle"
                     onClicked: win.action("cycleSubtitle")
                 }
+                PillButton { visible: layoutA.showSecondary; label: qsTr("媒体库"); actionId: "openLibrary"; onClicked: win.action("openLibrary") }
+                PillButton { label: qsTr("设置"); actionId: "openSettings"; onClicked: win.action("openSettings") }
                 PillButton {
-                    label: qsTr("切换布局")
-                    actionId: "cycleTheme"
-                    onClicked: win.action("cycleTheme")
+                    label: win.fullscreen ? qsTr("退出全屏") : qsTr("全屏")
+                    actionId: "toggleFullscreen"
+                    onClicked: win.action("toggleFullscreen")
                 }
             }
         }

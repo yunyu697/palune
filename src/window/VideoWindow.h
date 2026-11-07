@@ -17,6 +17,8 @@ public:
 
     qintptr videoSurfaceHandle();
     QWidget *surface() const { return m_surface; }
+    // 空转时不显示视频面：mpv 尚未出画时该子窗会露出浅色底，实机表现为「白块」。
+    void setVideoSurfaceVisible(bool visible);
 
 protected:
     void resizeEvent(QResizeEvent *event) override;

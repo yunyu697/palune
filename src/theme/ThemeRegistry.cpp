@@ -44,6 +44,15 @@ bool ThemeRegistry::isValidTheme(const QString &themeId)
     return availableThemes().contains(themeId);
 }
 
+int ThemeRegistry::windowRadius(const QString &themeId)
+{
+    if (themeId == QLatin1String("B"))
+        return 10;
+    if (themeId == QLatin1String("C"))
+        return 20;
+    return 14;
+}
+
 bool ThemeRegistry::resourceExists(const QString &themeId) const
 {
     return m_checker(qrcLayoutPath(themeId));

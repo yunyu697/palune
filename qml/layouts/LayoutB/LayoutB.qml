@@ -3,19 +3,23 @@ import QtQuick.Layouts
 import "../../tokens"
 import "../../components"
 
-// 布局 B：工作台。左侧信息坞（含最近文件）+ 底部运输条。
+// 布局 B：专业工作台（设计稿 3.B）。
+// 顶部扁平栏 52px（品牌 / 标签页 / 文件名 / 窗口按钮）、右侧检查器 344px、
+// 底部技术信息条 34px + 控制条 82px。拖拽与缩放由壳层统一接管。
 Item {
     id: layoutB
 
     readonly property bool compact: typeof compactMode !== "undefined" && compactMode.compact
     // 拖动中的临时宽度；松手后写入 UiStateStore（按主题独立持久化）。
     property real dragWidth: 0
-    readonly property int storedWidth: typeof uiState !== "undefined" ? uiState.panelWidth("B") : 320
-    readonly property int dockWidth: layoutB.compact ? 220
-        : (dragWidth > 0 ? dragWidth : storedWidth)
-    // 极矮窗口（480×270 验收尺寸）：隐藏次要标签并压缩最近列表，
-    // 保证左坞内容不越过窗口边界。
+    readonly property int storedWidth: typeof uiState !== "undefined" ? uiState.panelWidth("B") : 344
+    readonly property int dockWidth: layoutB.compact ? 224 : (dragWidth > 0 ? dragWidth : storedWidth)
     readonly property bool shortHeight: layoutB.height < 360
+    property string inspectorTab: "media"
+
+    readonly property int topBarHeight: 52
+    readonly property int techBarHeight: layoutB.compact ? 0 : 34
+    readonly property int controlBarHeight: layoutB.compact ? 64 : 82
 
     Tokens { id: tokens }
 
@@ -25,189 +29,240 @@ Item {
         onOpenRequested: win.action("openFile")
     }
 
-    // 左上角品牌与窗口按钮
-    Row {
+    // 顶部扁平栏
+    Rectangle {
+        id: topBar
         visible: uiState.chromeVisible
-        z: 2
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.margins: tokens.spaceM
-        spacing: tokens.spaceS
+        height: layoutB.topBarHeight
+        anchors { top: parent.top; left: parent.left; right: parent.right }
+        color: tokens.glass
 
-        PillButton { label: qsTr("PALUNE · 工作台"); highlighted: true; actionId: "openLibrary"; onClicked: win.action("openLibrary") }
-        PillButton { label: qsTr("打开"); actionId: "openFile"; onClicked: win.action("openFile") }
-        PillButton { visible: !layoutB.compact; label: qsTr("文件夹"); actionId: "openFolder"; onClicked: win.action("openFolder") }
-    }
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 18
+            anchors.rightMargin: 12
+            spacing: 8
 
-    Row {
-        visible: uiState.chromeVisible
-        z: 2
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.margins: tokens.spaceM
-        spacing: tokens.spaceS
+            Text {
+                text: "PALUNE"
+                color: tokens.accent
+                font.pixelSize: tokens.fontS
+                font.letterSpacing: 3
+                font.weight: Font.DemiBold
+            }
+            Rectangle { width: 1; height: 20; color: tokens.border }
 
-        PillButton {
-            label: win.fullscreen ? qsTr("退出全屏") : qsTr("全屏")
-            actionId: "toggleFullscreen"
-            onClicked: win.action("toggleFullscreen")
+            PillButton {
+                label: qsTr("媒体")
+                highlighted: layoutB.inspectorTab === "media"
+                actionId: "openFile"
+                onClicked: layoutB.inspectorTab = "media"
+            }
+            PillButton {
+                label: qsTr("章节")
+                highlighted: layoutB.inspectorTab === "chapters"
+                onClicked: layoutB.inspectorTab = "chapters"
+            }
+            PillButton {
+                label: qsTr("队列")
+                highlighted: layoutB.inspectorTab === "queue"
+                onClicked: layoutB.inspectorTab = "queue"
+            }
+            PillButton {
+                visible: !layoutB.compact
+                label: qsTr("媒体库")
+                actionId: "openLibrary"
+                onClicked: win.action("openLibrary")
+            }
+
+            Text {
+                Layout.fillWidth: true
+                Layout.leftMargin: 8
+                horizontalAlignment: Text.AlignLeft
+                text: player.title === "" ? qsTr("未打开文件") : player.title
+                color: tokens.text
+                font.pixelSize: tokens.fontM
+                elide: Text.ElideMiddle
+            }
+
+            PillButton {
+                visible: !layoutB.compact
+                label: qsTr("设置")
+                actionId: "openSettings"
+                onClicked: win.action("openSettings")
+            }
+            PillButton {
+                label: win.fullscreen ? qsTr("退出全屏") : qsTr("全屏")
+                actionId: "toggleFullscreen"
+                onClicked: win.action("toggleFullscreen")
+            }
+            WindowButtons {
+                Layout.alignment: Qt.AlignVCenter
+                compact: layoutB.compact
+            }
         }
-        PillButton { label: qsTr("设置"); actionId: "openSettings"; onClicked: win.action("openSettings") }
-        PillButton { label: qsTr("关闭"); actionId: "exit"; onClicked: win.action("exit") }
     }
 
-    // 左坞
+    // 右侧检查器
     Rectangle {
         id: dock
         objectName: "dockB"
         visible: uiState.chromeVisible
         width: layoutB.dockWidth
-        anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
+        anchors {
+            right: parent.right
+            top: parent.top
+            bottom: parent.bottom
+            topMargin: layoutB.topBarHeight
+            bottomMargin: layoutB.techBarHeight + layoutB.controlBarHeight
+        }
         color: tokens.glassSoft
         border.width: 1
         border.color: tokens.border
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.leftMargin: tokens.spaceM
-            anchors.rightMargin: tokens.spaceM
-            anchors.bottomMargin: tokens.spaceM
-            // 顶部让开悬浮的品牌/窗口按钮行，否则标题会被按钮压住。
-            anchors.topMargin: tokens.spaceM + (layoutB.compact ? 26 : 30) + tokens.spaceS
+            anchors.margins: tokens.spaceM
             spacing: tokens.spaceS
 
-            Text {
-                visible: !layoutB.shortHeight
-                text: qsTr("播放中")
-                color: tokens.accent
-                font.pixelSize: tokens.fontS
-                font.letterSpacing: 2
-            }
-            Text {
+            // 媒体页
+            ColumnLayout {
+                visible: layoutB.inspectorTab === "media"
                 Layout.fillWidth: true
-                text: player.title === "" ? qsTr("未打开文件") : player.title
-                color: tokens.text
-                font.pixelSize: 16
-                font.weight: Font.DemiBold
-                wrapMode: Text.WrapAnywhere
-            }
-            Text {
-                Layout.fillWidth: true
-                text: player.filePath
-                color: tokens.textMuted
-                font.pixelSize: tokens.fontS
-                elide: Text.ElideMiddle
-            }
+                spacing: tokens.spaceS
 
-            Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: tokens.border }
-
-            Text {
-                visible: !layoutB.shortHeight
-                text: qsTr("最近打开")
-                color: tokens.textMuted
-                font.pixelSize: tokens.fontS
-            }
-
-            ListView {
-                id: recentList
-                objectName: "recentListB"
-                Layout.fillWidth: true
-                Layout.preferredHeight: layoutB.shortHeight ? 60
-                    : (layoutB.compact ? 110 : 160)
-                clip: true
-                model: win.recentFiles
-                spacing: 2
-                // 与 UiStateStore 双向同步：切换布局重建后回到同一项。
-                currentIndex: typeof uiState !== "undefined" ? uiState.scrollIndex : -1
-                onCurrentIndexChanged: {
-                    // 模型尚未装载时 ListView 会把 currentIndex 压成 -1/0，别把这当成用户滚动。
-                    if (typeof uiState !== "undefined" && currentIndex >= 0
-                            && recentList.count > 0)
-                        uiState.scrollIndex = currentIndex
+                Text {
+                    text: qsTr("媒体信息")
+                    color: tokens.accent
+                    font.pixelSize: tokens.fontS
+                    font.letterSpacing: 2
                 }
+                Text {
+                    Layout.fillWidth: true
+                    text: player.title === "" ? qsTr("未打开文件") : player.title
+                    color: tokens.text
+                    font.pixelSize: 16
+                    font.weight: Font.DemiBold
+                    wrapMode: Text.WrapAnywhere
+                }
+                Text {
+                    Layout.fillWidth: true
+                    text: player.filePath
+                    color: tokens.textMuted
+                    font.pixelSize: tokens.fontS
+                    elide: Text.ElideMiddle
+                }
+                Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: tokens.border }
+                Text {
+                    text: qsTr("时长 ") + fmt(player.duration)
+                    color: tokens.textMuted
+                    font.pixelSize: tokens.fontS
+                }
+                Text {
+                    text: qsTr("音轨 ") + player.audioTracks.length + qsTr(" · 字幕 ") + player.subtitleTracks.length
+                    color: tokens.textMuted
+                    font.pixelSize: tokens.fontS
+                }
+                Text {
+                    text: qsTr("速度 ") + (Math.round(player.speed * 100) / 100) + "x"
+                    color: tokens.textMuted
+                    font.pixelSize: tokens.fontS
+                }
+                Item { Layout.fillHeight: true }
+            }
 
-                delegate: Rectangle {
-                    id: recentRow
-                    required property var modelData
-                    required property int index
-                    width: recentList.width
-                    height: 30
-                    radius: tokens.radiusS
-                    readonly property bool selected: typeof uiState !== "undefined"
-                                                      && uiState.selectedItemId === modelData.path
-                    color: selected ? tokens.accentSoft
-                                    : (recentHover.containsMouse ? "#22ffffff" : "transparent")
+            // 章节页
+            ColumnLayout {
+                visible: layoutB.inspectorTab === "chapters"
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                spacing: tokens.spaceS
+                Text {
+                    text: qsTr("章节")
+                    color: tokens.accent
+                    font.pixelSize: tokens.fontS
+                    font.letterSpacing: 2
+                }
+                Text {
+                    text: qsTr("当前文件没有章节信息")
+                    color: tokens.textFaint
+                    font.pixelSize: tokens.fontS
+                }
+                Item { Layout.fillHeight: true }
+            }
 
-                    Text {
-                        anchors.fill: parent
-                        anchors.leftMargin: 8
-                        anchors.rightMargin: 8
-                        verticalAlignment: Text.AlignVCenter
-                        text: modelData.name
-                        color: selected ? tokens.accent : tokens.text
-                        font.pixelSize: tokens.fontS
-                        elide: Text.ElideMiddle
+            // 队列页：最近打开
+            ColumnLayout {
+                visible: layoutB.inspectorTab === "queue"
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                spacing: tokens.spaceS
+                Text {
+                    text: qsTr("最近打开")
+                    color: tokens.accent
+                    font.pixelSize: tokens.fontS
+                    font.letterSpacing: 2
+                }
+                ListView {
+                    id: recentList
+                    objectName: "recentListB"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    model: win.recentFiles
+                    spacing: 2
+                    currentIndex: typeof uiState !== "undefined" ? uiState.scrollIndex : -1
+                    onCurrentIndexChanged: {
+                        if (typeof uiState !== "undefined" && currentIndex >= 0
+                                && recentList.count > 0)
+                            uiState.scrollIndex = currentIndex
                     }
-                    MouseArea {
-                        id: recentHover
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            recentList.currentIndex = recentRow.index
-                            if (typeof uiState !== "undefined")
-                                uiState.selectedItemId = recentRow.modelData.path
-                            win.action("openRecent", recentRow.modelData.path)
+
+                    delegate: Rectangle {
+                        id: recentRow
+                        required property var modelData
+                        required property int index
+                        width: recentList.width
+                        height: 30
+                        radius: tokens.radiusS
+                        readonly property bool selected: typeof uiState !== "undefined"
+                                                          && uiState.selectedItemId === modelData.path
+                        color: selected ? tokens.accentSoft
+                                        : (recentHover.containsMouse ? "#22ffffff" : "transparent")
+
+                        Text {
+                            anchors.fill: parent
+                            anchors.leftMargin: 8
+                            anchors.rightMargin: 8
+                            verticalAlignment: Text.AlignVCenter
+                            text: modelData.name
+                            color: selected ? tokens.accent : tokens.text
+                            font.pixelSize: tokens.fontS
+                            elide: Text.ElideMiddle
+                        }
+                        MouseArea {
+                            id: recentHover
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                recentList.currentIndex = recentRow.index
+                                if (typeof uiState !== "undefined")
+                                    uiState.selectedItemId = recentRow.modelData.path
+                                win.action("openRecent", recentRow.modelData.path)
+                            }
                         }
                     }
                 }
             }
-
-            Item { Layout.fillHeight: true }
-
-            Text {
-                visible: !layoutB.shortHeight
-                text: qsTr("音轨 ") + player.audioTracks.length + qsTr(" · 字幕 ") + player.subtitleTracks.length
-                color: tokens.textFaint
-                font.pixelSize: tokens.fontS
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: tokens.spaceS
-
-                PillButton {
-                    label: player.paused ? qsTr("播放") : qsTr("暂停")
-                    highlighted: true
-                    actionId: "playPause"
-                    onClicked: win.action("playPause")
-                }
-                PillButton { label: "-10s"; actionId: "seekBack10"; onClicked: win.action("seekBack10") }
-                PillButton { label: "+10s"; actionId: "seekForward10"; onClicked: win.action("seekForward10") }
-                Item { Layout.fillWidth: true }
-                PillButton {
-                    label: Math.round(player.speed * 100) / 100 + "x"
-                    actionId: "speedUp"
-                    onClicked: win.action("speedUp")
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: tokens.spaceS
-                PillButton { label: qsTr("音轨"); actionId: "cycleAudio"; onClicked: win.action("cycleAudio") }
-                PillButton { label: qsTr("字幕"); actionId: "cycleSubtitle"; onClicked: win.action("cycleSubtitle") }
-                Item { Layout.fillWidth: true }
-                PillButton { label: qsTr("切换布局"); actionId: "cycleTheme"; onClicked: win.action("cycleTheme") }
-            }
         }
 
-        // 右边缘拖拽改检查器宽度（紧凑模式固定宽度，不提供拖拽）
+        // 左边缘拖拽改检查器宽度（紧凑模式固定宽度）
         Rectangle {
             id: resizeHandle
             visible: !layoutB.compact
             width: 6
-            anchors { right: parent.right; top: parent.top; bottom: parent.bottom }
+            anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
             color: "transparent"
 
             MouseArea {
@@ -225,8 +280,8 @@ Item {
                     if (!dragging)
                         return
                     const globalX = mapToItem(layoutB, mouse.x, 0).x
-                    layoutB.dragWidth = Math.max(160,
-                                                 Math.min(720, startWidth + globalX - startMouseX))
+                    layoutB.dragWidth = Math.max(240, Math.min(720,
+                        startWidth + startMouseX - globalX))
                 }
                 onReleased: {
                     dragging = false
@@ -238,17 +293,66 @@ Item {
         }
     }
 
-    // 底部运输条
+    // 底部技术信息条
     Rectangle {
+        id: techBar
+        visible: uiState.chromeVisible && !layoutB.compact
+        height: layoutB.techBarHeight
+        anchors {
+            left: parent.left
+            right: parent.right
+            bottom: controlBar.top
+        }
+        color: "#cc0d0f14"
+        border.width: 1
+        border.color: tokens.border
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 18
+            anchors.rightMargin: 18
+            spacing: 18
+            Text {
+                text: qsTr("时长 ") + fmt(player.duration)
+                color: tokens.textFaint
+                font.pixelSize: tokens.fontS
+                font.family: "Consolas"
+            }
+            Text {
+                text: qsTr("音轨 ") + player.audioTracks.length
+                color: tokens.textFaint
+                font.pixelSize: tokens.fontS
+            }
+            Text {
+                text: qsTr("字幕 ") + player.subtitleTracks.length
+                color: tokens.textFaint
+                font.pixelSize: tokens.fontS
+            }
+            Item { Layout.fillWidth: true }
+            Text {
+                text: qsTr("工作台")
+                color: tokens.textFaint
+                font.pixelSize: tokens.fontS
+                font.letterSpacing: 2
+            }
+        }
+    }
+
+    // 底部控制条
+    Rectangle {
+        id: controlBar
         visible: uiState.chromeVisible
-        height: layoutB.compact ? tokens.transportHeight - 32 : tokens.transportHeight - 20
-        anchors { left: dock.right; right: parent.right; bottom: parent.bottom }
+        height: layoutB.controlBarHeight
+        anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
         color: tokens.glass
 
         RowLayout {
             anchors.fill: parent
-            anchors.margins: layoutB.compact ? 8 : 14
-            spacing: tokens.spaceM
+            anchors.leftMargin: layoutB.compact ? 10 : 18
+            anchors.rightMargin: layoutB.compact ? 10 : 18
+            anchors.topMargin: layoutB.compact ? 6 : 10
+            anchors.bottomMargin: layoutB.compact ? 6 : 10
+            spacing: 8
 
             SeekBar {
                 Layout.fillWidth: true
@@ -256,6 +360,39 @@ Item {
                 duration: player.duration
                 onSeekRequested: function (value) { win.action("seekTo", value) }
             }
+            PillButton {
+                label: player.paused ? qsTr("播放") : qsTr("暂停")
+                highlighted: true
+                actionId: "playPause"
+                onClicked: win.action("playPause")
+            }
+            PillButton { label: "-10s"; actionId: "seekBack10"; onClicked: win.action("seekBack10") }
+            PillButton { label: "+10s"; actionId: "seekForward10"; onClicked: win.action("seekForward10") }
+            VolumeBar {
+                visible: !layoutB.compact
+                Layout.preferredWidth: 90
+                value: player.muted ? 0 : player.volume
+                onVolumeSet: function (v) { win.action("volumeSet", v) }
+            }
+            PillButton {
+                label: Math.round(player.speed * 100) / 100 + "x"
+                actionId: "speedUp"
+                onClicked: win.action("speedUp")
+            }
+            PillButton { visible: !layoutB.compact; label: qsTr("音轨"); actionId: "cycleAudio"; onClicked: win.action("cycleAudio") }
+            PillButton { visible: !layoutB.compact; label: qsTr("字幕"); actionId: "cycleSubtitle"; onClicked: win.action("cycleSubtitle") }
+            PillButton { label: qsTr("切换布局"); actionId: "cycleTheme"; onClicked: win.action("cycleTheme") }
         }
+    }
+
+    function fmt(seconds) {
+        if (!seconds || seconds <= 0)
+            return "00:00"
+        var total = Math.floor(seconds)
+        var h = Math.floor(total / 3600)
+        var m = Math.floor((total % 3600) / 60)
+        var s = total % 60
+        function pad(v) { return v < 10 ? "0" + v : "" + v }
+        return (h > 0 ? h + ":" : "") + pad(m) + ":" + pad(s)
     }
 }

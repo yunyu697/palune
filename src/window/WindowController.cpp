@@ -28,6 +28,7 @@
 #include <QScreen>
 #include <QTimer>
 #include <QUrl>
+#include <QWindow>
 
 #if defined(Q_OS_WIN)
 #include <windows.h>
@@ -62,6 +63,7 @@ WindowController::WindowController(MpvClient *player,
     , m_library(library)
 {
     m_themeRegistry = new ThemeRegistry(m_settings, {}, this);
+    m_cornerRadius = ThemeRegistry::windowRadius(m_themeRegistry->currentTheme());
     m_uiState = new UiStateStore(m_settings, this);
     m_compactMode = new CompactController(m_settings, this);
     m_actions = new ActionRegistry(this);
@@ -69,6 +71,12 @@ WindowController::WindowController(MpvClient *player,
     m_compactMode->setTheme(m_themeRegistry->currentTheme());
     connect(m_themeRegistry, &ThemeRegistry::currentThemeChanged, this, [this]() {
         m_compactMode->setTheme(m_themeRegistry->currentTheme());
+        const int radius = ThemeRegistry::windowRadius(m_themeRegistry->currentTheme());
+        if (radius != m_cornerRadius) {
+            m_cornerRadius = radius;
+            emit windowRadiusChanged();
+        }
+        applyWindowRegion();
         if (m_overlay)
             m_compactMode->feedWidth(m_overlay->width());
     });
@@ -146,11 +154,17 @@ bool WindowController::start(int width, int height)
         if (m_compactMode && m_overlay)
             m_compactMode->feedWidth(m_overlay->width());
     });
+    // 用户用系统拖拽/边缘缩放改变覆盖窗后，视频窗必须跟随，否则画面和 UI 会错位。
+    connect(m_overlay, &QWindow::xChanged, this, &WindowController::syncVideoToOverlay);
+    connect(m_overlay, &QWindow::yChanged, this, &WindowController::syncVideoToOverlay);
+    connect(m_overlay, &QWindow::widthChanged, this, &WindowController::syncVideoToOverlay);
+    connect(m_overlay, &QWindow::heightChanged, this, &WindowController::syncVideoToOverlay);
     m_compactMode->feedWidth(m_overlay->width());
     if (m_settings && m_settings->windowMaximized())
         m_overlay->showMaximized();
     m_overlay->requestActivate();
     applyGeometry(r);
+    applyWindowRegion();
 
     if (m_player && m_player->available())
         m_player->setVideoWindow(m_video->videoSurfaceHandle());
@@ -159,6 +173,10 @@ bool WindowController::start(int width, int height)
     if (m_player) {
         connect(m_player, &MpvClient::titleChanged, this, &WindowController::updateTitle);
         connect(m_player, &MpvClient::filePathChanged, this, &WindowController::updateTitle);
+        connect(m_player, &MpvClient::filePathChanged, this, [this]() {
+            m_video->setVideoSurfaceVisible(!m_player->filePath().isEmpty());
+        });
+        m_video->setVideoSurfaceVisible(false);
     }
 
     m_ready = true;
@@ -321,18 +339,25 @@ ApplyResult WindowController::applyGeometry(const QRect &rect)
 #ifdef Q_OS_WIN
     // 直接用 SetWindowPos 连续调整两窗，避免 QQuickView::setGeometry 的同步重排拉大两窗几何差；
     // 同时把视频窗放到覆盖窗下方，保证 UI 始终在视频画面之上。
+    // 注意：SetWindowPos 收的是**物理像素**，而 Qt 的 QRect 是**逻辑像素**；
+    // 4K@200% 下若直接传逻辑值，窗口只有一半大小，QML 会按完整布局渲染并被裁掉
+    // （实测表现就是「UI 显示不全 + 进度条/按钮被截断」）。
     HWND videoHwnd = m_video ? reinterpret_cast<HWND>(m_video->winId()) : nullptr;
     HWND overlayHwnd = m_overlay ? reinterpret_cast<HWND>(m_overlay->winId()) : nullptr;
+    const qreal dpr = m_overlay ? m_overlay->devicePixelRatio() : 1.0;
+    const QRect native(qRound(rect.x() * dpr), qRound(rect.y() * dpr),
+                       qRound(rect.width() * dpr), qRound(rect.height() * dpr));
     if (videoHwnd) {
-        SetWindowPos(videoHwnd, overlayHwnd, rect.x(), rect.y(), rect.width(), rect.height(),
-                     SWP_NOACTIVATE | SWP_NOOWNERZORDER);
+        SetWindowPos(videoHwnd, overlayHwnd, native.x(), native.y(), native.width(),
+                     native.height(), SWP_NOACTIVATE | SWP_NOOWNERZORDER);
     }
     if (overlayHwnd) {
-        SetWindowPos(overlayHwnd, nullptr, rect.x(), rect.y(), rect.width(), rect.height(),
-                     SWP_NOZORDER | SWP_NOACTIVATE);
+        SetWindowPos(overlayHwnd, nullptr, native.x(), native.y(), native.width(),
+                     native.height(), SWP_NOZORDER | SWP_NOACTIVATE);
     }
     if (videoHwnd && overlayHwnd)
         result.overlayAbove = GetWindow(videoHwnd, GW_HWNDPREV) == overlayHwnd;
+    applyWindowRegion();
 #else
     if (m_video)
         m_video->setGeometry(rect);
@@ -460,6 +485,99 @@ void WindowController::moveBy(double dx, double dy)
         return;
     const QRect o = m_overlay->geometry();
     applyGeometry(QRect(o.topLeft() + QPoint(qRound(dx), qRound(dy)), o.size()));
+}
+
+void WindowController::startSystemMove()
+{
+    // 无边框窗口自己算位移会丢 Snap、抖动且跨 DPI 会漂移；交给系统移动循环。
+    if (m_overlay && !m_fullscreen)
+        m_overlay->startSystemMove();
+}
+
+void WindowController::startSystemResize(int edges)
+{
+    if (m_overlay && !m_fullscreen)
+        m_overlay->startSystemResize(Qt::Edges(static_cast<Qt::Edge>(edges)));
+}
+
+void WindowController::toggleMaximize()
+{
+    if (!m_overlay || m_fullscreen)
+        return;
+    if (m_maximized) {
+        m_maximized = false;
+        applyGeometry(m_restoreGeometry.isEmpty() ? m_normalGeometry : m_restoreGeometry);
+    } else {
+        m_restoreGeometry = m_overlay->geometry();
+        m_maximized = true;
+        QScreen *screen = m_overlay->screen();
+        if (!screen)
+            screen = QGuiApplication::primaryScreen();
+        applyGeometry(screen ? screen->availableGeometry() : m_restoreGeometry);
+    }
+    emit maximizedChanged();
+}
+
+void WindowController::minimizeWindow()
+{
+    if (!m_overlay)
+        return;
+    m_minimized = true;
+    m_overlay->showMinimized();
+    if (m_video)
+        m_video->hide();
+}
+
+void WindowController::syncVideoToOverlay()
+{
+    if (m_syncing || !m_overlay || !m_video || m_minimized)
+        return;
+    m_syncing = true;
+#if defined(Q_OS_WIN)
+    // 用户拖拽时 Qt 缓存的 geometry 可能还没刷新，直接读原生矩形最稳，
+    // 否则 SetWindowPos 会把窗口“吸回”旧位置（实机表现就是拖不动）。
+    HWND videoHwnd = reinterpret_cast<HWND>(m_video->winId());
+    HWND overlayHwnd = reinterpret_cast<HWND>(m_overlay->winId());
+    if (videoHwnd && overlayHwnd) {
+        RECT rc{};
+        GetWindowRect(overlayHwnd, &rc);
+        SetWindowPos(videoHwnd, overlayHwnd, rc.left, rc.top, rc.right - rc.left,
+                     rc.bottom - rc.top, SWP_NOACTIVATE | SWP_NOOWNERZORDER);
+        applyWindowRegion();
+    }
+#else
+    applyGeometry(m_overlay->geometry());
+#endif
+    m_syncing = false;
+}
+
+void WindowController::applyWindowRegion()
+{
+#if defined(Q_OS_WIN)
+    // 无边框 + 透明背景的窗口，DWM 不会给圆角，只能自己裁 Region；
+    // 逻辑圆角按 DPR 换算成物理像素，两窗用同一半径才不会出现视频露出直角。
+    const qreal dpr = m_overlay ? m_overlay->devicePixelRatio() : 1.0;
+    const int logical = (m_fullscreen || m_maximized) ? 0 : m_cornerRadius;
+    const int radius = qRound(logical * dpr);
+    auto applyRegion = [radius](qintptr handle) {
+        HWND hwnd = reinterpret_cast<HWND>(handle);
+        if (!hwnd)
+            return;
+        RECT rc{};
+        GetWindowRect(hwnd, &rc);
+        const int w = rc.right - rc.left;
+        const int h = rc.bottom - rc.top;
+        HRGN region = CreateRoundRectRgn(0, 0, w + 1, h + 1, radius * 2, radius * 2);
+        if (SetWindowRgn(hwnd, region, TRUE) == 0)
+            DeleteObject(region);
+    };
+    if (m_overlay)
+        applyRegion(m_overlay->winId());
+    if (m_video)
+        applyRegion(m_video->winId());
+#else
+    Q_UNUSED(m_cornerRadius)
+#endif
 }
 
 void WindowController::openFileDialog()
@@ -666,14 +784,9 @@ void WindowController::action(const QString &name, const QVariant &value)
     } else if (name == QLatin1String("toggleFullscreen")) {
         toggleFullscreen();
     } else if (name == QLatin1String("toggleMaximize")) {
-        if (!m_fullscreen && m_overlay) {
-            if (m_overlay->windowState() & Qt::WindowMaximized)
-                m_overlay->showNormal();
-            else
-                m_overlay->showMaximized();
-            if (m_video)
-                m_video->showMaximized();
-        }
+        toggleMaximize();
+    } else if (name == QLatin1String("minimizeWindow")) {
+        minimizeWindow();
     } else if (name == QLatin1String("windowScaleUp") || name == QLatin1String("windowScaleDown")) {
         if (m_overlay) {
             const double factor = name == QLatin1String("windowScaleUp") ? 1.25 : 0.8;

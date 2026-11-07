@@ -99,6 +99,7 @@ qt_add_resources(Palune "app_resources"
         qml/components/SeekBar.qml
         qml/components/VolumeBar.qml
         qml/components/EmptyState.qml
+        qml/components/WindowButtons.qml
         qml/shell/VideoHost.qml
         qml/layouts/LayoutA/LayoutA.qml
         qml/layouts/LayoutB/LayoutB.qml
@@ -107,10 +108,13 @@ qt_add_resources(Palune "app_resources"
         resources/trust/update.pub
         resources/trust/test-update.pub
         i18n/palune_en_US.qm
+        packaging/palune-256.png
 )
 
 if(WIN32)
     set_target_properties(Palune PROPERTIES WIN32_EXECUTABLE TRUE)
+    # 资源里的图标给 exe 用（任务栏/资源管理器），否则 Windows 显示默认空白图标。
+    target_sources(Palune PRIVATE packaging/palune.rc)
 elseif(APPLE)
     # 必须是 bundle，macdeployqt 才会部署 Qt 运行时（否则会跳过运行时部署）。
     # 自定义 Info.plist：冻结 bundle id 与 palune:// 协议注册（M1 判据 13）。

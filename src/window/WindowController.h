@@ -31,6 +31,8 @@ class WindowController : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(bool fullscreen READ isFullscreen NOTIFY fullscreenChanged)
+    Q_PROPERTY(bool maximized READ isMaximized NOTIFY maximizedChanged)
+    Q_PROPERTY(int windowRadius READ windowRadius NOTIFY windowRadiusChanged)
     Q_PROPERTY(QString windowTitle READ windowTitle NOTIFY windowTitleChanged)
     Q_PROPERTY(bool ready READ ready CONSTANT)
     Q_PROPERTY(QVariantList recentFiles READ recentFiles NOTIFY recentFilesChanged)
@@ -54,6 +56,9 @@ public:
     OverlayWindow *overlay() const { return m_overlay; }
 
     bool isFullscreen() const { return m_fullscreen; }
+    bool isMaximized() const { return m_maximized; }
+    // 当前主题的窗口圆角（逻辑像素），QML 壳层与原生窗口 Region 共用同一值。
+    int windowRadius() const { return m_cornerRadius; }
     QString windowTitle() const { return m_windowTitle; }
     QVariantList recentFiles() const;
     QString version() const;
@@ -74,6 +79,11 @@ public:
     Q_INVOKABLE void action(const QString &name, const QVariant &value);
     Q_INVOKABLE void openFolderDialog();
     Q_INVOKABLE void openRecentFile(const QString &path);
+    // 无边框窗口的原生拖拽 / 边缘缩放 / 最大化：交给系统处理，保证与 Snap、多屏 DPI 一致。
+    Q_INVOKABLE void startSystemMove();
+    Q_INVOKABLE void startSystemResize(int edges);
+    Q_INVOKABLE void toggleMaximize();
+    Q_INVOKABLE void minimizeWindow();
 
     ApplyResult applyGeometry(const QRect &rect);
     ApplyResult toggleFullscreenForTest();
@@ -99,6 +109,8 @@ public slots:
 
 signals:
     void fullscreenChanged();
+    void maximizedChanged();
+    void windowRadiusChanged();
     void windowTitleChanged();
     void recentFilesChanged();
     void uiActionRequested(const QString &name, const QVariant &value);
@@ -108,6 +120,10 @@ private:
     // 布局重建后按 UiStateStore 记录的动作 ID 恢复焦点（跨主题等价控件）。
     void restoreFocus();
     void updateTitle();
+    // 用户拖拽/缩放原生窗口后，把视频窗同步到覆盖窗几何。
+    void syncVideoToOverlay();
+    // 给两窗应用与主题一致的圆角 Region（Windows 无边框窗默认没有圆角）。
+    void applyWindowRegion();
     void showWindows();
     void saveWindowState();
     void rememberFile(const QString &path);
@@ -130,7 +146,11 @@ private:
     qint64 m_lastResumeSaveMs = 0;
     bool m_fullscreen = false;
     bool m_minimized = false;
+    bool m_maximized = false;
+    bool m_syncing = false;
+    int m_cornerRadius = 14;
     QRect m_normalGeometry;
+    QRect m_restoreGeometry;
     QString m_windowTitle = QStringLiteral("Palune");
     qint64 m_lastSyncMicros = 0;
 };

@@ -2,9 +2,37 @@
 
 > 自动推进的续跑点。每完成一个可验证节点更新本文件；撞到单轮上限时以本文件为准。
 
-更新时间：2026-11-07 11:20（Asia/Shanghai）
-当前里程碑：**M2（三主题验收矩阵）→ 即将进入 M3**
-版本：`1.0.0-alpha4`
+更新时间：2026-11-07 14:05（Asia/Shanghai）
+当前里程碑：**M2 收口（P0 修复完成，待发布 alpha5）**
+版本：`1.0.0-alpha5`
+
+## alpha5：P0 可用性修复 + 图标 + 实机逐屏对照
+
+用户实测 alpha4「能启动、能显示，但不可用」，本轮按 P0 处理。**根因与修复（每条均有实机证据）**：
+
+| 现象 | 根因 | 修复 | 证据 |
+|---|---|---|---|
+| UI 显示不全、按钮被截断 | `SetWindowPos` 收物理像素、Qt 矩形是逻辑像素，DPR=2 下窗口只有一半 | `applyGeometry()` 按 `devicePixelRatio` 换算；视频子窗同步 | `GetWindowRect` = `2360×1400`；QML 树 `Main 1180x700` |
+| 白块 | `STATIC` 子窗白底按逻辑尺寸只覆盖 1/4；空闲 mpv 子窗露浅色底 | 自定义黑底窗口类 `PaluneVideoSurface` + 原生客户区尺寸；空闲隐藏视频面 | `shots/alpha5-matrix` 36 张无白块 |
+| 进度条/按钮被遮挡 | `SeekBar` 的 `Item` `implicitHeight=0`，Slider 溢出；整窗 `MouseArea` 盖住布局按钮 | 自绘 2px 轨道 + 9px 点、`implicitHeight: 24`；整窗点击区移到布局之前 | 12 张实机截图 |
+| 无法移动 / 无法缩放 | 无边框窗无系统非客户区 | `startSystemMove()` + 四边四角 8px `startSystemResize()` | `docs/evidence/window-drag-resize.json`：drag 200×100、resize +300，PASS |
+| 方角 | 无边框透明窗下 DWM 圆角不生效 | `CreateRoundRectRgn` + `SetWindowRgn`，半径随主题 | `docs/evidence/window-radius.json`：A/B/C = 27/20/41 物理（14/10/20 逻辑），PASS |
+
+**逐屏对照**：`docs/evidence/UI-ALPHA5-COMPARISON.md`（3 主题 × 空态/播放/设置/列表 = 12 屏，逐屏列设计期望、实机、判定）。
+- 截图：`docs/evidence/shots/alpha5-ui/`（12 张实机 `CopyFromScreen`）+ `docs/evidence/shots/alpha5-matrix/`（36 张 `grabWindow` 自渲染基线）。
+- 窗口回归：`qa/runtime/m2-window-alpha5.json` 20 项 **PASS**（跨屏移动、运行中 DPI 切换 2 项 NOT_VERIFIED，需真机）。
+- 已知偏差 7 项（媒体库形态、C 默认尺寸、B 视频分栏、B 技术参数、设置分区、空态隐藏规则、媒体库无数据），已在对照文档 §3 登记，列入 M3。
+
+**截图中的外部元素**：右下白色方框与左上角 FPS 文本是本机第三方远控叠加层（`GameViewerServer`），不在 QML 树、不在应用窗口枚举、`grabWindow` 矩阵中完全干净，与本应用缺陷无关。
+
+**应用图标（方向 A「折角 Fold」）**：`tools/release/gen_icon.py` 纯标准库生成 `packaging/palune-256.png` + `palune.ico`（16/24/32/48/64/256，32bpp DIB 条目）。缺角由透明改为设计稿同款深色底 `#0C0E11`；与设计成品 `a-512-win-dark.png` 512×512 像素比对差异 **0.54%**（仅折线边缘抗锯齿）。exe 资源图标已接入（`packaging/palune.rc` + `app.setWindowIcon`），`ExtractAssociatedIcon` 复核：底板 `#E7B27C`、缺角 `#0C0E11`、A=255，均为设计色。
+
+### 流程固化（长期）
+
+**每个里程碑收口前必须提交「实机截图 × 设计稿逐屏对照」，缺对照不算通过。**
+- 覆盖范围：至少 主界面 / 设置 / 列表 / 空态 × 全部主题；每屏列设计期望、实机、判定。
+- 落盘位置：`docs/evidence/UI-<版本>-COMPARISON.md`，截图放 `docs/evidence/shots/<版本>-ui/`。
+- 判定口径：符合 / 偏差（登记编号与处置里程碑）/ 未验证（写原因），不允许静默省略。
 
 ## alpha4 发布（GitHub Releases）
 
@@ -99,10 +127,10 @@
 
 ## 下一步（按顺序）
 
-1. 等待 8h 浸泡结果（约 16:24），判定 RSS 漂移 ≤50MB/h、崩溃 0，补 M2 #7 完整结论。
-2. M2 #1 需用户签字的 36 界面评审基线（截图位于 `docs/evidence/shots/m2-baseline`、`m2-scale`）；签字后 M2 收口。
-3. 同时启动 M3 前期工作（读 `MILESTONES.md` M3 判据，拆解首个可验证节点）。
-4. M2 全项达标后：版本递进（alpha4→alpha5，`python tools/version/check_version.py`）、README/证据更新、提交推送，正式进入 M3。
+1. **发布 alpha5**：`python tools/version/check_version.py`、`python tools/ci/check_brand_terms.py` 均通过；提交并推 tag `1.0.0-alpha5` 触发三平台打包 → Release；下载复核 SHA-256 与本地/CI 一致。
+2. 用 alpha5 安装包做一次真实安装 → 启动 → 逐屏截图复核（重点：拖拽、缩放、圆角、白块、按钮可点）。
+3. 等待 8h 浸泡结果（约 16:24），判定 RSS 漂移 ≤50MB/h、崩溃 0，补 M2 #7 完整结论。
+4. M3 首个 UI 任务：按 `UI-ALPHA5-COMPARISON.md` §3 的 7 项偏差逐个改（媒体库形态 → C 默认尺寸 → B 分栏/技术条 → 设置分区 → 空态隐藏）。
 5. M2 #8 剩余真机项：多屏移动、运行中 DPI（125/150/200%）切换需用户环境；自动化部分已完成。
 
 ## 阻塞 / 需用户

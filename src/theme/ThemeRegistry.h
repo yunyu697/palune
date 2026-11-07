@@ -40,6 +40,8 @@ public:
     static QStringList availableThemes() { return {QStringLiteral("A"), QStringLiteral("B"), QStringLiteral("C")}; }
     static QUrl layoutUrl(const QString &themeId);
     static bool isValidTheme(const QString &themeId);
+    // 窗口圆角（逻辑像素）：设计稿 7.2 节 A=14 / B=10 / C=20。
+    static int windowRadius(const QString &themeId);
 
     QString currentTheme() const { return m_currentTheme; }
     QString fallbackReason() const { return m_fallbackReason; }

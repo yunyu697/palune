@@ -1,0 +1,40 @@
+﻿{
+    "version":  "1.0.0-alpha5",
+    "method":  "GetWindowRgn + 45deg diagonal first-inside pixel; derived radius = cut / 0.2929",
+    "items":  [
+                  {
+                      "theme":  "A",
+                      "expectedLogicalRadius":  14,
+                      "expectedPhysical":  28,
+                      "expectedDiagonalCut":  8,
+                      "measuredDiagonalCut":  8,
+                      "derivedRadiusPhysical":  27,
+                      "rgnType":  3,
+                      "dpi":  192,
+                      "pass":  true
+                  },
+                  {
+                      "theme":  "B",
+                      "expectedLogicalRadius":  10,
+                      "expectedPhysical":  20,
+                      "expectedDiagonalCut":  6,
+                      "measuredDiagonalCut":  6,
+                      "derivedRadiusPhysical":  20,
+                      "rgnType":  3,
+                      "dpi":  192,
+                      "pass":  true
+                  },
+                  {
+                      "theme":  "C",
+                      "expectedLogicalRadius":  20,
+                      "expectedPhysical":  40,
+                      "expectedDiagonalCut":  12,
+                      "measuredDiagonalCut":  12,
+                      "derivedRadiusPhysical":  41,
+                      "rgnType":  3,
+                      "dpi":  192,
+                      "pass":  true
+                  }
+              ],
+    "verdict":  "PASS"
+}

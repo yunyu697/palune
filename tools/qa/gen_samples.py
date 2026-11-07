@@ -92,6 +92,26 @@ SPECS = [
      ["-c:a", "pcm_s16le", "-ac", "2"], "matroska", []),
 ]
 
+# 某些 ffmpeg 发行版（如 Homebrew 的精简构建）不带 libvorbis 编码器；
+# 合成样本时按可用编码器回退，避免整个冒烟作业因单个样本失败。
+AUDIO_FALLBACKS = {"libvorbis": "libopus"}
+AVAILABLE_ENCODERS: set[str] = set()
+
+
+def probe_encoders() -> set[str]:
+    try:
+        text = subprocess.run(["ffmpeg", "-hide_banner", "-encoders"],
+                              capture_output=True, text=True, check=True).stdout
+    except subprocess.CalledProcessError:
+        return set()
+    names = set()
+    for line in text.splitlines():
+        parts = line.split()
+        if len(parts) >= 2 and len(parts[0]) == 6 and parts[0][0] in "VAS":
+            names.add(parts[1])
+    return names
+
+
 SRT = """1
 00:00:01,000 --> 00:00:04,000
 Palune 字幕轨测试
@@ -131,6 +151,14 @@ def build_one(out: Path, spec, tmpdir: Path) -> None:
         cmd += ["-map", m]
     cmd += vargs
     if aargs:
+        if "-c:a" in aargs:
+            index = aargs.index("-c:a") + 1
+            codec = aargs[index]
+            fallback = AUDIO_FALLBACKS.get(codec)
+            if AVAILABLE_ENCODERS and codec not in AVAILABLE_ENCODERS and fallback:
+                print(f"[WARN] {name}：编码器 {codec} 不可用，改用 {fallback}")
+                aargs = list(aargs)
+                aargs[index] = fallback
         cmd += aargs
     if "subtitle" in extra:
         cmd += ["-c:s", "srt"]
@@ -148,6 +176,8 @@ def main() -> int:
     if shutil.which("ffmpeg") is None:
         print("[FAIL] 未找到 ffmpeg，请先安装（Windows: winget install Gyan.FFmpeg）", file=sys.stderr)
         return 1
+
+    AVAILABLE_ENCODERS.update(probe_encoders())
 
     root = Path(__file__).resolve().parents[2]
     out = Path(args.out)

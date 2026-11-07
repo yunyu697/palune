@@ -1,5 +1,7 @@
 #include <QtTest>
 
+#include <QDir>
+#include <QFile>
 #include <QTemporaryDir>
 
 #include "settings/Settings.h"
@@ -100,6 +102,38 @@ private slots:
         QCOMPARE(settings.windowGeometry(), QRect(4, 8, 1280, 720));
         settings.setWindowMaximized(true);
         QVERIFY(settings.windowMaximized());
+    }
+
+    void resumePositionNormalisesPathSeparators()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString native = QDir(dir.path()).filePath(QStringLiteral("clip.mkv"));
+        {
+            QFile file(native);
+            QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write("x");
+        }
+        const QString slashed = QDir::fromNativeSeparators(native);
+        Settings settings(dir.filePath(QStringLiteral("settings.toml")));
+        QString error;
+        QVERIFY(settings.load(&error));
+        QCOMPARE(settings.resumePosition(native), 0.0);
+
+        settings.setResumePosition(native, 42.5);
+        QCOMPARE(settings.resumePosition(native), 42.5);
+        QCOMPARE(settings.resumePosition(slashed), 42.5);
+
+        // 非正数不写入，避免把"从头播放"当成续播点。
+        settings.setResumePosition(native, 0.0);
+        QCOMPARE(settings.resumePosition(native), 42.5);
+        QCOMPARE(settings.resumePosition(QString()), 0.0);
+
+        QVERIFY(settings.save(&error));
+        Settings reloaded(settings.path());
+        QVERIFY(reloaded.load(&error));
+        QCOMPARE(reloaded.resumePosition(native), 42.5);
+        QCOMPARE(reloaded.resumePosition(slashed), 42.5);
     }
 
     void uiStatePersistsPanelWidths()

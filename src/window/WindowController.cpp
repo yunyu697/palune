@@ -17,6 +17,7 @@
 #include <QDir>
 #include <functional>
 #include <algorithm>
+#include <QDateTime>
 #include <QElapsedTimer>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -71,6 +72,38 @@ WindowController::WindowController(MpvClient *player,
         if (m_overlay)
             m_compactMode->feedWidth(m_overlay->width());
     });
+
+    // 播放位置记忆：每秒落盘一次，强杀后按文件恢复；fileLoaded 后再 seek 避免加载中被丢弃。
+    if (m_player) {
+        connect(m_player, &MpvClient::fileLoaded, this, [this]() {
+            if (m_pendingResume > 3.0 && m_player) {
+                m_player->seek(m_pendingResume);
+                Log::info(QStringLiteral("续播到 %1s").arg(m_pendingResume, 0, 'f', 1));
+            }
+            m_pendingResume = -1.0;
+        });
+        connect(m_player, &MpvClient::positionChanged, this, [this]() {
+            const double pos = m_player ? m_player->position() : 0.0;
+            if (pos <= 3.0)
+                return;
+            const qint64 now = QDateTime::currentMSecsSinceEpoch();
+            if (now - m_lastResumeSaveMs < 1000)
+                return;
+            m_lastResumeSaveMs = now;
+            saveResumePosition();
+        });
+    }
+}
+
+void WindowController::saveResumePosition()
+{
+    if (!m_player || !m_settings)
+        return;
+    const QString path = m_player->filePath();
+    if (path.isEmpty())
+        return;
+    m_settings->setResumePosition(path, m_player->position());
+    m_settings->save();
 }
 
 WindowController::~WindowController()
@@ -415,6 +448,7 @@ void WindowController::activate()
 
 void WindowController::close()
 {
+    saveResumePosition();
     saveWindowState();
     CrashBreadcrumb::record(QStringLiteral("用户关闭窗口"));
     QCoreApplication::quit();
@@ -703,6 +737,11 @@ void WindowController::openFile(const QUrl &url)
         path = url.toString();
     if (path.isEmpty())
         return;
+    // 切文件前先记住当前文件的进度。
+    saveResumePosition();
+    m_pendingResume = m_settings ? m_settings->resumePosition(path) : -1.0;
+    if (m_pendingResume <= 3.0)
+        m_pendingResume = -1.0;
     if (!m_player->openFile(path)) {
         Log::error(QStringLiteral("打开文件失败：%1").arg(path));
         return;

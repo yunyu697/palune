@@ -214,6 +214,12 @@ QString ActionRegistry::keyToken(int key)
 
 bool ActionRegistry::parseKeySpec(const QString &spec, int *key, int *modifiers)
 {
+    // "+" 本身是分隔符，单独作为键位时直接判定，避免被 split 吞掉。
+    if (spec == QLatin1String("+")) {
+        if (key) *key = Qt::Key_Plus;
+        if (modifiers) *modifiers = 0;
+        return true;
+    }
     QStringList parts = spec.split(QLatin1Char('+'), Qt::SkipEmptyParts);
     if (parts.isEmpty())
         return false;
@@ -263,6 +269,10 @@ bool ActionRegistry::parseKeySpec(const QString &spec, int *key, int *modifiers)
         code = Qt::Key_Home;
     else if (token == QLatin1String("End"))
         code = Qt::Key_End;
+    else if (token == QLatin1String("PageUp"))
+        code = Qt::Key_PageUp;
+    else if (token == QLatin1String("PageDown"))
+        code = Qt::Key_PageDown;
     else if (token == QLatin1String("."))
         code = Qt::Key_Period;
     else if (token == QLatin1String(","))

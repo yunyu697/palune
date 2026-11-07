@@ -1,0 +1,90 @@
+{
+  "mode": "m2-resume-kill",
+  "rounds": 10,
+  "toleranceSeconds": 1.0,
+  "media": "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\palune\\qa\\runtime\\media\\resume-60s.mp4",
+  "items": [
+    {
+      "round": 1,
+      "loaded": true,
+      "saved": 8.13,
+      "restored": 8.13,
+      "delta": 0.0,
+      "pass": true
+    },
+    {
+      "round": 2,
+      "loaded": true,
+      "saved": 16.77,
+      "restored": 16.8,
+      "delta": 0.033,
+      "pass": true
+    },
+    {
+      "round": 3,
+      "loaded": true,
+      "saved": 25.83,
+      "restored": 25.83,
+      "delta": 0.0,
+      "pass": true
+    },
+    {
+      "round": 4,
+      "loaded": true,
+      "saved": 34.87,
+      "restored": 34.9,
+      "delta": 0.033,
+      "pass": true
+    },
+    {
+      "round": 5,
+      "loaded": true,
+      "saved": 44.03,
+      "restored": 44.03,
+      "delta": 0.0,
+      "pass": true
+    },
+    {
+      "round": 6,
+      "loaded": true,
+      "saved": 53.17,
+      "restored": 53.17,
+      "delta": 0.0,
+      "pass": true
+    },
+    {
+      "round": 7,
+      "loaded": true,
+      "saved": 59.1,
+      "restored": 59.1,
+      "delta": 0.0,
+      "pass": true
+    },
+    {
+      "round": 8,
+      "loaded": true,
+      "saved": 59.1,
+      "restored": 59.17,
+      "delta": 0.067,
+      "pass": true
+    },
+    {
+      "round": 9,
+      "loaded": true,
+      "saved": 59.97,
+      "restored": 59.97,
+      "delta": 0.0,
+      "pass": true
+    },
+    {
+      "round": 10,
+      "loaded": true,
+      "saved": 59.97,
+      "restored": 60.0,
+      "delta": 0.033,
+      "pass": true
+    }
+  ],
+  "verdict": "PASS",
+  "generatedAt": "2026-11-07T09:13:35+08:00"
+}

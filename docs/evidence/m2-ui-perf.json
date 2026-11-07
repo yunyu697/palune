@@ -1,0 +1,43 @@
+{
+    "frameBudgetMs": 16.7,
+    "generatedAt": "2026-11-07T08:59:08",
+    "mode": "m2-ui-perf",
+    "resolution": "3840x2160",
+    "themes": [
+        {
+            "controlsOff": 0,
+            "controlsOn": 14,
+            "frames": 90,
+            "hideMs": 65.0358,
+            "renderMaxMs": 1.2969,
+            "renderP95Ms": 0.5577,
+            "showMs": 66.6956,
+            "theme": "A",
+            "verdict": "PASS"
+        },
+        {
+            "controlsOff": 0,
+            "controlsOn": 13,
+            "frames": 90,
+            "hideMs": 83.5919,
+            "renderMaxMs": 2.0378,
+            "renderP95Ms": 0.4816,
+            "showMs": 68.5119,
+            "theme": "B",
+            "verdict": "PASS"
+        },
+        {
+            "controlsOff": 0,
+            "controlsOn": 11,
+            "frames": 90,
+            "hideMs": 86.0675,
+            "renderMaxMs": 4.0257,
+            "renderP95Ms": 0.191,
+            "showMs": 48.9014,
+            "theme": "C",
+            "verdict": "PASS"
+        }
+    ],
+    "verdict": "PASS",
+    "version": "1.0.0-alpha4"
+}

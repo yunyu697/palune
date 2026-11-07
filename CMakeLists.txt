@@ -333,3 +333,7 @@ add_test(NAME media COMMAND tst_media)
 add_executable(tst_core tests/unit/tst_core.cpp)
 target_link_libraries(tst_core PRIVATE palune_core Qt6::Test)
 add_test(NAME core COMMAND tst_core)
+
+add_executable(tst_actions tests/unit/tst_actions.cpp)
+target_link_libraries(tst_actions PRIVATE palune_core Qt6::Test)
+add_test(NAME actions COMMAND tst_actions)

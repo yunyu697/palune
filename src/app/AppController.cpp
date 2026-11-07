@@ -30,7 +30,9 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QKeyEvent>
+#include <QMutex>
 #include <QQmlContext>
+#include <QVector>
 #include <QQmlEngine>
 #include <QSysInfo>
 #include <QQuickItem>
@@ -97,6 +99,10 @@ void AppController::start()
         runM2Actions();
         return;
     }
+    if (m_options.m2UiPerf) {
+        runM2UiPerf();
+        return;
+    }
     if (m_options.m2Compact) {
         runM2Compact();
         return;
@@ -158,6 +164,33 @@ void AppController::startNormal()
     QString path = m_options.openPath;
     if (!path.isEmpty())
         m_windows->openFile(QUrl::fromLocalFile(path));
+
+    if (m_options.resumeProbe) {
+        QTimer::singleShot(300, this, [this, path]() {
+            QElapsedTimer probe;
+            probe.start();
+            while (probe.elapsed() < 9000 && m_player && m_player->duration() <= 0.0)
+                sleepMs(120);
+            // 冻结播放再读数，避免测量期间位置继续前进。
+            if (m_player && !m_player->paused())
+                m_player->togglePause();
+            sleepMs(600);
+            const double saved = m_settings->resumePosition(path);
+            const double restored = m_player ? m_player->position() : 0.0;
+            QJsonObject report;
+            report.insert(QStringLiteral("mode"), QStringLiteral("resume-probe"));
+            report.insert(QStringLiteral("path"), path);
+            report.insert(QStringLiteral("savedPosition"), saved);
+            report.insert(QStringLiteral("restoredPosition"), restored);
+            report.insert(QStringLiteral("deltaSeconds"), qAbs(restored - saved));
+            report.insert(QStringLiteral("loaded"), m_player && m_player->duration() > 0.0);
+            report.insert(QStringLiteral("generatedAt"), QDateTime::currentDateTime().toString(Qt::ISODate));
+            writeJsonReport(report, m_options.reportPath.isEmpty()
+                                        ? defaultReportPath(QStringLiteral("resume-probe"))
+                                        : m_options.reportPath);
+            finishWithCode(0);
+        });
+    }
 
     if (m_options.selftest) {
         QTimer::singleShot(700, this, [this]() {
@@ -1220,6 +1253,181 @@ void AppController::runM2Actions()
     report.insert(QStringLiteral("generatedAt"), QDateTime::currentDateTime().toString(Qt::ISODate));
     writeJsonReport(report, m_options.reportPath.isEmpty()
                                 ? defaultReportPath(QStringLiteral("m2-actions"))
+                                : m_options.reportPath);
+    finishWithCode(allPass ? 0 : 2);
+}
+
+void AppController::runM2UiPerf()
+{
+    UpdateService demo;
+    Settings demoSettings;
+    ThemeRegistry demoTheme(&demoSettings, [](const QString &) { return true; });
+    UiStateStore demoUi(&demoSettings);
+    CompactController demoCompact(&demoSettings);
+    MediaLibraryService demoLibrary;
+    ShotPlayer shotPlayer;
+    ShotWindow shotWin;
+    shotPlayer.setFilePath(QStringLiteral("D:/qa/demo-4k60.mp4"));
+    shotPlayer.setTitle(QStringLiteral("示例影片 · 4K60"));
+    shotPlayer.setDuration(7200.0);
+    shotPlayer.setPosition(30.0);
+
+    QQuickView view;
+    view.setFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint
+                  | Qt::WindowDoesNotAcceptFocus);
+    view.setColor(QColor(QStringLiteral("#0b0c10")));
+    view.setOpacity(0.0);
+    view.setResizeMode(QQuickView::SizeRootObjectToView);
+    auto *ctx = view.engine()->rootContext();
+    ctx->setContextProperty(QStringLiteral("player"), &shotPlayer);
+    ctx->setContextProperty(QStringLiteral("updater"), &demo);
+    ctx->setContextProperty(QStringLiteral("win"), &shotWin);
+    ctx->setContextProperty(QStringLiteral("themeRegistry"), &demoTheme);
+    ctx->setContextProperty(QStringLiteral("uiState"), &demoUi);
+    ctx->setContextProperty(QStringLiteral("compactMode"), &demoCompact);
+    ctx->setContextProperty(QStringLiteral("library"), &demoLibrary);
+    // 4K60：3840×2160，预算 16.7ms/帧。
+    view.resize(3840, 2160);
+    view.setSource(QUrl(QStringLiteral("qrc:/qml/Main.qml")));
+    if (view.status() != QQuickView::Ready) {
+        for (const auto &error : view.errors())
+            Log::error(QStringLiteral("QML: %1").arg(error.toString()));
+        finishWithCode(5);
+        return;
+    }
+    view.show();
+    sleepMs(300);
+    QQuickItem *root = view.rootObject();
+    LayoutHost host(view.engine(), &demoTheme);
+    host.setHostItem(root ? root->findChild<QQuickItem *>(QStringLiteral("layoutSlot")) : nullptr);
+
+    QElapsedTimer renderClock;
+    QMutex frameMutex;
+    QVector<double> frameMs;
+    QObject::connect(&view, &QQuickWindow::beforeRendering, &view, [&]() {
+        renderClock.restart();
+    }, Qt::DirectConnection);
+    QObject::connect(&view, &QQuickWindow::afterRendering, &view, [&]() {
+        const double ms = static_cast<double>(renderClock.nsecsElapsed()) / 1e6;
+        QMutexLocker locker(&frameMutex);
+        frameMs.append(ms);
+    }, Qt::DirectConnection);
+
+    auto pumpFrame = [&]() {
+        QEventLoop loop;
+        QObject::connect(&view, &QQuickWindow::frameSwapped, &loop, &QEventLoop::quit);
+        view.update();
+        QTimer::singleShot(300, &loop, &QEventLoop::quit);
+        loop.exec();
+    };
+
+    QJsonArray themes;
+    bool allPass = true;
+    for (const QString &theme : {QStringLiteral("A"), QStringLiteral("B"), QStringLiteral("C")}) {
+        demoTheme.switchTo(theme);
+        demoCompact.setTheme(theme);
+        demoCompact.reset();
+        demoCompact.feedWidth(3840);
+        demoCompact.flush();
+        shotWin.setFullscreen(false);
+        demoUi.setChromeVisible(true);
+        sleepMs(250);
+        pumpFrame();
+        pumpFrame();
+        // 预热：主题切换后的首帧包含着色器/字形缓存构建，不计入显隐判据。
+        demoUi.setChromeVisible(false);
+        pumpFrame();
+        demoUi.setChromeVisible(true);
+        pumpFrame();
+        demoUi.setChromeVisible(false);
+        pumpFrame();
+
+        // 唤出/隐藏延迟：从状态变更到承载该变更的下一帧呈现。
+        demoUi.setChromeVisible(false);
+        pumpFrame();
+        QElapsedTimer toggleClock;
+        toggleClock.start();
+        demoUi.setChromeVisible(true);
+        pumpFrame();
+        const double showMs = static_cast<double>(toggleClock.nsecsElapsed()) / 1e6;
+        toggleClock.restart();
+        demoUi.setChromeVisible(false);
+        pumpFrame();
+        const double hideMs = static_cast<double>(toggleClock.nsecsElapsed()) / 1e6;
+
+        // 控制层可见控件数量（隐藏后应为 0）
+        auto countControls = [&]() -> int {
+            int total = 0;
+            std::function<void(QQuickItem *)> walk = [&](QQuickItem *item) {
+                if (!item->property("actionId").toString().isEmpty() && item->isVisible())
+                    ++total;
+                for (QQuickItem *child : item->childItems())
+                    walk(child);
+            };
+            if (root)
+                walk(root);
+            return total;
+        };
+        demoUi.setChromeVisible(true);
+        pumpFrame();
+        const int controlsOn = countControls();
+        demoUi.setChromeVisible(false);
+        pumpFrame();
+        const int controlsOff = countControls();
+
+        // 4K60 UI 帧时间：模拟播放进度每帧推进，触发真实重绘。
+        {
+            QMutexLocker locker(&frameMutex);
+            frameMs.clear();
+        }
+        double pos = 30.0;
+        for (int i = 0; i < 90; ++i) {
+            shotPlayer.setPosition(pos);
+            pos += 0.033;
+            pumpFrame();
+        }
+        QVector<double> samples;
+        {
+            QMutexLocker locker(&frameMutex);
+            samples = frameMs;
+        }
+        std::sort(samples.begin(), samples.end());
+        double p95 = 0.0;
+        double maxMs = 0.0;
+        if (!samples.isEmpty()) {
+            maxMs = samples.last();
+            p95 = samples.at(qMin(samples.size() - 1, int(samples.size() * 0.95)));
+        }
+        const bool themePass = showMs <= 100.0 && hideMs <= 100.0 && p95 < 16.7
+            && controlsOn > 0 && controlsOff == 0;
+        allPass = allPass && themePass;
+
+        themes.append(QJsonObject{
+            {QStringLiteral("theme"), theme},
+            {QStringLiteral("showMs"), showMs},
+            {QStringLiteral("hideMs"), hideMs},
+            {QStringLiteral("controlsOn"), controlsOn},
+            {QStringLiteral("controlsOff"), controlsOff},
+            {QStringLiteral("frames"), samples.size()},
+            {QStringLiteral("renderP95Ms"), p95},
+            {QStringLiteral("renderMaxMs"), maxMs},
+            {QStringLiteral("verdict"), themePass ? QStringLiteral("PASS") : QStringLiteral("FAIL")},
+        });
+        Log::info(QStringLiteral("UI 性能 %1：显 %2ms 隐 %3ms p95 %4ms")
+                      .arg(theme).arg(showMs, 0, 'f', 1).arg(hideMs, 0, 'f', 1)
+                      .arg(p95, 0, 'f', 2));
+    }
+
+    QJsonObject report;
+    report.insert(QStringLiteral("mode"), QStringLiteral("m2-ui-perf"));
+    report.insert(QStringLiteral("version"), QStringLiteral(PALUNE_VERSION));
+    report.insert(QStringLiteral("resolution"), QStringLiteral("3840x2160"));
+    report.insert(QStringLiteral("frameBudgetMs"), 16.7);
+    report.insert(QStringLiteral("themes"), themes);
+    report.insert(QStringLiteral("verdict"), allPass ? QStringLiteral("PASS") : QStringLiteral("FAIL"));
+    report.insert(QStringLiteral("generatedAt"), QDateTime::currentDateTime().toString(Qt::ISODate));
+    writeJsonReport(report, m_options.reportPath.isEmpty()
+                                ? defaultReportPath(QStringLiteral("m2-ui-perf"))
                                 : m_options.reportPath);
     finishWithCode(allPass ? 0 : 2);
 }

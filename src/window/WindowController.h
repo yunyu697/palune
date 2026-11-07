@@ -112,6 +112,7 @@ private:
     void saveWindowState();
     void rememberFile(const QString &path);
     void playSibling(int delta);
+    void saveResumePosition();
 
     MpvClient *m_player = nullptr;
     UpdateService *m_updater = nullptr;
@@ -125,6 +126,8 @@ private:
     VideoWindow *m_video = nullptr;
     OverlayWindow *m_overlay = nullptr;
     bool m_ready = false;
+    double m_pendingResume = -1.0;
+    qint64 m_lastResumeSaveMs = 0;
     bool m_fullscreen = false;
     bool m_minimized = false;
     QRect m_normalGeometry;

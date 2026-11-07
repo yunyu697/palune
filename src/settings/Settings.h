@@ -43,6 +43,10 @@ public:
     int panelWidth(const QString &themeId) const;
     void setPanelWidth(const QString &themeId, int width);
 
+    // 播放位置记忆（按文件路径哈希存，强杀后续播用）。
+    double resumePosition(const QString &path) const;
+    void setResumePosition(const QString &path, double seconds);
+
 private:
     QString m_path;
     QVariantMap m_values;

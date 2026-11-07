@@ -3,6 +3,7 @@
 #include "core/AppPaths.h"
 #include "settings/Toml.h"
 
+#include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -170,6 +171,28 @@ int Settings::panelWidth(const QString &themeId) const
 void Settings::setPanelWidth(const QString &themeId, int width)
 {
     setValue(QStringLiteral("ui.layout.%1.panelWidth").arg(themeId), qMax(0, width));
+}
+
+double Settings::resumePosition(const QString &path) const
+{
+    if (path.isEmpty())
+        return 0.0;
+    // 调用方可能传 Windows 原生分隔符（--open）或 QUrl 的正斜杠路径，统一归一化后再哈希。
+    const QString normalized = QDir::fromNativeSeparators(QFileInfo(path).absoluteFilePath());
+    const QString id = QString::fromLatin1(
+        QCryptographicHash::hash(normalized.toUtf8(), QCryptographicHash::Sha1).toHex());
+    // 序列化时 "resume.<id>" 会写成 [resume] 表；解析后键又拼回扁平形式。
+    return value(QStringLiteral("resume.") + id).toDouble();
+}
+
+void Settings::setResumePosition(const QString &path, double seconds)
+{
+    if (path.isEmpty() || seconds <= 0.0)
+        return;
+    const QString normalized = QDir::fromNativeSeparators(QFileInfo(path).absoluteFilePath());
+    const QString id = QString::fromLatin1(
+        QCryptographicHash::hash(normalized.toUtf8(), QCryptographicHash::Sha1).toHex());
+    setValue(QStringLiteral("resume.") + id, seconds);
 }
 
 } // namespace palune

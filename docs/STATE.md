@@ -2,16 +2,56 @@
 
 > 自动推进的续跑点。每完成一个可验证节点更新本文件；撞到单轮上限时以本文件为准。
 
-更新时间：2026-11-07 10:50（Asia/Shanghai）
+更新时间：2026-11-07 11:20（Asia/Shanghai）
 当前里程碑：**M2（三主题验收矩阵）→ 即将进入 M3**
 版本：`1.0.0-alpha4`
 
-## 基线
+## alpha4 发布（GitHub Releases）
+
+**结论：alpha4 之前只在本地产出，从未进入 Releases。** 排查结果：
+
+| 环节 | 实际情况 |
+|---|---|
+| `ci.yml` 产物 | 只有 `coverage`、`m1-smoke-Windows/Linux/macOS` 报告（772~9128 字节），**不含安装包**；保留期到期即失效 |
+| `release.yml` 触发 | 只监听 `push: tags: ["*"]` 与 `workflow_dispatch`；alpha2~alpha4 期间**从未推送 tag**，故流水线一次都没跑 |
+| Release 现状 | 只有 `1.0.0-alpha1`（tag `1.0.0-alpha1`），无 alpha2/3/4 |
+| publish job | `if: startsWith(github.ref, 'refs/tags/')`——手工 `workflow_dispatch` 只会构建+生成清单，**不会创建 Release** |
+| 本地包 | `Palune-1.0.0-alpha4-win-x64.exe`（07:04 构建，07:07 完成安装验证），仅存在于临时工作目录 |
+
+**处置**：修复 `check_version.py` 对本地 `build*`/`dist` 目录的误报；推送 tag `1.0.0-alpha4`，触发三平台打包 → 清单生成 → Release 发布。过程中又修掉两处断点：
+
+1. macOS 打包失败：`qt_generate_deploy_app_script` 传了 Qt 6.9 已删除的 `--compiler-runtime`，`macdeployqt` 报 Unknown argument。
+2. Release 发布失败：`dist/*` 含 Windows 验证输出目录 `dist/verify`，`gh release upload` 拒绝目录；改为只上传 `dist` 顶层文件。
+
+**最终发布（run 42337180135 全部 success）**：<https://github.com/yunyu697/palune/releases/tag/1.0.0-alpha4>
+
+| 资产 | SHA-256 |
+|---|---|
+| `Palune-1.0.0-alpha4-win-x64.exe`（60,177,283 B） | `101b50526c69cc82c777b82b5c4bdd33d260bed42a5982675441d456518dce97` |
+| `Palune-1.0.0-alpha4-win-x64.msi`（81,116,446 B） | `105a4a8a571cac6a396fcd30ed4ed228be18cb2914fd6e7c09948826972d1abc` |
+| `Palune-1.0.0-alpha4-macos-arm64.dmg`（68,035,794 B） | `83bebe395c7019c4406475fa09306ac222fc9f3b47b552f056d57b947e0f0f69` |
+| `Palune-1.0.0-alpha4-linux-x86_64.AppImage`（124,566,008 B） | `192374b32f064c445a42415e6743c20d7a099e859f468c7d630c2e8bf4ba84a2` |
+| `Palune-1.0.0-alpha4-linux-x86_64.deb`（108,548,948 B） | `6aeaa0f5f128b9b2fe80d55080cda001a6205a644597f75d4be5fc3ceb9af0d2` |
+| `Palune-1.0.0-alpha4-linux-x86_64.rpm`（132,467,057 B） | `cd96f20e1ae54ff9d5f71918b924deff74dfb0c6b21084707fc03d9ec520a460` |
+
+另附 `latest.json`、`SHA256SUMS`、`windows-install-evidence.json`、`install-launch.json`。
+
+**发布包与本地验证包的哈希对照（不一致，原因已核实）**：
+
+| 包 | 大小 | SHA-256 |
+|---|---|---|
+| 本地 07:04 构建（Qt 6.8.3，已验证） | 59,153,598 B | `092322e611b2876344a576a189b1992f30f97c63f8f8f1681ee27d028ce901ed` |
+| Release 发布（Qt 6.9.3，CI 构建） | 60,177,283 B | `101b50526c69cc82c777b82b5c4bdd33d260bed42a5982675441d456518dce97` |
+
+差异来源：Qt 版本不同（本地 6.8.3 / CI 6.9.3）、libmpv DLL 来源不同、NSIS 安装包内嵌时间戳，均导致字节不一致。**发布的不是未验证构建**：release 流水线的 Windows job 对这份最终 exe 做了「安装 → 启动 → 卸载」全流程验证，`windows-install-evidence.json` 显示 `installExitCode=0`、三个快捷方式正确、`launch.ok=true`、卸载后安装目录与快捷方式全部清除、`verdict=PASS`；该证据与安装包同批发布。
+
+### 基线
 
 | 项 | 状态 |
 |---|---|
-| 基线 commit | `f7fe72f`（已推送 `origin/main`，工作区干净） |
+| 基线 commit | `01da2e2`（已推送 `origin/main`；tag `1.0.0-alpha4` 指向该提交） |
 | CI（f7fe72f） | **三平台全绿**：版本/分层/覆盖率/Windows/Linux/macOS 全部 success；macOS 冒烟 20/20 样本 PASS |
+| Release（alpha4） | **已发布**：run `42337180135` 六个作业全部 success，6 个安装包 + 清单/校验值/安装证据已上传 |
 | macOS SIGBUS 根因 | lldb 栈：`mpv_create → AppHub.init → RemoteCommandCenter.init → AppHub.getIcon → NSImage(data:) → ImageIO PNGReadPlugin`，PC 跳到 `0xbad4007`。根因是 `DYLD_LIBRARY_PATH` 含 `$(brew --prefix)/lib`，Homebrew 的 libpng/libjpeg 抢占了系统 ImageIO 的解码插件；收窄为 `libsodium/lib:mpv/lib` 后消失 |
 | CI（1d5d306） | 仅 macOS 失败（上述 SIGBUS），其余全绿 |
 | 本机 8h 浸泡 | 后台运行中（PID 13516，起于 08:23，预计 16:24 出 `qa/runtime/m2-soak-8h.json`） |

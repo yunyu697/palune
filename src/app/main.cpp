@@ -13,6 +13,8 @@
 #include <QTranslator>
 #include <QUrlQuery>
 
+#include <clocale>
+
 #include <cstdio>
 
 #if defined(Q_OS_WIN)
@@ -111,6 +113,10 @@ int main(int argc, char *argv[])
             qputenv("PALUNE_M0_DESKTOP", QString::fromWCharArray(deskName).toUtf8());
     }
 #endif
+
+    // libmpv 要求 LC_NUMERIC 为 C；macOS CI 等环境可能给出非 C 的 numeric locale，
+    // 会导致 mpv_create 直接失败。Qt 的格式化走 QLocale，不受这里影响。
+    std::setlocale(LC_NUMERIC, "C");
 
     QApplication app(argc, argv);
     app.setApplicationVersion(QStringLiteral(PALUNE_VERSION));

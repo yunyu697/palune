@@ -10,9 +10,10 @@
 
 | 项 | 状态 |
 |---|---|
-| 基线 commit | `9f3beef`（已推送 `origin/main`） |
-| 工作区 | 有未提交改动：续播持久化、M2 #4/#7 证据、本次 CI 修复（动作注册表单测 + 品牌扫描自命中） |
-| CI 42320937952（9f3beef） | **红**：品牌 lint 命中本文件旧扫描命令；覆盖率 64.7% < 70%（ActionRegistry 无单测）→ 已修复，待推送复跑 |
+| 基线 commit | `1be2ea7`（已推送 `origin/main`） |
+| 工作区 | 干净（i18n 与 CI 修复均已提交） |
+| CI 42323768699（7d885f9） | **红**：Windows 为 Chocolatey 源超时（基础设施抖动）；macOS 冒烟缺 libmpv 动态库搜索路径。已补 `DYLD_LIBRARY_PATH` 与失败日志输出，待新提交复跑 |
+| CI（1be2ea7） | 排队/运行中，确认三平台 + 覆盖率 + 分层/品牌/i18n lint 全绿 |
 | 本机 8h 浸泡 | 后台运行中（PID 13516，起于 08:23，预计 16:24 出 `qa/runtime/m2-soak-8h.json`） |
 
 ## M1 遗留收口
@@ -56,12 +57,11 @@
 
 ## 下一步（按顺序）
 
-1. 提交并推送本次 CI 修复（tst_actions、Settings 续播用例、品牌 lint 自命中修复），确认三平台全绿。
-2. M2 #9：中/英 i18n（`qsTr` + 翻译资源）+ 无硬编码文案 lint 接入 CI。
-3. M2 #8：窗口行为 20 项（可自动项自动执行，真机项标 NOT_VERIFIED）。
-4. 等待 8h 浸泡结果（约 16:24），判定 RSS 漂移 ≤50MB/h、崩溃 0。
-5. M2 #1 需用户签字的 36 界面评审基线；签字后 M2 收口。
-6. M2 全项达标后：版本递进（alpha4→alpha5，`python tools/version/check_version.py`）、README/证据更新、提交推送，进入 M3。
+1. 确认 1be2ea7 CI 三平台全绿；Windows 若再遇 Chocolatey 超时按基础设施抖动重跑。
+2. M2 #8：窗口行为 20 项（可自动项自动执行，真机项标 NOT_VERIFIED）。
+3. 等待 8h 浸泡结果（约 16:24），判定 RSS 漂移 ≤50MB/h、崩溃 0。
+4. M2 #1 需用户签字的 36 界面评审基线；签字后 M2 收口。
+5. M2 全项达标后：版本递进（alpha4→alpha5，`python tools/version/check_version.py`）、README/证据更新、提交推送，进入 M3。
 
 ## 阻塞 / 需用户
 

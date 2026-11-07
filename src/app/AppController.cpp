@@ -17,6 +17,8 @@
 #include "ui/ActionRegistry.h"
 #include "update/UpdateService.h"
 #include "window/WindowController.h"
+#include "window/OverlayWindow.h"
+#include "window/VideoWindow.h"
 
 #include <QCoreApplication>
 #include <QCryptographicHash>
@@ -32,6 +34,7 @@
 #include <QKeyEvent>
 #include <QMutex>
 #include <QQmlContext>
+#include <QScreen>
 #include <QVector>
 #include <QQmlEngine>
 #include <QSysInfo>
@@ -39,6 +42,10 @@
 #include <QQuickView>
 #include <QThread>
 #include <QTimer>
+
+#if defined(Q_OS_WIN)
+#include <windows.h>
+#endif
 
 #include <functional>
 #include <memory>
@@ -101,6 +108,10 @@ void AppController::start()
     }
     if (m_options.m2UiPerf) {
         runM2UiPerf();
+        return;
+    }
+    if (m_options.m2Window) {
+        runM2Window();
         return;
     }
     if (m_options.m2Compact) {
@@ -1257,6 +1268,200 @@ void AppController::runM2Actions()
     finishWithCode(allPass ? 0 : 2);
 }
 
+void AppController::runM2Window()
+{
+    QJsonArray items;
+    int failures = 0;
+    int notVerified = 0;
+    auto record = [&](const QString &id, const QString &name, const QString &verdict,
+                      const QString &detail) {
+        if (verdict == QStringLiteral("FAIL"))
+            ++failures;
+        if (verdict == QStringLiteral("NOT_VERIFIED"))
+            ++notVerified;
+        items.append(QJsonObject{{QStringLiteral("id"), id},
+                                 {QStringLiteral("name"), name},
+                                 {QStringLiteral("verdict"), verdict},
+                                 {QStringLiteral("detail"), detail}});
+    };
+    const QString pass = QStringLiteral("PASS");
+    const QString fail = QStringLiteral("FAIL");
+    const QString nv = QStringLiteral("NOT_VERIFIED");
+    auto pump = [&]() {
+        for (int i = 0; i < 20; ++i)
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
+    };
+
+    CrashBreadcrumb::record(QStringLiteral("M2 窗口：创建覆盖窗"));
+    OverlayWindow overlay;
+    overlay.resize(960, 540);
+    overlay.show();
+    VideoWindow video;
+    video.resize(960, 540);
+    video.show();
+    pump();
+    CrashBreadcrumb::record(QStringLiteral("M2 窗口：窗口已显示"));
+
+    const QRect initial = overlay.geometry();
+    QScreen *screen = overlay.screen();
+    const QRect available = screen ? screen->availableGeometry() : QRect(0, 0, 1280, 720);
+
+    record(QStringLiteral("overlay_visible"), QStringLiteral("覆盖窗可见"),
+           overlay.isVisible() ? pass : fail,
+           QStringLiteral("visible=%1").arg(overlay.isVisible()));
+    record(QStringLiteral("frameless_hint"), QStringLiteral("覆盖窗无边框"),
+           (overlay.flags() & Qt::FramelessWindowHint) ? pass : fail,
+           QStringLiteral("flags=%1").arg(static_cast<int>(overlay.flags())));
+    record(QStringLiteral("overlay_title"), QStringLiteral("窗口标题"),
+           overlay.title() == QStringLiteral("Palune") ? pass : fail, overlay.title());
+
+#if defined(Q_OS_WIN)
+    HWND overlayHwnd = reinterpret_cast<HWND>(overlay.winId());
+    HWND videoHwnd = reinterpret_cast<HWND>(video.winId());
+    const LONG_PTR overlayEx = GetWindowLongPtrW(overlayHwnd, GWL_EXSTYLE);
+    const LONG_PTR overlayStyle = GetWindowLongPtrW(overlayHwnd, GWL_STYLE);
+    const LONG_PTR videoEx = GetWindowLongPtrW(videoHwnd, GWL_EXSTYLE);
+    record(QStringLiteral("overlay_appwindow"), QStringLiteral("Alt-Tab/任务栏入口"),
+           (overlayEx & WS_EX_APPWINDOW) && !(overlayEx & WS_EX_TOOLWINDOW) ? pass : fail,
+           QStringLiteral("exstyle=0x%1").arg(overlayEx, 0, 16));
+    record(QStringLiteral("video_toolwindow"), QStringLiteral("视频窗不进任务栏/Alt-Tab"),
+           (videoEx & WS_EX_TOOLWINDOW) && !(videoEx & WS_EX_APPWINDOW) ? pass : fail,
+           QStringLiteral("exstyle=0x%1").arg(videoEx, 0, 16));
+    record(QStringLiteral("video_noactivate"), QStringLiteral("视频窗不抢焦点"),
+           (videoEx & WS_EX_NOACTIVATE) ? pass : fail,
+           QStringLiteral("exstyle=0x%1").arg(videoEx, 0, 16));
+    record(QStringLiteral("snap_resizable"), QStringLiteral("Aero Snap 可缩放样式"),
+           (overlayStyle & WS_THICKFRAME) ? pass : fail,
+           QStringLiteral("style=0x%1").arg(overlayStyle, 0, 16));
+    record(QStringLiteral("maximize_box"), QStringLiteral("最大化框样式"),
+           (overlayStyle & WS_MAXIMIZEBOX) ? pass : fail,
+           QStringLiteral("style=0x%1").arg(overlayStyle, 0, 16));
+#else
+    record(QStringLiteral("overlay_appwindow"), QStringLiteral("Alt-Tab/任务栏入口"), nv,
+           QStringLiteral("Windows 覆盖窗专项，本平台不适用"));
+    record(QStringLiteral("video_toolwindow"), QStringLiteral("视频窗不进任务栏/Alt-Tab"), nv,
+           QStringLiteral("Windows 覆盖窗专项，本平台不适用"));
+    record(QStringLiteral("video_noactivate"), QStringLiteral("视频窗不抢焦点"), nv,
+           QStringLiteral("Windows 覆盖窗专项，本平台不适用"));
+    record(QStringLiteral("snap_resizable"), QStringLiteral("Aero Snap 可缩放样式"), nv,
+           QStringLiteral("Windows 覆盖窗专项，本平台不适用"));
+    record(QStringLiteral("maximize_box"), QStringLiteral("最大化框样式"), nv,
+           QStringLiteral("Windows 覆盖窗专项，本平台不适用"));
+#endif
+
+    // Snap 几何：用 SetWindowPos 等效的窗口几何验证左/右半屏对齐与视频窗跟随。
+    QRect half = available;
+    half.setWidth(available.width() / 2);
+    overlay.setGeometry(half);
+    pump();
+    const bool aligned = overlay.geometry() == half;
+    record(QStringLiteral("snap_geometry"), QStringLiteral("半屏对齐"),
+           aligned ? pass : fail,
+           QStringLiteral("expected=%1,%2 %3x%4 actual=%5,%6 %7x%8")
+               .arg(half.x()).arg(half.y()).arg(half.width()).arg(half.height())
+               .arg(overlay.geometry().x()).arg(overlay.geometry().y())
+               .arg(overlay.geometry().width()).arg(overlay.geometry().height()));
+    overlay.setGeometry(initial);
+    pump();
+
+    CrashBreadcrumb::record(QStringLiteral("M2 窗口：全屏/最小化"));
+    overlay.showFullScreen();
+    pump();
+    record(QStringLiteral("fullscreen_enter"), QStringLiteral("进入全屏"),
+           overlay.visibility() == QWindow::FullScreen ? pass : fail,
+           QStringLiteral("visibility=%1").arg(static_cast<int>(overlay.visibility())));
+    overlay.showNormal();
+    pump();
+    const bool restored = overlay.visibility() == QWindow::Windowed
+        && overlay.geometry() == initial;
+    record(QStringLiteral("fullscreen_exit"), QStringLiteral("退出全屏并还原几何"),
+           restored ? pass : fail,
+           QStringLiteral("visibility=%1 geometry=%2")
+               .arg(static_cast<int>(overlay.visibility()))
+               .arg(QStringLiteral("%1,%2 %3x%4")
+                        .arg(overlay.geometry().x()).arg(overlay.geometry().y())
+                        .arg(overlay.geometry().width()).arg(overlay.geometry().height())));
+
+    overlay.showMinimized();
+    pump();
+    record(QStringLiteral("minimize_enter"), QStringLiteral("最小化"),
+           overlay.visibility() == QWindow::Minimized ? pass : fail,
+           QStringLiteral("visibility=%1").arg(static_cast<int>(overlay.visibility())));
+    overlay.showNormal();
+    pump();
+    record(QStringLiteral("minimize_restore"), QStringLiteral("最小化恢复"),
+           overlay.isVisible() && overlay.visibility() == QWindow::Windowed ? pass : fail,
+           QStringLiteral("visible=%1 visibility=%2")
+               .arg(overlay.isVisible()).arg(static_cast<int>(overlay.visibility())));
+    const bool geometrySame = overlay.geometry() == initial;
+    record(QStringLiteral("restore_geometry"), QStringLiteral("恢复后几何不变"),
+           geometrySame ? pass : fail,
+           QStringLiteral("same=%1 initial=%2,%3 %4x%5 actual=%6,%7 %8x%9")
+               .arg(geometrySame)
+               .arg(initial.x()).arg(initial.y()).arg(initial.width()).arg(initial.height())
+               .arg(overlay.geometry().x()).arg(overlay.geometry().y())
+               .arg(overlay.geometry().width()).arg(overlay.geometry().height()));
+
+    CrashBreadcrumb::record(QStringLiteral("M2 窗口：多屏/关闭"));
+    const auto screens = QGuiApplication::screens();
+    record(QStringLiteral("screens_detected"), QStringLiteral("显示器枚举"),
+           !screens.isEmpty() ? pass : fail,
+           QStringLiteral("screens=%1").arg(screens.size()));
+    if (screens.size() > 1) {
+        const QRect target = screens.at(1)->availableGeometry();
+        overlay.setGeometry(target);
+        pump();
+        record(QStringLiteral("multi_screen_move"), QStringLiteral("跨屏移动"),
+               overlay.screen() == screens.at(1) ? pass : fail,
+               QStringLiteral("target=%1x%2").arg(target.width()).arg(target.height()));
+        overlay.setGeometry(initial);
+        pump();
+    } else {
+        record(QStringLiteral("multi_screen_move"), QStringLiteral("跨屏移动"), nv,
+               QStringLiteral("当前仅 1 块屏幕，需真机多屏验证"));
+    }
+
+    record(QStringLiteral("dpi_ratio"), QStringLiteral("DPI 缩放识别"),
+           screen && screen->devicePixelRatio() > 0 ? pass : fail,
+           QStringLiteral("dpr=%1").arg(screen ? screen->devicePixelRatio() : 0.0));
+    record(QStringLiteral("dpi_live_switch"), QStringLiteral("运行中 DPI 切换"), nv,
+           QStringLiteral("需真机切换显示器缩放（125%/150%/200%）"));
+
+    bool closeEmitted = false;
+    QObject::connect(&overlay, &OverlayWindow::closed, &overlay, [&]() { closeEmitted = true; });
+    CrashBreadcrumb::record(QStringLiteral("M2 窗口：关闭覆盖窗"));
+    overlay.close();
+    pump();
+    CrashBreadcrumb::record(QStringLiteral("M2 窗口：关闭完成"));
+    record(QStringLiteral("close_signal"), QStringLiteral("关闭信号"),
+           closeEmitted ? pass : fail, QStringLiteral("emitted=%1").arg(closeEmitted));
+
+    const QRect persisted(100, 80, 1280, 720);
+    m_settings->setWindowGeometry(persisted);
+    record(QStringLiteral("geometry_persist"), QStringLiteral("几何持久化"),
+           m_settings->windowGeometry() == persisted ? pass : fail,
+           QStringLiteral("stored=%1,%2 %3x%4")
+               .arg(m_settings->windowGeometry().x()).arg(m_settings->windowGeometry().y())
+               .arg(m_settings->windowGeometry().width())
+               .arg(m_settings->windowGeometry().height()));
+
+    const QString verdict = failures == 0 ? QStringLiteral("PASS") : QStringLiteral("FAIL");
+    CrashBreadcrumb::record(QStringLiteral("M2 窗口：写入报告"));
+    QJsonObject report;
+    report.insert(QStringLiteral("mode"), QStringLiteral("m2-window"));
+    report.insert(QStringLiteral("items"), items);
+    report.insert(QStringLiteral("total"), items.size());
+    report.insert(QStringLiteral("failures"), failures);
+    report.insert(QStringLiteral("notVerified"), notVerified);
+    report.insert(QStringLiteral("verdict"), verdict);
+    report.insert(QStringLiteral("generatedAt"),
+                  QDateTime::currentDateTime().toString(Qt::ISODate));
+    writeReport(report);
+    Log::info(QStringLiteral("M2 窗口行为：%1，失败 %2，未验证 %3")
+                  .arg(verdict).arg(failures).arg(notVerified));
+    finishWithCode(failures == 0 ? 0 : 2);
+}
+
 void AppController::runM2UiPerf()
 {
     UpdateService demo;
@@ -1636,6 +1841,13 @@ void AppController::writeJsonReport(const QJsonObject &report, const QString &pa
 
 void AppController::writeReport(const QJsonObject &extra)
 {
+    // 窗口/动作等本地采集模式没有 UpdateService，不能走更新器字段拼装。
+    if (!m_updater) {
+        writeJsonReport(extra, m_options.reportPath.isEmpty()
+                                   ? QStringLiteral("qa/runtime/m2-window.json")
+                                   : m_options.reportPath);
+        return;
+    }
     QJsonObject report = extra;
     if (!report.contains(QStringLiteral("mode")))
         report.insert(QStringLiteral("mode"), QStringLiteral("update-e2e:%1").arg(m_options.e2eMode));

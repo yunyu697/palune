@@ -1,0 +1,130 @@
+{
+    "failures": 0,
+    "generatedAt": "2026-11-07T09:54:01",
+    "items": [
+        {
+            "detail": "visible=1",
+            "id": "overlay_visible",
+            "name": "覆盖窗可见",
+            "verdict": "PASS"
+        },
+        {
+            "detail": "flags=1073743873",
+            "id": "frameless_hint",
+            "name": "覆盖窗无边框",
+            "verdict": "PASS"
+        },
+        {
+            "detail": "Palune",
+            "id": "overlay_title",
+            "name": "窗口标题",
+            "verdict": "PASS"
+        },
+        {
+            "detail": "exstyle=0xc0100",
+            "id": "overlay_appwindow",
+            "name": "Alt-Tab/任务栏入口",
+            "verdict": "PASS"
+        },
+        {
+            "detail": "exstyle=0x8000080",
+            "id": "video_toolwindow",
+            "name": "视频窗不进任务栏/Alt-Tab",
+            "verdict": "PASS"
+        },
+        {
+            "detail": "exstyle=0x8000080",
+            "id": "video_noactivate",
+            "name": "视频窗不抢焦点",
+            "verdict": "PASS"
+        },
+        {
+            "detail": "style=0x96070000",
+            "id": "snap_resizable",
+            "name": "Aero Snap 可缩放样式",
+            "verdict": "PASS"
+        },
+        {
+            "detail": "style=0x96070000",
+            "id": "maximize_box",
+            "name": "最大化框样式",
+            "verdict": "PASS"
+        },
+        {
+            "detail": "expected=0,0 960x1032 actual=0,0 960x1032",
+            "id": "snap_geometry",
+            "name": "半屏对齐",
+            "verdict": "PASS"
+        },
+        {
+            "detail": "visibility=5",
+            "id": "fullscreen_enter",
+            "name": "进入全屏",
+            "verdict": "PASS"
+        },
+        {
+            "detail": "visibility=2 geometry=480,246 960x540",
+            "id": "fullscreen_exit",
+            "name": "退出全屏并还原几何",
+            "verdict": "PASS"
+        },
+        {
+            "detail": "visibility=3",
+            "id": "minimize_enter",
+            "name": "最小化",
+            "verdict": "PASS"
+        },
+        {
+            "detail": "visible=1 visibility=2",
+            "id": "minimize_restore",
+            "name": "最小化恢复",
+            "verdict": "PASS"
+        },
+        {
+            "detail": "same=1 initial=480,246 960x540 actual=480,246 960x540",
+            "id": "restore_geometry",
+            "name": "恢复后几何不变",
+            "verdict": "PASS"
+        },
+        {
+            "detail": "screens=1",
+            "id": "screens_detected",
+            "name": "显示器枚举",
+            "verdict": "PASS"
+        },
+        {
+            "detail": "当前仅 1 块屏幕，需真机多屏验证",
+            "id": "multi_screen_move",
+            "name": "跨屏移动",
+            "verdict": "NOT_VERIFIED"
+        },
+        {
+            "detail": "dpr=2",
+            "id": "dpi_ratio",
+            "name": "DPI 缩放识别",
+            "verdict": "PASS"
+        },
+        {
+            "detail": "需真机切换显示器缩放（125%/150%/200%）",
+            "id": "dpi_live_switch",
+            "name": "运行中 DPI 切换",
+            "verdict": "NOT_VERIFIED"
+        },
+        {
+            "detail": "emitted=1",
+            "id": "close_signal",
+            "name": "关闭信号",
+            "verdict": "PASS"
+        },
+        {
+            "detail": "stored=100,80 1280x720",
+            "id": "geometry_persist",
+            "name": "几何持久化",
+            "verdict": "PASS"
+        }
+    ],
+    "mode": "m2-window",
+    "notVerified": 2,
+    "total": 20,
+    "verdict": "PASS"
+}

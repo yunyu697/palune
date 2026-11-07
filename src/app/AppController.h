@@ -49,6 +49,7 @@ public:
         bool m2ConfigCheck = false;  // --m2-config-check：配置回退（子进程场景用）
         bool m2Actions = false;      // --m2-actions：40 动作绑定/焦点/键盘用例
         bool m2UiPerf = false;       // --m2-ui-perf：控制层显隐时延与 4K60 帧时间
+        bool m2Window = false;       // --m2-window：窗口行为 20 项清单
         bool resumeProbe = false;    // --resume-probe：打开文件后续播并报告位置
         bool shotMatrix = false;     // --shot-matrix：3 主题 × 12 界面截图
         int stateSwitchCount = 50;
@@ -80,6 +81,7 @@ private:
     void runM2ConfigCheck();
     void runM2Actions();
     void runM2UiPerf();
+    void runM2Window();
     void runShotMatrix();
     QStringList collectMedia() const;
     bool waitFor(const std::function<bool()> &predicate, int timeoutMs);

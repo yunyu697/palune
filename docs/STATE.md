@@ -52,13 +52,13 @@
 | 5 | 50 次跨主题切换状态保持 | **PASS**：`m2-stateswitch.json` |
 | 6 | 自动降级阈值 + 配置回退 | **PASS**：`m2-compact.json`、`m2-config-fallback.json`、`m2-compact-baseline.json`（640×360 各主题 36/36） |
 | 7 | 强杀 10 次续播 ±1s；8h 浸泡 | 强杀 **PASS**：`m2-resume-kill.json`（10 轮，delta 0~0.067s）；8h 浸泡进行中 |
-| 8 | 窗口行为 20 项清单 | 未做（真机项标注 NOT_VERIFIED） |
+| 8 | 窗口行为 20 项清单 | **部分通过**：`m2-window.json` 20 项，18 PASS / 2 NOT_VERIFIED（跨屏移动、运行中 DPI 切换，需真机）；Alt-Tab/任务栏、Snap 样式、全屏、最小化恢复、几何持久化均 PASS |
 | 9 | 中/英 i18n + 无硬编码文案 lint | **PASS**：`m2-i18n.json`；QML 125 处 qsTr、10 上下文 203 条翻译全完成，硬编码 0；中/英各 37 张截图（`shots/m2-i18n-zh|en`） |
 
 ## 下一步（按顺序）
 
 1. 确认 1be2ea7 CI 三平台全绿；Windows 若再遇 Chocolatey 超时按基础设施抖动重跑。
-2. M2 #8：窗口行为 20 项（可自动项自动执行，真机项标 NOT_VERIFIED）。
+2. M2 #8 剩余真机项：多屏移动、运行中 DPI（125/150/200%）切换需用户环境；自动化部分已完成。
 3. 等待 8h 浸泡结果（约 16:24），判定 RSS 漂移 ≤50MB/h、崩溃 0。
 4. M2 #1 需用户签字的 36 界面评审基线；签字后 M2 收口。
 5. M2 全项达标后：版本递进（alpha4→alpha5，`python tools/version/check_version.py`）、README/证据更新、提交推送，进入 M3。

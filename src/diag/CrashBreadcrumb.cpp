@@ -75,6 +75,10 @@ void CrashBreadcrumb::install(const QString &version)
     std::signal(SIGABRT, fatalHandler);
     std::signal(SIGFPE, fatalHandler);
     std::signal(SIGILL, fatalHandler);
+#ifdef SIGBUS
+    // macOS/arm64 上非法对齐或 mmap 失效会以 SIGBUS 终止，不注册就只剩空壳崩溃。
+    std::signal(SIGBUS, fatalHandler);
+#endif
 }
 
 void CrashBreadcrumb::record(const QString &action)

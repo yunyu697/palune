@@ -2,7 +2,7 @@
 
 > 自动推进的续跑点。每完成一个可验证节点更新本文件；撞到单轮上限时以本文件为准。
 
-更新时间：2026-11-07 09:10（Asia/Shanghai）
+更新时间：2026-11-07 10:15（Asia/Shanghai）
 当前里程碑：**M2（三主题验收矩阵）**
 版本：`1.0.0-alpha4`
 
@@ -10,10 +10,9 @@
 
 | 项 | 状态 |
 |---|---|
-| 基线 commit | `f6001e7`（已推送 `origin/main`） |
-| 工作区 | 干净 |
-| CI（be6c3b0） | Windows/Linux/覆盖率/分层/品牌/i18n 全绿；macOS 冒烟 `mpv_create 失败`（非 C 的 `LC_NUMERIC`）→ 已在 f6001e7 启动时固定 C locale |
-| CI（f6001e7） | 运行中，确认 macOS 冒烟与三平台全绿 |
+| 基线 commit | `1d5d306`（已推送 `origin/main`，工作区干净，领先远端 0） |
+| CI（1d5d306） | 版本/分层/覆盖率/Windows/Linux 全绿；仅 macOS headless 冒烟失败：libmpv 加载成功后 **Bus error 10（SIGBUS）**，崩溃点 `mpv_create` 或 `applyOptions`，未产出报告 |
+| CI（be6c3b0） | 覆盖率与品牌 lint 已转绿；macOS 当时为 `mpv_create 失败`（非 C 的 `LC_NUMERIC`），已两次固定 `LC_NUMERIC=C`（main 中 QApplication 之后 + `setVideoWindow` create 前） |
 | 本机 8h 浸泡 | 后台运行中（PID 13516，起于 08:23，预计 16:24 出 `qa/runtime/m2-soak-8h.json`） |
 
 ## M1 遗留收口
@@ -57,7 +56,7 @@
 
 ## 下一步（按顺序）
 
-1. 确认 f6001e7 CI 三平台全绿（macOS 冒烟 locale 修复）。
+1. 定位 macOS headless 冒烟 SIGBUS：加启动/建窗面包屑与 SIGBUS 处理器，CI 失败时打印 `qa/runtime/config-ci/crash/*` 与 macOS 崩溃报告，确认栈帧后再决定修复或替换 macOS 取用方式。
 2. M2 #8 剩余真机项：多屏移动、运行中 DPI（125/150/200%）切换需用户环境；自动化部分已完成。
 3. 等待 8h 浸泡结果（约 16:24），判定 RSS 漂移 ≤50MB/h、崩溃 0。
 4. M2 #1 需用户签字的 36 界面评审基线；签字后 M2 收口。

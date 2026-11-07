@@ -133,15 +133,19 @@ bool MpvClient::setVideoWindow(qintptr wid)
         // 部分 libmpv 构建要求 LC_NUMERIC 为 C，否则 mpv_create 直接返回空。
         std::setlocale(LC_NUMERIC, "C");
 #endif
+        Log::info(QStringLiteral("mpv create 开始"));
         m_mpv = m_api->create();
+        Log::info(QStringLiteral("mpv create 返回：%1").arg(m_mpv ? QStringLiteral("ok") : QStringLiteral("null")));
         if (!m_mpv) {
             m_loadError = QCoreApplication::translate("Palune", "mpv_create 失败");
             m_available = false;
             return false;
         }
         applyOptions(wid);
+        Log::info(QStringLiteral("mpv 选项应用完成，准备 initialize"));
         Log::info(QStringLiteral("mpv 视频窗句柄：wid=%1").arg(wid));
         const int rc = m_api->initialize(m_mpv);
+        Log::info(QStringLiteral("mpv initialize 返回：%1").arg(rc));
         if (rc < 0) {
             m_loadError = QCoreApplication::translate("Palune", "mpv_initialize 失败：%1").arg(m_api->errorString(rc));
             m_api->terminateDestroy(m_mpv);
@@ -160,10 +164,16 @@ bool MpvClient::setVideoWindow(qintptr wid)
 void MpvClient::applyOptions(qintptr wid)
 {
     auto opt = [this](const char *k, const char *v) {
-        if (m_api->setOptionString(m_mpv, k, v) >= 0)
-            Log::debug(QStringLiteral("mpv 选项 %1=%2").arg(k, v));
-        else
-            Log::warn(QStringLiteral("mpv 选项设置失败：%1=%2").arg(k, v));
+        const int rc = m_api->setOptionString(m_mpv, k, v);
+        if (rc >= 0) {
+            if (qEnvironmentVariableIsSet("PALUNE_MPV_TRACE"))
+                Log::info(QStringLiteral("mpv 选项 %1=%2").arg(k, v));
+            else
+                Log::debug(QStringLiteral("mpv 选项 %1=%2").arg(k, v));
+        } else {
+            Log::warn(QStringLiteral("mpv 选项设置失败：%1=%2（%3）")
+                          .arg(k, v, m_api->errorString(rc)));
+        }
     };
 
     const QByteArray voEnv = qEnvironmentVariable("PALUNE_MPV_VO").toUtf8();

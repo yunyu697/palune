@@ -31,6 +31,7 @@
 | 实机截图 | 6 张原生窗口合成（3 主题 × 主界面/空态）+ 39 张自渲染矩阵（13 屏 × 3 主题），对照文档 `docs/evidence/UI-ALPHA7-COMPARISON.md` |
 | 本地安装包 | `dist/Palune-1.0.0-alpha7-win-x64.exe`，59,214,724 B，SHA-256 `dc3a8216ec668261a26a0591b91ca0099fa17e0b2e06ca95f8248647f6ee17df` |
 | 安装→启动→卸载 | **PASS**（`docs/evidence/windows-install-evidence.json`、`install-launch.json`，version=1.0.0-alpha7） |
+| 发布 | tag `1.0.0-alpha7` 已推送；按既定工作方式**不创建 Release**：tag 触发的 Release 工作流已主动取消（run 42386155959 结论 cancelled），发行仓库仍只有 alpha6 |
 | 判定 | **PASS**（偏差 #7 NOT_VERIFIED，不阻塞） |
 
 ### 下一阶段

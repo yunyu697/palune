@@ -265,10 +265,15 @@ jobs:
           VERSION: ${{ needs.version.outputs.version }}
         run: |
           set -euo pipefail
+          # dist 里混有 Windows 安装验证输出目录（dist/verify），gh release 不接受目录；
+          # 只挑顶层的文件作为发布资产。
+          mapfile -t FILES < <(find dist -maxdepth 1 -type f | sort)
+          echo "发布资产："
+          printf '%s\n' "${FILES[@]}"
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" dist/* --clobber
+            gh release upload "$TAG" "${FILES[@]}" --clobber
           else
-            gh release create "$TAG" dist/* \
+            gh release create "$TAG" "${FILES[@]}" \
               --title "Palune $VERSION" \
               --notes "Palune $VERSION 自动构建产物。更新清单见 latest.json，校验值见 SHA256SUMS。" \
               --prerelease

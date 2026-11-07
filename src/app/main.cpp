@@ -114,11 +114,10 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    // libmpv 要求 LC_NUMERIC 为 C；macOS CI 等环境可能给出非 C 的 numeric locale，
-    // 会导致 mpv_create 直接失败。Qt 的格式化走 QLocale，不受这里影响。
-    std::setlocale(LC_NUMERIC, "C");
-
     QApplication app(argc, argv);
+    // libmpv 要求 LC_NUMERIC 为 C；QApplication 构造时可能按系统环境重设 locale，
+    // 因此必须在其之后固定。Qt 的格式化走 QLocale，不受这里影响。
+    std::setlocale(LC_NUMERIC, "C");
     app.setApplicationVersion(QStringLiteral(PALUNE_VERSION));
     app.setApplicationDisplayName(QStringLiteral("Palune"));
 

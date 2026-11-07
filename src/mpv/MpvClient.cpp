@@ -6,6 +6,10 @@
 #include <QDir>
 #include <QFileInfo>
 
+#if defined(Q_OS_UNIX)
+#include <clocale>
+#endif
+
 extern "C" {
 #include <mpv/client.h>
 }
@@ -125,6 +129,10 @@ bool MpvClient::setVideoWindow(qintptr wid)
     if (!m_available)
         return false;
     if (!m_mpv) {
+#if defined(Q_OS_UNIX)
+        // 部分 libmpv 构建要求 LC_NUMERIC 为 C，否则 mpv_create 直接返回空。
+        std::setlocale(LC_NUMERIC, "C");
+#endif
         m_mpv = m_api->create();
         if (!m_mpv) {
             m_loadError = QCoreApplication::translate("Palune", "mpv_create 失败");

@@ -21,6 +21,9 @@ Item {
     readonly property string appVersion: hasWindow ? win.version
                                                     : (typeof updater !== "undefined" ? updater.currentVersion : "")
     readonly property bool compact: typeof compactMode !== "undefined" && compactMode.compact
+    // 窄/矮窗口（480×270 及紧凑断点附近）：页签改横向、内容区可滚动，
+    // 避免设置卡片超出窗口造成截断（M2 缩放基线判据）。
+    readonly property bool narrow: panelRoot.width < 720 || panelRoot.height < 520
 
     readonly property var pageTitles: ["通用", "播放", "字幕", "音频", "快捷键", "关于"]
 
@@ -32,17 +35,17 @@ Item {
     Rectangle {
         id: card
         anchors.centerIn: parent
-        width: Math.min(1000, parent.width - 72)
-        height: Math.min(660, parent.height - 72)
-        radius: 18
+        width: Math.min(1000, parent.width - (panelRoot.narrow ? 16 : 72))
+        height: Math.min(660, parent.height - (panelRoot.narrow ? 16 : 72))
+        radius: panelRoot.narrow ? 8 : 18
         color: "#f20d0e11"
         border.width: 1
         border.color: panelRoot.lineColor
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 24
-            spacing: 14
+            anchors.margins: panelRoot.narrow ? 12 : 24
+            spacing: panelRoot.narrow ? 8 : 14
 
             RowLayout {
                 Layout.fillWidth: true
@@ -52,13 +55,14 @@ Item {
                     Text {
                         text: "设置"
                         color: panelRoot.textColor
-                        font.pixelSize: 20
+                        font.pixelSize: panelRoot.narrow ? 16 : 20
                         font.weight: Font.DemiBold
                     }
                     Text {
+                        visible: !panelRoot.narrow || panelRoot.height >= 320
                         text: "Palune " + panelRoot.appVersion + " · M2"
                         color: panelRoot.mutedColor
-                        font.pixelSize: 11
+                        font.pixelSize: panelRoot.narrow ? 10 : 11
                     }
                 }
 
@@ -92,13 +96,52 @@ Item {
                 color: panelRoot.lineColor
             }
 
+            // 窄窗口下页签横向排列，省出垂直空间给内容区
+            Flow {
+                id: compactTabs
+                visible: panelRoot.narrow
+                Layout.fillWidth: true
+                Layout.preferredHeight: 26
+                spacing: 4
+
+                Repeater {
+                    model: panelRoot.pageTitles
+                    delegate: Rectangle {
+                        required property int index
+                        required property string modelData
+                        width: 64
+                        height: 26
+                        radius: 8
+                        color: panelRoot.page === index ? panelRoot.accent + "33"
+                                                        : (compactTabHover.containsMouse ? "#18ffffff" : "transparent")
+                        border.width: 1
+                        border.color: panelRoot.page === index ? panelRoot.accent : "transparent"
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: modelData
+                            color: panelRoot.page === index ? panelRoot.accent : panelRoot.textColor
+                            font.pixelSize: 11
+                        }
+                        MouseArea {
+                            id: compactTabHover
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: panelRoot.page = index
+                        }
+                    }
+                }
+            }
+
             RowLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 spacing: 18
 
-                // 左侧页签
+                // 左侧页签（窄窗口下隐藏，改用上方横向页签）
                 Column {
+                    visible: !panelRoot.narrow
                     spacing: 6
                     Repeater {
                         model: panelRoot.pageTitles
@@ -133,18 +176,34 @@ Item {
                 }
 
                 Rectangle {
+                    visible: !panelRoot.narrow
                     Layout.preferredWidth: 1
                     Layout.fillHeight: true
                     color: panelRoot.lineColor
                 }
 
-                Item {
+                // 内容区：窄窗口下高度可能不足，用 Flickable 保证可滚动、不截断
+                Flickable {
+                    id: contentFlick
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+                    contentWidth: width
+                    contentHeight: contentColumn.implicitHeight
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    ScrollBar.vertical: ScrollBar {
+                        policy: contentFlick.contentHeight > contentFlick.height
+                                ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                    }
+
+                    ColumnLayout {
+                        id: contentColumn
+                        width: contentFlick.width
+                        spacing: 0
 
                     // 0 通用
                     ColumnLayout {
-                        anchors.fill: parent
+                        Layout.fillWidth: true
                         visible: panelRoot.page === 0
                         spacing: 12
 
@@ -223,6 +282,8 @@ Item {
                                   + "px · 当前：" + (panelRoot.compact ? "紧凑" : "常规")
                             color: panelRoot.mutedColor
                             font.pixelSize: 12
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
                         }
                         Text {
                             visible: typeof compactMode !== "undefined" && compactMode.configNotice !== ""
@@ -243,7 +304,7 @@ Item {
 
                     // 1 播放
                     ColumnLayout {
-                        anchors.fill: parent
+                        Layout.fillWidth: true
                         visible: panelRoot.page === 1
                         spacing: 10
 
@@ -270,7 +331,7 @@ Item {
 
                     // 2 字幕
                     ColumnLayout {
-                        anchors.fill: parent
+                        Layout.fillWidth: true
                         visible: panelRoot.page === 2
                         spacing: 10
 
@@ -301,7 +362,7 @@ Item {
 
                     // 3 音频
                     ColumnLayout {
-                        anchors.fill: parent
+                        Layout.fillWidth: true
                         visible: panelRoot.page === 3
                         spacing: 12
 
@@ -348,7 +409,7 @@ Item {
 
                     // 4 快捷键
                     ColumnLayout {
-                        anchors.fill: parent
+                        Layout.fillWidth: true
                         visible: panelRoot.page === 4
                         spacing: 8
 
@@ -360,6 +421,8 @@ Item {
                             color: panelRoot.mutedColor
                             font.pixelSize: 12
                             lineHeight: 1.4
+                            wrapMode: Text.WordWrap
+                            Layout.fillWidth: true
                         }
 
                         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
@@ -378,13 +441,14 @@ Item {
 
                     // 5 关于
                     ColumnLayout {
-                        anchors.fill: parent
+                        Layout.fillWidth: true
                         visible: panelRoot.page === 5
                         spacing: 12
 
                         Text { text: "Palune " + panelRoot.appVersion; color: panelRoot.textColor; font.pixelSize: 16; font.weight: Font.DemiBold }
                         Text { text: "Qt " + Qt.application.version + " · libmpv 动态链接 · 渲染路径：" + Qt.platform.os
-                               color: panelRoot.mutedColor; font.pixelSize: 12 }
+                               color: panelRoot.mutedColor; font.pixelSize: 12
+                               wrapMode: Text.WordWrap; Layout.fillWidth: true }
                         Text {
                             visible: panelRoot.hasWindow
                             text: panelRoot.hasWindow
@@ -404,7 +468,8 @@ Item {
                             Layout.fillHeight: true
                         }
                     }
-                }
+                    }   // contentColumn
+                }       // contentFlick
             }
         }
     }

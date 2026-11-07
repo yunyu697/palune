@@ -13,6 +13,9 @@ Item {
     readonly property int storedWidth: typeof uiState !== "undefined" ? uiState.panelWidth("B") : 320
     readonly property int dockWidth: layoutB.compact ? 220
         : (dragWidth > 0 ? dragWidth : storedWidth)
+    // 极矮窗口（480×270 验收尺寸）：隐藏次要标签并压缩最近列表，
+    // 保证左坞内容不越过窗口边界。
+    readonly property bool shortHeight: layoutB.height < 360
 
     Tokens { id: tokens }
 
@@ -66,10 +69,15 @@ Item {
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: tokens.spaceM
+            anchors.leftMargin: tokens.spaceM
+            anchors.rightMargin: tokens.spaceM
+            anchors.bottomMargin: tokens.spaceM
+            // 顶部让开悬浮的品牌/窗口按钮行，否则标题会被按钮压住。
+            anchors.topMargin: tokens.spaceM + (layoutB.compact ? 26 : 30) + tokens.spaceS
             spacing: tokens.spaceS
 
             Text {
+                visible: !layoutB.shortHeight
                 text: "播放中"
                 color: tokens.accent
                 font.pixelSize: tokens.fontS
@@ -94,6 +102,7 @@ Item {
             Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: tokens.border }
 
             Text {
+                visible: !layoutB.shortHeight
                 text: "最近打开"
                 color: tokens.textMuted
                 font.pixelSize: tokens.fontS
@@ -103,7 +112,8 @@ Item {
                 id: recentList
                 objectName: "recentListB"
                 Layout.fillWidth: true
-                Layout.preferredHeight: layoutB.compact ? 110 : 160
+                Layout.preferredHeight: layoutB.shortHeight ? 60
+                    : (layoutB.compact ? 110 : 160)
                 clip: true
                 model: win.recentFiles
                 spacing: 2
@@ -156,6 +166,7 @@ Item {
             Item { Layout.fillHeight: true }
 
             Text {
+                visible: !layoutB.shortHeight
                 text: "音轨 " + player.audioTracks.length + " · 字幕 " + player.subtitleTracks.length
                 color: tokens.textFaint
                 font.pixelSize: tokens.fontS

@@ -1,0 +1,80 @@
+{
+  "mode": "m2-scale-matrix",
+  "version": "1.0.0-alpha4",
+  "generatedAt": "2026-11-07T08:20:00",
+  "host": "Windows 11, single monitor, native DPR 2.0",
+  "criterion": "三主题在 480x270、1280x720、4K、125%/150%/200% 缩放下无溢出、无截断、无错位；每主题独立截图基线通过",
+  "method": "QT_SCALE_FACTOR 设为 0.5/0.625/0.75/1.0，对应有效 DPR 1.0/1.25/1.5/2.0；每组 A/B/C × 12 界面 = 36 张，逐张人工抽查 + 基线清单比对",
+  "configs": [
+    {
+      "config": "size-480x270-100",
+      "logical": "480x270",
+      "pixel": "480x270",
+      "devicePixelRatio": 1.0,
+      "saved": 36,
+      "expected": 36,
+      "verdict": "PASS"
+    },
+    {
+      "config": "size-1280x720-100",
+      "logical": "1280x720",
+      "pixel": "1280x720",
+      "devicePixelRatio": 1.0,
+      "saved": 36,
+      "expected": 36,
+      "verdict": "PASS"
+    },
+    {
+      "config": "size-3840x2160-100",
+      "logical": "3840x2160",
+      "pixel": "3840x2160",
+      "devicePixelRatio": 1.0,
+      "saved": 36,
+      "expected": 36,
+      "verdict": "PASS"
+    },
+    {
+      "config": "scale-125-1440x900",
+      "logical": "1440x900",
+      "pixel": "1800x1125",
+      "devicePixelRatio": 1.25,
+      "saved": 36,
+      "expected": 36,
+      "verdict": "PASS"
+    },
+    {
+      "config": "scale-150-1440x900",
+      "logical": "1440x900",
+      "pixel": "2160x1350",
+      "devicePixelRatio": 1.5,
+      "saved": 36,
+      "expected": 36,
+      "verdict": "PASS"
+    },
+    {
+      "config": "scale-200-1440x900",
+      "logical": "1440x900",
+      "pixel": "2880x1800",
+      "devicePixelRatio": 2.0,
+      "saved": 36,
+      "expected": 36,
+      "verdict": "PASS"
+    }
+  ],
+  "regressionsFoundAndFixed": [
+    {
+      "screen": "settings-* @ 480x270",
+      "issue": "设置卡片高度超出窗口，底部页签/内容被截断，正文横向溢出",
+      "fix": "SettingsPanel 增加 narrow 断点：卡片贴边、页签改横向 Flow、内容区改 Flickable 可滚动、长文本换行/省略",
+      "evidence": "shots/m2-scale/size-480x270-100/m2-A-settings-shortcuts.png"
+    },
+    {
+      "screen": "layoutB main @ 480x270 与 1280x720",
+      "issue": "左坞标题与顶部品牌/窗口按钮重叠；极矮窗口下左坞内容越过窗口边界",
+      "fix": "左坞内容顶部避让按钮行；height<360 时隐藏次要标签、最近列表压到 60px",
+      "evidence": "shots/m2-scale/size-480x270-100/m2-B-main.png"
+    }
+  ],
+  "evidence": "docs/evidence/shots/m2-scale/（13 张代表图，全量 216 张位于 qa/runtime/m2-scale/）",
+  "generator": "Palune.exe --ui-shot <dir> --shot-matrix --shot-size WxH"
+}

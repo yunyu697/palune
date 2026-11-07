@@ -166,6 +166,12 @@ int main(int argc, char *argv[])
     options.m2ConfigCheck = hasArg(argc, argv, "--m2-config-check");
     options.shotMatrix = hasArg(argc, argv, "--shot-matrix");
     options.backdropPath = valueArg(argc, argv, "--shot-backdrop");
+    const QString shotSize = valueArg(argc, argv, "--shot-size");
+    if (!shotSize.isEmpty()) {
+        const QStringList parts = shotSize.split(QLatin1Char('x'));
+        if (parts.size() == 2 && parts.at(0).toInt() > 0 && parts.at(1).toInt() > 0)
+            options.shotSize = QSize(parts.at(0).toInt(), parts.at(1).toInt());
+    }
     if (hasArg(argc, argv, "--state-switch-count"))
         options.stateSwitchCount = valueArg(argc, argv, "--state-switch-count").toInt();
 
@@ -178,7 +184,7 @@ int main(int argc, char *argv[])
     const char *valueFlags[] = {"--video", "--report", "--ui-shot", "--update-url",
                                 "--download-dir", "--e2e-mode", "--e2e-marker", "--open",
                                 "--media", "--switch-count", "--soak-minute",
-                                "--state-switch-count", "--shot-backdrop"};
+                                "--state-switch-count", "--shot-backdrop", "--shot-size"};
     for (int i = 1; i < argc; ++i) {
         const QString arg = QString::fromLocal8Bit(argv[i]);
         bool isValueFlag = false;

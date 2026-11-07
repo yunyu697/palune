@@ -3,6 +3,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QObject>
+#include <QSize>
 #include <QString>
 
 #include <functional>
@@ -48,6 +49,7 @@ public:
         bool m2ConfigCheck = false;  // --m2-config-check：配置回退（子进程场景用）
         bool shotMatrix = false;     // --shot-matrix：3 主题 × 12 界面截图
         int stateSwitchCount = 50;
+        QSize shotSize;              // --shot-size：非迷你界面逻辑尺寸（默认 1440x900）
         QString backdropPath;        // --shot-backdrop：截图静态背景
     };
 

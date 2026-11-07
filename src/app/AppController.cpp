@@ -965,7 +965,8 @@ void AppController::runShotMatrix()
     ctx->setContextProperty(QStringLiteral("uiState"), &demoUi);
     ctx->setContextProperty(QStringLiteral("compactMode"), &demoCompact);
     ctx->setContextProperty(QStringLiteral("library"), &demoLibrary);
-    view.resize(1440, 900);
+    const QSize normalSize = m_options.shotSize.isValid() ? m_options.shotSize : QSize(1440, 900);
+    view.resize(normalSize);
     view.setSource(QUrl(QStringLiteral("qrc:/qml/Main.qml")));
     if (view.status() != QQuickView::Ready) {
         for (const auto &error : view.errors())
@@ -975,7 +976,9 @@ void AppController::runShotMatrix()
     }
     view.setPosition(0, 0);
     view.show();
+    Log::info(QStringLiteral("截图：窗口已显示"));
     sleepMs(220);
+    Log::info(QStringLiteral("截图：等待结束"));
 
     QQuickItem *root = view.rootObject();
     LayoutHost host(view.engine(), &demoTheme);
@@ -1028,11 +1031,17 @@ void AppController::runShotMatrix()
             root->setProperty("errorDismissed", false);
             if (settingsPanel && shot.page >= 0)
                 settingsPanel->setProperty("page", shot.page);
-            view.resize(mini ? 480 : 1440, mini ? 270 : 900);
-            demoCompact.feedWidth(mini ? 480 : 1440);
+            const QSize logical = mini ? QSize(480, 270) : normalSize;
+            view.resize(logical);
+            demoCompact.feedWidth(logical.width());
             demoCompact.flush();
             sleepMs(260);
+            Log::info(QStringLiteral("截图：抓取 %1/%2").arg(theme, shot.id));
             const QImage image = view.grabWindow();
+            Log::info(QStringLiteral("截图：完成 %1/%2 %3x%4")
+                          .arg(theme, shot.id)
+                          .arg(image.width())
+                          .arg(image.height()));
             const QString path = m_options.shotDir
                 + QStringLiteral("/m2-%1-%2.png").arg(theme, shot.id);
             if (!image.isNull() && image.save(path)) {
@@ -1042,6 +1051,10 @@ void AppController::runShotMatrix()
                 entry.insert(QStringLiteral("screen"), shot.id);
                 entry.insert(QStringLiteral("width"), image.width());
                 entry.insert(QStringLiteral("height"), image.height());
+                entry.insert(QStringLiteral("logicalWidth"), logical.width());
+                entry.insert(QStringLiteral("logicalHeight"), logical.height());
+                entry.insert(QStringLiteral("devicePixelRatio"),
+                              double(image.width()) / double(logical.width()));
                 entry.insert(QStringLiteral("file"), QFileInfo(path).fileName());
                 index.append(entry);
             } else {
@@ -1054,6 +1067,8 @@ void AppController::runShotMatrix()
     report.insert(QStringLiteral("mode"), QStringLiteral("m2-ui-baseline"));
     report.insert(QStringLiteral("version"), QStringLiteral(PALUNE_VERSION));
     report.insert(QStringLiteral("themes"), QJsonArray{QStringLiteral("A"), QStringLiteral("B"), QStringLiteral("C")});
+    report.insert(QStringLiteral("logicalWidth"), normalSize.width());
+    report.insert(QStringLiteral("logicalHeight"), normalSize.height());
     report.insert(QStringLiteral("screensPerTheme"), screens.size());
     report.insert(QStringLiteral("saved"), saved);
     report.insert(QStringLiteral("expected"), screens.size() * 3);

@@ -45,6 +45,8 @@
 
 差异来源：Qt 版本不同（本地 6.8.3 / CI 6.9.3）、libmpv DLL 来源不同、NSIS 安装包内嵌时间戳，均导致字节不一致。**发布的不是未验证构建**：release 流水线的 Windows job 对这份最终 exe 做了「安装 → 启动 → 卸载」全流程验证，`windows-install-evidence.json` 显示 `installExitCode=0`、三个快捷方式正确、`launch.ok=true`、卸载后安装目录与快捷方式全部清除、`verdict=PASS`；该证据与安装包同批发布。
 
+**复核**：从 Release 重新下载 `Palune-1.0.0-alpha4-win-x64.exe`（60,177,283 B），本地计算 SHA-256 = `101b50526c69cc82c777b82b5c4bdd33d260bed42a5982675441d456518dce97`，与 Release 内 `SHA256SUMS` 完全一致，下载链路无损。
+
 ### 基线
 
 | 项 | 状态 |

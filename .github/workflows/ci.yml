@@ -140,7 +140,10 @@ jobs:
           brew install ffmpeg mpv libsodium
           # UpdateCrypto 通过 QLibrary 动态加载 libsodium；Homebrew 的 lib 目录
           # 不在 dyld 默认搜索路径，测试与冒烟进程需要显式传入。libmpv 同理。
-          echo "DYLD_LIBRARY_PATH=$(brew --prefix libsodium)/lib:$(brew --prefix mpv)/lib:$(brew --prefix)/lib" >> "$GITHUB_ENV"
+          # 注意不要加 $(brew --prefix)/lib：那里有 Homebrew 自带的 libpng/libjpeg，
+          # 会把系统 ImageIO 的 PNG 解码插件绑定到不兼容的副本（macOS 上表现为
+          # 建窗时跳到无效地址的 SIGBUS）。只暴露确实需要的两个目录。
+          echo "DYLD_LIBRARY_PATH=$(brew --prefix libsodium)/lib:$(brew --prefix mpv)/lib" >> "$GITHUB_ENV"
 
       - name: 安装运行时依赖（Windows）
         if: runner.os == 'Windows'

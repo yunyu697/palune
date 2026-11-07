@@ -2,25 +2,26 @@
 
 > 自动推进的续跑点。每完成一个可验证节点更新本文件；撞到单轮上限时以本文件为准。
 
-更新时间：2026-11-07 10:15（Asia/Shanghai）
-当前里程碑：**M2（三主题验收矩阵）**
+更新时间：2026-11-07 10:50（Asia/Shanghai）
+当前里程碑：**M2（三主题验收矩阵）→ 即将进入 M3**
 版本：`1.0.0-alpha4`
 
 ## 基线
 
 | 项 | 状态 |
 |---|---|
-| 基线 commit | `1d5d306`（已推送 `origin/main`，工作区干净，领先远端 0） |
-| CI（1d5d306） | 版本/分层/覆盖率/Windows/Linux 全绿；仅 macOS headless 冒烟失败：libmpv 加载成功后 **Bus error 10（SIGBUS）**，崩溃点 `mpv_create` 或 `applyOptions`，未产出报告 |
-| CI（be6c3b0） | 覆盖率与品牌 lint 已转绿；macOS 当时为 `mpv_create 失败`（非 C 的 `LC_NUMERIC`），已两次固定 `LC_NUMERIC=C`（main 中 QApplication 之后 + `setVideoWindow` create 前） |
+| 基线 commit | `f7fe72f`（已推送 `origin/main`，工作区干净） |
+| CI（f7fe72f） | **三平台全绿**：版本/分层/覆盖率/Windows/Linux/macOS 全部 success；macOS 冒烟 20/20 样本 PASS |
+| macOS SIGBUS 根因 | lldb 栈：`mpv_create → AppHub.init → RemoteCommandCenter.init → AppHub.getIcon → NSImage(data:) → ImageIO PNGReadPlugin`，PC 跳到 `0xbad4007`。根因是 `DYLD_LIBRARY_PATH` 含 `$(brew --prefix)/lib`，Homebrew 的 libpng/libjpeg 抢占了系统 ImageIO 的解码插件；收窄为 `libsodium/lib:mpv/lib` 后消失 |
+| CI（1d5d306） | 仅 macOS 失败（上述 SIGBUS），其余全绿 |
 | 本机 8h 浸泡 | 后台运行中（PID 13516，起于 08:23，预计 16:24 出 `qa/runtime/m2-soak-8h.json`） |
 
 ## M1 遗留收口
 
-- **CI 三平台**：Windows/Linux/覆盖率/分层/版本曾绿；macOS 失败点已定位为 `tools/qa/gen_samples.py` 的 `libvorbis→libopus` 回退仍带 `-q:a 3`，已改为显式 `-b:a 96k`，待推送复跑。
-- **覆盖率**：`单测覆盖率` 作业门槛 70%；9f3beef 因新增 `src/ui/ActionRegistry.cpp` 掉到 64.7%。已补 `tests/unit/tst_actions.cpp` 与 `Settings` 续播用例，待 CI 复跑确认。
+- **CI 三平台**：已全部转绿（含 macOS 20/20 冒烟样本）；此前样本生成与 locale 问题均已修复。
+- **覆盖率**：`单测覆盖率` 作业 70% 门槛已恢复绿色（补 `tests/unit/tst_actions.cpp` 与 Settings 续播用例）。
 - **1 小时压测**：已完成 1/3 轮，`docs/evidence/m1-soak.json`，RSS 218MB→190MB（-28.3MB/h），无增长趋势；完整 8h 数据由 M2 soak 补齐。
-- macOS/Linux headless 冒烟：Linux 已绿；macOS 因样本生成失败未进入冒烟，修复后复跑。
+- macOS/Linux headless 冒烟：Linux/macOS 均绿。
 
 ## Windows 安装包三问题（M1 实测反馈）
 
@@ -56,11 +57,11 @@
 
 ## 下一步（按顺序）
 
-1. 定位 macOS headless 冒烟 SIGBUS：加启动/建窗面包屑与 SIGBUS 处理器，CI 失败时打印 `qa/runtime/config-ci/crash/*` 与 macOS 崩溃报告，确认栈帧后再决定修复或替换 macOS 取用方式。
-2. M2 #8 剩余真机项：多屏移动、运行中 DPI（125/150/200%）切换需用户环境；自动化部分已完成。
-3. 等待 8h 浸泡结果（约 16:24），判定 RSS 漂移 ≤50MB/h、崩溃 0。
-4. M2 #1 需用户签字的 36 界面评审基线；签字后 M2 收口。
-5. M2 全项达标后：版本递进（alpha4→alpha5，`python tools/version/check_version.py`）、README/证据更新、提交推送，进入 M3。
+1. 等待 8h 浸泡结果（约 16:24），判定 RSS 漂移 ≤50MB/h、崩溃 0，补 M2 #7 完整结论。
+2. M2 #1 需用户签字的 36 界面评审基线（截图位于 `docs/evidence/shots/m2-baseline`、`m2-scale`）；签字后 M2 收口。
+3. 同时启动 M3 前期工作（读 `MILESTONES.md` M3 判据，拆解首个可验证节点）。
+4. M2 全项达标后：版本递进（alpha4→alpha5，`python tools/version/check_version.py`）、README/证据更新、提交推送，正式进入 M3。
+5. M2 #8 剩余真机项：多屏移动、运行中 DPI（125/150/200%）切换需用户环境；自动化部分已完成。
 
 ## 阻塞 / 需用户
 

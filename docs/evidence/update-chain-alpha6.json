@@ -1,0 +1,252 @@
+{
+  "feedUrl": "https://github.com/yunyu697/palune-releases/releases/latest/download/latest.json",
+  "anonymous": true,
+  "requestHeaders": {
+    "User-Agent": "Palune-Release-Audit/1.0",
+    "Cache-Control": "no-cache"
+  },
+  "authorization": null,
+  "generatedAt": "2026-11-07T10:51:08.625922+00:00",
+  "feed": {
+    "httpStatus": 200,
+    "finalUrl": "https://release-assets.githubusercontent.com/github-production-release-asset/1449256608/143c721e-275f-4305-9a56-9c3b29e8f06b?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-11-07T11%3A44%3A13Z&rscd=attachment%3B+filename%3Dlatest.json&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-11-07T10%3A43%3A29Z&ske=2026-11-07T11%3A44%3A13Z&sks=b&skv=2018-11-09&sig=0VYTsQ%2F7JwFVxiL%2F16xT2bcttesS%2Fr1YBa5bZlsBk2A%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc5NDA0ODkxMywibmJmIjoxNzk0MDQ4NjEzLCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.-raZNFxkpmRoQVkOGGRN7rXwtIJ1jErrLZsZEo4GLK4&response-content-disposition=attachment%3B%20filename%3Dlatest.json&response-content-type=application%2Foctet-stream",
+    "headers": [
+      [
+        "Connection",
+        "close"
+      ],
+      [
+        "Content-Length",
+        "1120"
+      ],
+      [
+        "Last-Modified",
+        "Sat, 07 Nov 2026 10:49:42 GMT"
+      ],
+      [
+        "ETag",
+        "\"0x8DF3CBCD42BEE00\""
+      ],
+      [
+        "Server",
+        "Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0"
+      ],
+      [
+        "x-ms-request-id",
+        "ffa23c57-801e-001b-69a5-6edf56000000"
+      ],
+      [
+        "x-ms-version",
+        "2018-11-09"
+      ],
+      [
+        "x-ms-creation-time",
+        "Sat, 07 Nov 2026 10:49:42 GMT"
+      ],
+      [
+        "x-ms-blob-content-md5",
+        "tkFhN28b7xRLswACDYTJEA=="
+      ],
+      [
+        "x-ms-lease-status",
+        "unlocked"
+      ],
+      [
+        "x-ms-lease-state",
+        "available"
+      ],
+      [
+        "x-ms-blob-type",
+        "BlockBlob"
+      ],
+      [
+        "x-ms-server-encrypted",
+        "true"
+      ],
+      [
+        "x-ms-access-tier",
+        "Hot"
+      ],
+      [
+        "x-ms-access-tier-inferred",
+        "true"
+      ],
+      [
+        "Via",
+        "1.1 varnish, 1.1 varnish"
+      ],
+      [
+        "Accept-Ranges",
+        "bytes"
+      ],
+      [
+        "Age",
+        "0"
+      ],
+      [
+        "Date",
+        "Sat, 07 Nov 2026 10:50:15 GMT"
+      ],
+      [
+        "X-Served-By",
+        "cache-iad-khef600030-IAD, cache-bur-kbur8200088-BUR"
+      ],
+      [
+        "X-Cache",
+        "MISS, MISS"
+      ],
+      [
+        "X-Cache-Hits",
+        "0, 0"
+      ],
+      [
+        "X-Timer",
+        "S1794048615.381540,VS0,VE60"
+      ],
+      [
+        "Content-Disposition",
+        "attachment; filename=latest.json"
+      ],
+      [
+        "Content-Type",
+        "application/octet-stream"
+      ]
+    ],
+    "bytes": 1120
+  },
+  "payload": {
+    "version": "1.0.0-alpha6",
+    "channel": "alpha",
+    "publishedAt": "2026-11-07T10:49:32Z",
+    "artifacts": [
+      {
+        "platform": "windows",
+        "arch": "x86_64",
+        "url": "https://github.com/yunyu697/palune-releases/releases/download/1.0.0-alpha6/Palune-1.0.0-alpha6-win-x64.exe",
+        "size": 59210046,
+        "sha256": "2d146581fa1b0519eb8a3c6ffb96e78c39f5be5fb602977ffa09dcc1133eb981",
+        "installer": "nsis",
+        "minOsVersion": "10.0",
+        "signature": {
+          "type": "ed25519",
+          "value": "1IgbRApl3kkUxNL+M+vtZzPbytkiFC406i1TlQw8y+eUJ10e2wF43ay23L4d8Pk04Gru8CamZ1SbDeg44vjYBQ=="
+        }
+      }
+    ],
+    "keyId": "palune-test",
+    "signed": true,
+    "manifestSignatureValid": true
+  },
+  "artifact": {
+    "name": "Palune-1.0.0-alpha6-win-x64.exe",
+    "url": "https://github.com/yunyu697/palune-releases/releases/download/1.0.0-alpha6/Palune-1.0.0-alpha6-win-x64.exe",
+    "finalUrl": "https://release-assets.githubusercontent.com/github-production-release-asset/1449256608/a4a99813-aa70-43f2-b00e-ae16272b5971?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-11-07T11%3A23%3A55Z&rscd=attachment%3B+filename%3DPalune-1.0.0-alpha6-win-x64.exe&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-11-07T10%3A23%3A49Z&ske=2026-11-07T11%3A23%3A55Z&sks=b&skv=2018-11-09&sig=b2V3qOoKOrYfAJCGjfA0H%2BMy7oF8%2BpHi9juxdmAFEmQ%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc5NDA1MDQxNiwibmJmIjoxNzk0MDQ4NjE2LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.tXRj0lAq0xzPa0kYZ0OJ8p-UnlRBlf34TCLgSCFDPxs&response-content-disposition=attachment%3B%20filename%3DPalune-1.0.0-alpha6-win-x64.exe&response-content-type=application%2Foctet-stream",
+    "httpStatus": 200,
+    "headers": [
+      [
+        "Connection",
+        "close"
+      ],
+      [
+        "Content-Length",
+        "59210046"
+      ],
+      [
+        "Last-Modified",
+        "Sat, 07 Nov 2026 10:50:00 GMT"
+      ],
+      [
+        "ETag",
+        "\"0x8DF3CBCDF5A6D06\""
+      ],
+      [
+        "Server",
+        "Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0"
+      ],
+      [
+        "x-ms-request-id",
+        "d39a55eb-901e-0007-57a5-6e8d36000000"
+      ],
+      [
+        "x-ms-version",
+        "2018-11-09"
+      ],
+      [
+        "x-ms-creation-time",
+        "Sat, 07 Nov 2026 10:50:00 GMT"
+      ],
+      [
+        "x-ms-lease-status",
+        "unlocked"
+      ],
+      [
+        "x-ms-lease-state",
+        "available"
+      ],
+      [
+        "x-ms-blob-type",
+        "BlockBlob"
+      ],
+      [
+        "x-ms-server-encrypted",
+        "true"
+      ],
+      [
+        "x-ms-access-tier",
+        "Hot"
+      ],
+      [
+        "x-ms-access-tier-inferred",
+        "true"
+      ],
+      [
+        "Via",
+        "1.1 varnish, 1.1 varnish"
+      ],
+      [
+        "Accept-Ranges",
+        "bytes"
+      ],
+      [
+        "Age",
+        "0"
+      ],
+      [
+        "Date",
+        "Sat, 07 Nov 2026 10:50:17 GMT"
+      ],
+      [
+        "X-Served-By",
+        "cache-iad-kiad7000062-IAD, cache-sjc1000144-SJC"
+      ],
+      [
+        "X-Cache",
+        "MISS, MISS"
+      ],
+      [
+        "X-Cache-Hits",
+        "0, 0"
+      ],
+      [
+        "X-Timer",
+        "S1794048618.829411,VS0,VE155"
+      ],
+      [
+        "Content-Disposition",
+        "attachment; filename=Palune-1.0.0-alpha6-win-x64.exe"
+      ],
+      [
+        "Content-Type",
+        "application/octet-stream"
+      ]
+    ],
+    "declaredSize": 59210046,
+    "actualSize": 59210046,
+    "declaredSha256": "2d146581fa1b0519eb8a3c6ffb96e78c39f5be5fb602977ffa09dcc1133eb981",
+    "actualSha256": "2d146581fa1b0519eb8a3c6ffb96e78c39f5be5fb602977ffa09dcc1133eb981",
+    "sha256Match": true,
+    "signatureValid": true,
+    "path": "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\_scratch\\rel-alpha6\\Palune-1.0.0-alpha6-win-x64.exe"
+  },
+  "verdict": "PASS"
+}

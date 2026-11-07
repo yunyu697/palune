@@ -1,0 +1,69 @@
+匿名 GET https://github.com/yunyu697/palune-releases/releases/latest/download/latest.json -> HTTP 200
+--- 原始响应头 ---
+HTTP/1.1 302 Found
+Date: Sat, 07 Nov 2026 10:54:46 GMT
+Content-Type: text/html; charset=utf-8
+Vary: X-PJAX, X-PJAX-Container, Turbo-Visit, Turbo-Frame, X-Requested-With, X-GitHub-Client-Version, Sec-Fetch-Site,Accept-Encoding, Accept, X-Requested-With
+Location: https://github.com/yunyu697/palune-releases/releases/download/1.0.0-alpha6/latest.json
+Cache-Control: no-cache
+Strict-Transport-Security: max-age=31536000; includeSubdomains; preload
+X-Frame-Options: deny
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Referrer-Policy: no-referrer-when-downgrade
+Content-Security-Policy: default-src 'none'; base-uri 'self'; child-src github.githubassets.com github.com/assets-cdn/worker/ github.com/assets/ gist.github.com/assets-cdn/worker/; connect-src 'self' uploads.github.com www.githubstatus.com collector.github.com raw.githubusercontent.com api.github.com github-cloud.s3.amazonaws.com github-production-repository-file-5c1aeb.s3.amazonaws.com github-production-upload-manifest-file-7fdce7.s3.amazonaws.com github-production-user-asset-6210df.s3.amazonaws.com *.rel.tunnels.api.visualstudio.com wss://*.rel.tunnels.api.visualstudio.com github.githubassets.com objects-origin.githubusercontent.com copilot-proxy.githubusercontent.com proxy.individual.githubcopilot.com proxy.business.githubcopilot.com proxy.enterprise.githubcopilot.com *.actions.githubusercontent.com wss://*.actions.githubusercontent.com productionresultssa0.blob.core.windows.net productionresultssa1.blob.core.windows.net productionresultssa2.blob.core.windows.net productionresultssa3.blob.core.windows.net productionresultssa4.blob.core.windows.net productionresultssa5.blob.core.windows.net productionresultssa6.blob.core.windows.net productionresultssa7.blob.core.windows.net productionresultssa8.blob.core.windows.net productionresultssa9.blob.core.windows.net productionresultssa10.blob.core.windows.net productionresultssa11.blob.core.windows.net productionresultssa12.blob.core.windows.net productionresultssa13.blob.core.windows.net productionresultssa14.blob.core.windows.net productionresultssa15.blob.core.windows.net productionresultssa16.blob.core.windows.net productionresultssa17.blob.core.windows.net productionresultssa18.blob.core.windows.net productionresultssa19.blob.core.windows.net productionresultssa30.blob.core.windows.net productionresultssa31.blob.core.windows.net productionresultssa32.blob.core.windows.net github-production-repository-image-32fea6.s3.amazonaws.com github-production-release-asset-2e65be.s3.amazonaws.com insights.github.com wss://alive.github.com wss://alive-staging.github.com api.githubcopilot.com api.individual.githubcopilot.com api.business.githubcopilot.com api.enterprise.githubcopilot.com wss://production-copilot-host.webpubsub.azure.com wss://production-copilot-host-centralus.webpubsub.azure.com wss://production-copilot-host-centralus-02.webpubsub.azure.com wss://production-copilot-host-westus.webpubsub.azure.com wss://production-copilot-host-westus3.webpubsub.azure.com api.github.com/cmc_internal/api/; font-src github.githubassets.com; form-action 'self' github.com gist.github.com copilot-workspace.githubnext.com objects-origin.githubusercontent.com; frame-ancestors 'none'; frame-src viewscreen.githubusercontent.com notebooks.githubusercontent.com; img-src 'self' data: blob: github.githubassets.com media.githubusercontent.com camo.githubusercontent.com identicons.github.com avatars.githubusercontent.com private-avatars.githubusercontent.com github-cloud.s3.amazonaws.com objects.githubusercontent.com release-assets.githubusercontent.com secured-user-images.githubusercontent.com user-images.githubusercontent.com private-user-images.githubusercontent.com opengraph.githubassets.com repository-images.githubusercontent.com marketplace-screenshots.githubusercontent.com copilotprodattachments.blob.core.windows.net/github-production-copilot-attachments/ github-production-user-asset-6210df.s3.amazonaws.com customer-stories-feed.github.com spotlights-feed.github.com explore-feed.github.com *.googleusercontent.com objects-origin.githubusercontent.com *.githubusercontent.com; manifest-src 'self'; media-src github.com user-images.githubusercontent.com secured-user-images.githubusercontent.com private-user-images.githubusercontent.com github-production-user-asset-6210df.s3.amazonaws.com gist.github.com github.githubassets.com; script-src github.githubassets.com; style-src 'unsafe-inline' github.githubassets.com; upgrade-insecure-requests; worker-src github.githubassets.com github.com/assets-cdn/worker/ github.com/assets/ gist.github.com/assets-cdn/worker/
+Server: github.com
+Set-Cookie: _gh_sess=DFxjNc0L%2FMXt5wZXNFxXGpIMlsmRlOX4IZ1uPWnlnS71TGi0G3yQzAS07N60yNVb0Q4AL90qBrfoGBSKIjWJKpF87qQRAn9FYtzPT6OrkcA%2BfFcvilLGntsNxHIM4ulRS5u%2BXTmbhMyktCwWU4aj6u1eszj35m54YXTiI3L5Lzy5iKCARgOngAODJHzuH9T7aaMcWwsaOznNgtfsyN2UcRAiZlZ99KqgrfWHdIEOjz6%2BXr7w2bycfEwN3rJspoJIMsBiDLIUcr7i%2B7uR8JG3dA%3D%3D--chvrrAZYmWcg3ZcA--OuNOKPoJkPGZjm45Q4JZyQ%3D%3D; path=/; HttpOnly; secure; SameSite=Lax
+Set-Cookie: _octo=GH1.1.1887917588.1794048886; expires=Sun, 07 Nov 2027 10:54:46 GMT; domain=.github.com; path=/; secure; SameSite=Lax
+Set-Cookie: logged_in=no; expires=Sun, 07 Nov 2027 10:54:46 GMT; domain=.github.com; path=/; HttpOnly; secure; SameSite=Lax
+Content-Length: 0
+X-GitHub-Request-Id: DBE0:3ED2C0:E8A597:172AE6E:6AEF0376
+x-github-edge-region: southeastasia
+
+HTTP/1.1 302 Found
+Date: Sat, 07 Nov 2026 10:54:46 GMT
+Content-Type: text/html; charset=utf-8
+Vary: X-PJAX, X-PJAX-Container, Turbo-Visit, Turbo-Frame, X-Requested-With, X-GitHub-Client-Version, Sec-Fetch-Site,Accept-Encoding, Accept, X-Requested-With
+Location: https://release-assets.githubusercontent.com/github-production-release-asset/1449256608/143c721e-275f-4305-9a56-9c3b29e8f06b?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-11-07T11%3A44%3A34Z&rscd=attachment%3B+filename%3Dlatest.json&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-11-07T10%3A43%3A53Z&ske=2026-11-07T11%3A44%3A34Z&sks=b&skv=2018-11-09&sig=Am5U3vMM1WiZas09yca9LedRXacEBvTLXxvUda%2FGJCU%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc5NDA0OTE4NiwibmJmIjoxNzk0MDQ4ODg2LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.ylvjzEJlYJn0aPPfX1qL-7t-LEjvfbrjTlqXd2YgOPI&response-content-disposition=attachment%3B%20filename%3Dlatest.json&response-content-type=application%2Foctet-stream
+Cache-Control: no-cache
+Strict-Transport-Security: max-age=31536000; includeSubdomains; preload
+X-Frame-Options: deny
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Referrer-Policy: no-referrer-when-downgrade
+Content-Security-Policy: default-src 'none'; base-uri 'self'; child-src github.githubassets.com github.com/assets-cdn/worker/ github.com/assets/ gist.github.com/assets-cdn/worker/; connect-src 'self' uploads.github.com www.githubstatus.com collector.github.com raw.githubusercontent.com api.github.com github-cloud.s3.amazonaws.com github-production-repository-file-5c1aeb.s3.amazonaws.com github-production-upload-manifest-file-7fdce7.s3.amazonaws.com github-production-user-asset-6210df.s3.amazonaws.com *.rel.tunnels.api.visualstudio.com wss://*.rel.tunnels.api.visualstudio.com github.githubassets.com objects-origin.githubusercontent.com copilot-proxy.githubusercontent.com proxy.individual.githubcopilot.com proxy.business.githubcopilot.com proxy.enterprise.githubcopilot.com *.actions.githubusercontent.com wss://*.actions.githubusercontent.com productionresultssa0.blob.core.windows.net productionresultssa1.blob.core.windows.net productionresultssa2.blob.core.windows.net productionresultssa3.blob.core.windows.net productionresultssa4.blob.core.windows.net productionresultssa5.blob.core.windows.net productionresultssa6.blob.core.windows.net productionresultssa7.blob.core.windows.net productionresultssa8.blob.core.windows.net productionresultssa9.blob.core.windows.net productionresultssa10.blob.core.windows.net productionresultssa11.blob.core.windows.net productionresultssa12.blob.core.windows.net productionresultssa13.blob.core.windows.net productionresultssa14.blob.core.windows.net productionresultssa15.blob.core.windows.net productionresultssa16.blob.core.windows.net productionresultssa17.blob.core.windows.net productionresultssa18.blob.core.windows.net productionresultssa19.blob.core.windows.net productionresultssa30.blob.core.windows.net productionresultssa31.blob.core.windows.net productionresultssa32.blob.core.windows.net github-production-repository-image-32fea6.s3.amazonaws.com github-production-release-asset-2e65be.s3.amazonaws.com insights.github.com wss://alive.github.com wss://alive-staging.github.com api.githubcopilot.com api.individual.githubcopilot.com api.business.githubcopilot.com api.enterprise.githubcopilot.com wss://production-copilot-host.webpubsub.azure.com wss://production-copilot-host-centralus.webpubsub.azure.com wss://production-copilot-host-centralus-02.webpubsub.azure.com wss://production-copilot-host-westus.webpubsub.azure.com wss://production-copilot-host-westus3.webpubsub.azure.com api.github.com/cmc_internal/api/; font-src github.githubassets.com; form-action 'self' github.com gist.github.com copilot-workspace.githubnext.com objects-origin.githubusercontent.com; frame-ancestors 'none'; frame-src viewscreen.githubusercontent.com notebooks.githubusercontent.com; img-src 'self' data: blob: github.githubassets.com media.githubusercontent.com camo.githubusercontent.com identicons.github.com avatars.githubusercontent.com private-avatars.githubusercontent.com github-cloud.s3.amazonaws.com objects.githubusercontent.com release-assets.githubusercontent.com secured-user-images.githubusercontent.com user-images.githubusercontent.com private-user-images.githubusercontent.com opengraph.githubassets.com repository-images.githubusercontent.com marketplace-screenshots.githubusercontent.com copilotprodattachments.blob.core.windows.net/github-production-copilot-attachments/ github-production-user-asset-6210df.s3.amazonaws.com customer-stories-feed.github.com spotlights-feed.github.com explore-feed.github.com *.googleusercontent.com objects-origin.githubusercontent.com *.githubusercontent.com; manifest-src 'self'; media-src github.com user-images.githubusercontent.com secured-user-images.githubusercontent.com private-user-images.githubusercontent.com github-production-user-asset-6210df.s3.amazonaws.com gist.github.com github.githubassets.com; script-src github.githubassets.com; style-src 'unsafe-inline' github.githubassets.com; upgrade-insecure-requests; worker-src github.githubassets.com github.com/assets-cdn/worker/ github.com/assets/ gist.github.com/assets-cdn/worker/
+Server: github.com
+Content-Length: 0
+X-GitHub-Request-Id: DBE0:3ED2C0:E8A61F:172AF38:6AEF0376
+x-github-edge-region: southeastasia
+
+HTTP/1.1 200 OK
+Connection: keep-alive
+Content-Length: 1120
+Last-Modified: Sat, 07 Nov 2026 10:49:42 GMT
+ETag: "0x8DF3CBCD42BEE00"
+Server: Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0
+x-ms-request-id: ffa23c57-801e-001b-69a5-6edf56000000
+x-ms-version: 2018-11-09
+x-ms-creation-time: Sat, 07 Nov 2026 10:49:42 GMT
+x-ms-blob-content-md5: tkFhN28b7xRLswACDYTJEA==
+x-ms-lease-status: unlocked
+x-ms-lease-state: available
+x-ms-blob-type: BlockBlob
+x-ms-server-encrypted: true
+x-ms-access-tier: Hot
+x-ms-access-tier-inferred: true
+Via: 1.1 varnish, 1.1 varnish
+Accept-Ranges: bytes
+Age: 156
+Date: Sat, 07 Nov 2026 10:54:47 GMT
+X-Served-By: cache-iad-khef600030-IAD, cache-nrt-rjaa8190025-NRT
+X-Cache: HIT, HIT
+X-Cache-Hits: 1, 0
+X-Timer: S1794048887.270140,VS0,VE1
+Content-Disposition: attachment; filename=latest.json
+Content-Type: application/octet-stream
+
+[OK] 匿名清单 version=1.0.0-alpha6，已签名
+     windows/x86_64 匿名 HEAD 200 https://github.com/yunyu697/palune-releases/releases/download/1.0.0-alpha6/Palune-1.0.0-alpha6-win-x64.exe
+[OK] 清单与安装包均可匿名访问

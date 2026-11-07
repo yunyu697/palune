@@ -80,8 +80,10 @@ UpdateService::UpdateService(const QUrl &feedUrl, const QString &downloadDirOver
 {
     if (m_feedUrl.isEmpty()) {
         const QString env = qEnvironmentVariable("PALUNE_UPDATE_URL");
-        m_feedUrl = env.isEmpty() ? QUrl(QStringLiteral("https://updates.palune.app/beta/latest.json"))
-                                  : QUrl(env);
+        // 发行仓库公开，匿名可读；源码仓库私有，客户端不内嵌任何凭据。
+        m_feedUrl = env.isEmpty()
+            ? QUrl(QStringLiteral("https://github.com/yunyu697/palune-releases/releases/latest/download/latest.json"))
+            : QUrl(env);
     }
     m_timeoutTimer = new QTimer(this);
     m_timeoutTimer->setSingleShot(true);
@@ -220,6 +222,7 @@ void UpdateService::checkForUpdates()
     m_errorMessage.clear();
     emit errorChanged();
     m_timeoutTimer->start();
+    m_mirrorIndex = 0; // 每次检查都从官方直连开始，避免沿用上次失败换到的镜像
     setState(State::Checking);
     fetchManifest();
 }
@@ -350,6 +353,25 @@ void UpdateService::rebuildMirrors()
     emit mirrorChanged();
 }
 
+bool UpdateService::tryNextChannel(const QString &reason)
+{
+    // 通道顺序：直连（官方发行仓库）→ 清单 mirrors。
+    // 清单与签名始终走主链，镜像只决定安装包从哪下载；请求失败或内容校验不过就换下一条。
+    if (m_mirrors.isEmpty() || m_mirrorIndex + 1 >= m_mirrors.size())
+        return false;
+    const QString failed = mirrorName();
+    ++m_mirrorIndex;
+    m_restartingDownload = true;
+    emit mirrorChanged();
+    Log::warn(QStringLiteral("下载通道「%1」失败（%2），自动切换到「%3」")
+                  .arg(failed, reason, mirrorName()));
+    QTimer::singleShot(0, this, [this]() {
+        m_restartingDownload = false;
+        startDownload(m_action);
+    });
+    return true;
+}
+
 QUrl UpdateService::selectedArtifactUrl() const
 {
     if (m_mirrorIndex <= 0)
@@ -466,7 +488,10 @@ void UpdateService::startDownload(Action action)
                 delete m_file;
                 m_file = nullptr;
             }
-            fail(QStringLiteral("UPD-007"), reply->errorString());
+            const QString reason = reply->errorString();
+            if (tryNextChannel(reason))
+                return;
+            fail(QStringLiteral("UPD-007"), reason);
             return;
         }
         finishDownload();
@@ -497,7 +522,10 @@ void UpdateService::finishDownload()
 
     QString verifyError;
     if (!verifyPackage(m_currentPath, &verifyError)) {
+        // 镜像/反代返回的内容没通过 SHA-256 或签名校验：整包丢弃，换下一个通道重下。
         QFile::remove(m_currentPath);
+        if (tryNextChannel(verifyError))
+            return;
         fail(QStringLiteral("UPD-006"), verifyError);
         return;
     }

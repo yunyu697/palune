@@ -13,7 +13,8 @@
 - 内容源抽象：五组接口（认证/列表/取流/上报/能力）+ `MediaItem`/`UserState` + 适配器注册表，媒体库空状态页
 - 分级日志、崩溃面包屑（`crashes/breadcrumbs.txt` 与致命信号快照）、版本信息页
 - 更新清单升级为 payload + 分离签名信封，按 platform/arch 选择产物并校验产物签名
-- 命名与标识冻结：`app.palune.player`、`%APPDATA%\Palune`、日志前缀 `palune`、`Palune/crashes`、`palune://`、`https://updates.palune.app/{stable,beta}/latest.json`
+- 命名与标识冻结：`app.palune.player`、`%APPDATA%\Palune`、日志前缀 `palune`、`Palune/crashes`、`palune://`
+- 更新源固定为公开发行仓库：`https://github.com/yunyu697/palune-releases/releases/latest/download/latest.json`（匿名可读，客户端不内嵌凭据）
 - CI：版本校验 → 分层静态检查 → 三平台构建 + 全部单测 + 20 样本 headless 冒烟
 
 ## M1 实测结论（本机 Windows 11，独立桌面运行）
@@ -92,6 +93,8 @@ macOS / Linux 依赖：`tools/ci/fetch_deps.sh`（brew / apt / dnf / pacman）�
 
 ## 发布（release）
 
+源码仓库**私有**；发行产物推送到**公开**仓库 `yunyu697/palune-releases`（只放安装包与更新清单，不含源码）。完整说明见 [docs/RELEASES.md](docs/RELEASES.md)。
+
 `.github/workflows/release.yml`：三平台各自打包，产出更新清单与校验值。
 
 | 平台 | 产物 |
@@ -100,12 +103,14 @@ macOS / Linux 依赖：`tools/ci/fetch_deps.sh`（brew / apt / dnf / pacman）�
 | macOS | `Palune-<版本>-macos-arm64.dmg` |
 | Linux | `Palune-<版本>-linux-x86_64.AppImage`、`.deb`、`.rpm` |
 
-- 触发：打 tag 自动构建并创建 Release（预发布），或手动 `workflow_dispatch`（产物仍会作为 artifact 上传，便于无 tag 验收）
+- 触发：打 tag 自动构建并发布到发行仓库，或手动 `workflow_dispatch`（只构建与生成清单，产物作为 artifact 上传）
 - 每次运行都上传 `latest.json` 与 `SHA256SUMS`
 - `latest.json` 按 `UPDATER_SPEC.md` 的 payload + 分离签名结构生成；`artifacts` 每平台一条（exe / dmg / AppImage），msi/deb/rpm 放在 `extraArtifacts`
-- 签名私钥取仓库 Secret `PALUNE_UPDATE_PRIVATE_KEY`（PEM 或其 base64，或 32 字节种子 base64），缺失时清单标记 `signing.signed=false` 且产物不带签名，流程不因此变红
-- 首次完整跑通（tag `1.0.0-alpha1`，三平台打包 + Release）：https://github.com/yunyu697/palune/actions/runs/42238311152
-- 发布页：https://github.com/yunyu697/palune/releases/tag/1.0.0-alpha1
+- 清单与产物必须已签名；`manifest` job 自带断言，`signature` 缺失直接失败
+- 跨仓库发布凭据：`RELEASE_REPO_TOKEN`（仅对 `palune-releases` 有 `contents:write`），存放在本仓库 Actions Secret；GitHub 自带的 `GITHUB_TOKEN` 无法跨仓库使用
+- 发布后 `assert-public-feed` job 会**不带凭据** GET `releases/latest/download/latest.json`，要求 200 且能取到 `version`；401/404 直接失败
+- 发行仓库的 alpha Release 不加 `--prerelease`，否则 `releases/latest` 不会指向它（会 404）
+- 最新发布页：https://github.com/yunyu697/palune-releases/releases
 
 ## 版本号规则（硬约束）
 

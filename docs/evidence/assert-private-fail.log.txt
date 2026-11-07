@@ -1,0 +1,22 @@
+匿名 GET https://github.com/yunyu697/palune/releases/latest/download/latest.json -> HTTP 404
+--- 原始响应头 ---
+HTTP/1.1 404 Not Found
+Date: Sat, 07 Nov 2026 10:54:55 GMT
+Content-Type: text/plain; charset=utf-8
+Vary: X-PJAX, X-PJAX-Container, Turbo-Visit, Turbo-Frame, X-Requested-With, X-GitHub-Client-Version,Accept-Encoding, Accept, X-Requested-With
+Cache-Control: no-cache
+Strict-Transport-Security: max-age=31536000; includeSubdomains; preload
+X-Frame-Options: deny
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Referrer-Policy: origin-when-cross-origin, strict-origin-when-cross-origin
+Content-Security-Policy: default-src 'none'; base-uri 'self'; connect-src 'self'; form-action 'self'; img-src 'self' data:; script-src 'self'; style-src 'unsafe-inline'
+Server: github.com
+Set-Cookie: _gh_sess=9gpgHWvJ4WHKxQIFZ7%2FjObVDv9ByZT98zvMGL8L82sU2zzPEVi0ObxY4XP5zLCctxlXhdmVIPUYMUeLkJONEWuZU7BMJcJjHzW%2FBR82%2FZssdLtUrLA2JC84MOoymmsF06BhmFsUbodb%2FzAyITXrMs6z%2BB5aYkXUCddP9724ycnXUkpoM4Uby7gcVbWPRWwg7icF8EBcOcLYjg1j8JdX940CdktCyXHWoJWD5A0ozUhmAlHoP6y7ZiShUP5nwBnJO44mSkIoQQiU8Q4tqndLVSQ%3D%3D--Sus0Kk5oXK2vx6Rl--2yxsMG0nlQmcR1xZoPzsNg%3D%3D; path=/; HttpOnly; secure; SameSite=Lax
+Set-Cookie: _octo=GH1.1.1979553363.1794048894; expires=Sun, 07 Nov 2027 10:54:54 GMT; domain=.github.com; path=/; secure; SameSite=Lax
+Set-Cookie: logged_in=no; expires=Sun, 07 Nov 2027 10:54:54 GMT; domain=.github.com; path=/; HttpOnly; secure; SameSite=Lax
+Content-Length: 9
+X-GitHub-Request-Id: DCE8:B282E:E8B3EA:173011B:6AEF037E
+x-github-edge-region: southeastasia
+
+::error::更新源必须匿名可访问：HTTP 404（401/404 均视为失败）

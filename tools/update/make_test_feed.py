@@ -48,6 +48,7 @@ def main() -> None:
     ap.add_argument("--out", required=True)
     ap.add_argument("--variant", default="good", choices=["good", "bad-signature", "bad-hash"])
     ap.add_argument("--mirrors", type=int, default=2)
+    ap.add_argument("--version", default=FEED_VERSION)
     args = ap.parse_args()
 
     out = Path(args.out).resolve()
@@ -55,7 +56,7 @@ def main() -> None:
         shutil.rmtree(out)
     out.mkdir(parents=True)
 
-    version = FEED_VERSION
+    version = args.version
     package_name = f"Palune-{version}-win-x64-setup.cmd"
     package = out / package_name
     package.write_text(installer_script(version), encoding="utf-8")
@@ -122,7 +123,7 @@ def main() -> None:
         encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw
     ).hex()
     print(f"[OK] feed={out}")
-    print(f"     version={version} size={manifest['size']} sha256={digest}")
+    print(f"     version={version} size={manifest_payload['artifacts'][0]['size']} sha256={digest}")
     print(f"     publicKeyHex={public_hex}")
     print(f"     variant={args.variant}")
 

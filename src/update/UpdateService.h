@@ -112,6 +112,7 @@ private:
     bool verifyManifestSignature(QString *error);
     void launchInstaller(const QString &path);
     void rebuildMirrors();
+    bool tryNextChannel(const QString &reason);
     QUrl selectedArtifactUrl() const;
     QString targetDirectory() const;
     QString packageFileName() const;

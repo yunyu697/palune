@@ -205,6 +205,8 @@ jobs:
     name: 生成 latest.json 与 SHA256SUMS
     needs: [version, windows, macos, linux]
     runs-on: ubuntu-latest
+    env:
+      RELEASE_REPO: yunyu697/palune-releases
     steps:
       - uses: actions/checkout@v4
 
@@ -233,12 +235,33 @@ jobs:
             --dist dist \
             --version "$VERSION" \
             --channel "$CHANNEL" \
-            --base-url "https://github.com/${GITHUB_REPOSITORY}/releases/download/${VERSION}" \
+            --base-url "https://github.com/${RELEASE_REPO}/releases/download/${VERSION}" \
             --notes "$NOTES"
           echo "--- latest.json ---"
           cat dist/latest.json
           echo "--- SHA256SUMS ---"
           cat dist/SHA256SUMS
+
+      - name: 断言清单与产物均已签名
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, sys
+          m = json.load(open("dist/latest.json", encoding="utf-8"))
+          sig = m.get("signature") or {}
+          if not sig.get("value"):
+              print("[FAIL] latest.json 未签名；客户端会拒绝未签名清单", file=sys.stderr)
+              sys.exit(1)
+          payload = m["payload"]
+          if not payload.get("artifacts"):
+              print("[FAIL] latest.json 缺少 artifacts", file=sys.stderr)
+              sys.exit(1)
+          for item in payload["artifacts"]:
+              if not ((item.get("signature") or {}).get("value")):
+                  print(f"[FAIL] 产物未签名：{item.get('platform')}/{item.get('arch')}", file=sys.stderr)
+                  sys.exit(1)
+          print(f"[OK] 已签名，keyId={sig.get('keyId')}，产物 {len(payload['artifacts'])} 个")
+          PY
 
       - uses: actions/upload-artifact@v4
         with:
@@ -247,20 +270,30 @@ jobs:
           if-no-files-found: error
 
   publish:
-    name: 创建 GitHub Release
+    name: 发布到公开发行仓库
     needs: [version, manifest]
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
+    env:
+      RELEASE_REPO: yunyu697/palune-releases
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: release-dist
           path: dist
 
-      - name: 上传到 Release
+      - name: 检查跨仓库发布凭据
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
+          RELEASE_REPO_TOKEN: ${{ secrets.RELEASE_REPO_TOKEN }}
+        run: |
+          if [ -z "${RELEASE_REPO_TOKEN:-}" ]; then
+            echo "::error::缺少 Secret RELEASE_REPO_TOKEN：需一个仅对 ${RELEASE_REPO} 具备 contents:write 的凭据"
+            exit 1
+          fi
+
+      - name: 上传到发行仓库 Release
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_REPO_TOKEN }}
           TAG: ${{ github.ref_name }}
           VERSION: ${{ needs.version.outputs.version }}
         run: |
@@ -270,12 +303,65 @@ jobs:
           mapfile -t FILES < <(find dist -maxdepth 1 -type f | sort)
           echo "发布资产："
           printf '%s\n' "${FILES[@]}"
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" "${FILES[@]}" --clobber
+          if gh release view "$TAG" --repo "$RELEASE_REPO" >/dev/null 2>&1; then
+            gh release upload "$TAG" "${FILES[@]}" --repo "$RELEASE_REPO" --clobber
           else
-            gh release create "$TAG" "${FILES[@]}" \
+            # 不加 --prerelease：GitHub 的 releases/latest 只指向非预发布 Release，
+            # 否则客户端固定使用的 latest/download/latest.json 会 404。
+            gh release create "$TAG" "${FILES[@]}" --repo "$RELEASE_REPO" \
               --title "Palune $VERSION" \
-              --notes "Palune $VERSION 自动构建产物。更新清单见 latest.json，校验值见 SHA256SUMS。" \
-              --prerelease
+              --notes "Palune $VERSION 发行产物。源码在私有仓库；更新清单见 latest.json，校验值见 SHA256SUMS。"
           fi
-          gh release view "$TAG" --json assets --jq '.assets[].name'
+          gh release view "$TAG" --repo "$RELEASE_REPO" --json assets --jq '.assets[].name'
+
+  assert-public-feed:
+    name: 匿名可访问断言
+    needs: [version, publish]
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_REPO: yunyu697/palune-releases
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - name: 不带任何凭据 GET latest.json 与安装包
+        run: |
+          set -uo pipefail
+          FEED="https://github.com/${RELEASE_REPO}/releases/latest/download/latest.json"
+          HEADERS="$(mktemp)"
+          CODE="$(curl -sSL -o feed.json -D "$HEADERS" -w '%{http_code}' --max-redirs 5 \
+            --retry 6 --retry-delay 10 --retry-all-errors \
+            -H 'Cache-Control: no-cache' "$FEED" || true)"
+          echo "匿名 GET $FEED -> HTTP $CODE"
+          echo "--- 原始响应头 ---"
+          cat "$HEADERS"
+          if [ "$CODE" != "200" ]; then
+            echo "::error::更新源必须匿名可访问：HTTP $CODE（401/404 均视为失败）"
+            exit 1
+          fi
+          python - <<'PY'
+          import json, os, subprocess, sys
+          feed = json.load(open("feed.json", encoding="utf-8"))
+          payload = feed.get("payload") or {}
+          version = payload.get("version", "")
+          if not version:
+              print("[FAIL] latest.json 里取不到 version 字段", file=sys.stderr)
+              sys.exit(1)
+          if version != os.environ["VERSION"]:
+              print(f"[FAIL] latest.json version={version} 与本次发布 {os.environ['VERSION']} 不一致", file=sys.stderr)
+              sys.exit(1)
+          if not ((feed.get("signature") or {}).get("value")):
+              print("[FAIL] latest.json 未签名", file=sys.stderr)
+              sys.exit(1)
+          print(f"[OK] 匿名清单 version={version}，已签名")
+          for item in payload.get("artifacts", []):
+              url = item["url"]
+              out = subprocess.run(
+                  ["curl", "-sSIL", "-o", "/dev/null", "-w", "%{http_code}",
+                   "--retry", "6", "--retry-delay", "10", "--retry-all-errors", url],
+                  capture_output=True, text=True, check=True)
+              code = out.stdout.strip()
+              print(f"     {item['platform']}/{item['arch']} 匿名 HEAD {code} {url}")
+              if code != "200":
+                  print(f"[FAIL] 安装包匿名不可下载：HTTP {code} {url}", file=sys.stderr)
+                  sys.exit(1)
+          print("[OK] 清单与安装包均可匿名访问")
+          PY

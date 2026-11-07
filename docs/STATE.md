@@ -2,9 +2,66 @@
 
 > 自动推进的续跑点。每完成一个可验证节点更新本文件；撞到单轮上限时以本文件为准。
 
-更新时间：2026-11-07 14:05（Asia/Shanghai）
-当前里程碑：**M2 收口（P0 修复完成，待发布 alpha5）**
-版本：`1.0.0-alpha5`
+更新时间：2026-11-07 19:00（Asia/Shanghai）
+当前里程碑：**M2 收口 + 更新链路重构（alpha6）**
+版本：`1.0.0-alpha6`
+
+## alpha6：私有源码 + 公开发行仓库（更新链路重构）
+
+用户要求解决「私有仓库 Release 资产无法匿名下载 → 检查更新 401/404、镜像方案失效」的结构性问题。
+
+### 事实核查（先纠正三个前提）
+
+| 前提 | 实际情况 |
+|---|---|
+| 源码仓库是私有的 | **当时是 PUBLIC**（`gh repo view` 返回 `visibility=PUBLIC`）。已在 18:41 转为私有，随后匿名访问 tag 资产与 latest 均为 404 |
+| `latest` 404 是私有权限导致 | 不全是。GitHub 的 `releases/latest` **只指向非预发布 Release**；alpha5 是 prerelease，所以公开状态下 tag 直链 `releases/download/1.0.0-alpha5/latest.json` 返回 200，而 `releases/latest/download/latest.json` 返回 404 |
+| 清单签名链路可用 | **不可用**：alpha5 的 `latest.json` 是 `signature=null` / `signing.signed=false`（仓库此前没有任何 Actions Secret）；而客户端 `UpdateManifest::parse` 明确拒绝未签名清单，更新必然失败 |
+
+### 改造内容
+
+| 项 | 内容 |
+|---|---|
+| 公开发行仓库 | 新建 `yunyu697/palune-releases`（public，仅发行物、不含源码），README 写明定位、更新源、校验方式、回退方式 |
+| 源码仓库 | `yunyu697/palune` 转为私有；跨仓写操作只在 CI 发生 |
+| 跨仓发布 | `release.yml` 的 publish job 改用 `RELEASE_REPO_TOKEN`（仅 `palune-releases` 的 `contents:write`，存私有仓库 Secret）；GitHub 自带 `GITHUB_TOKEN` 无法跨仓，已在 job 内做缺失断言 |
+| 匿名断言 | 新增 `assert-public-feed` job：不带凭据 GET `releases/latest/download/latest.json`，要求 200 且 `payload.version` 等于本次发布、清单已签名，并对每个安装包 URL 匿名 HEAD 200；401/404 直接失败，原始响应头打印进日志 |
+| 签名断言 | `manifest` job 新增断言：清单签名与每个产物签名必须存在，缺一直接失败（修复「未签名也能发布」的静默放行） |
+| 客户端更新源 | 默认改为 `https://github.com/yunyu697/palune-releases/releases/latest/download/latest.json`，不带任何凭据 |
+| 镜像逻辑 | 镜像只用于安装包下载，清单与签名始终走主链；下载失败或内容校验不通过自动切下一条（直连→镜像 1→镜像 2），全失败才报错；任何通道的包都必须通过 SHA-256 + 清单签名 + 产物签名三重校验 |
+| 签名密钥 | 使用仓库内既有的本地测试私钥（`tools/update/test-key.pem`，公钥已内置于 `resources/trust/update.pub`）写入 Secret `PALUNE_UPDATE_PRIVATE_KEY` / `PALUNE_UPDATE_KEY_ID=palune-test`；未新造密钥。stable 前必须换离线生产密钥 |
+
+### 文档
+
+- `docs/RELEASES.md`：两仓关系、凭据类型与权限范围、发布流程、匿名断言、回退方式、为什么不能内嵌 token、镜像策略。
+- `README.md` 发布章节同步更新。
+
+### 验证（alpha6，证据见 `docs/evidence/UPDATE-CHAIN-ALPHA6.md`）
+
+| 用例 | 结果 |
+|---|---|
+| 匿名 GET `releases/latest/download/latest.json` | **200**（首跳 302 → 最终 200，落到 Azure Blob），`version=1.0.0-alpha6`，已签名 `keyId=palune-test` |
+| 匿名下载安装包 | **200**，59,210,046 B |
+| SHA-256 | 实测 `2d146581…eb981` = 清单值，一致 |
+| 清单签名 / 安装包签名 | Ed25519 **均 PASS**（内置公钥验证） |
+| 客户端真实检查（`--update-check`） | `state=uptodate`、`availableVersion=1.0.0-alpha6`、`errorCode` 空（未签名会报 UPD-004） |
+| 安装 → 启动 → 卸载 | **PASS**（本地构建包，出包前后同一文件上传） |
+| CI 断言正向 | 公开仓库 URL → 200、version 一致、产物 HEAD 200 → exit 0 |
+| CI 断言负向 | 私有仓库同路径 → 404 → `::error::` → exit 1 |
+| 镜像投毒（哈希不符） | 自动切换 镜像 A → 镜像 B，被投毒内容未落盘，最终哈希 = 镜像 B |
+| 镜像 404 | 自动切换 镜像 A → 镜像 B，下载成功 |
+
+发布页：<https://github.com/yunyu697/palune-releases/releases/tag/1.0.0-alpha6>（资产：exe、latest.json、SHA256SUMS、安装验证证据）。
+
+### 卡点（需用户操作）
+
+| 卡点 | 影响 | 解除方式 |
+|---|---|---|
+| `RELEASE_REPO_TOKEN` 未配置 | CI 的 `publish` 与 `assert-public-feed` job 无法执行；本次 alpha6 由本机用已授权的 `gh` 凭据一次性发布 | 用户签发**仅对 `yunyu697/palune-releases` 有 `Contents: Read and write`** 的细粒度 PAT（或 GitHub App token），执行 `gh secret set RELEASE_REPO_TOKEN -R yunyu697/palune`；随后推送 tag `1.0.0-alpha6` 重跑三平台构建与发布（CI 用 Qt 6.9.3，哈希会与本机不同，需重跑匿名断言） |
+| 未创建任何新 token | —— | 严格遵守「不自己造 token」，跨仓凭据只能由用户签发 |
+
+补充：alpha6 仅发布 Windows 安装包；MSI 因本机无 WiX 未生成（CI 有 WiX），macOS/Linux 产物需 CI 补齐。
+
 
 ## alpha5：P0 可用性修复 + 图标 + 实机逐屏对照
 
@@ -33,6 +90,13 @@
 - 覆盖范围：至少 主界面 / 设置 / 列表 / 空态 × 全部主题；每屏列设计期望、实机、判定。
 - 落盘位置：`docs/evidence/UI-<版本>-COMPARISON.md`，截图放 `docs/evidence/shots/<版本>-ui/`。
 - 判定口径：符合 / 偏差（登记编号与处置里程碑）/ 未验证（写原因），不允许静默省略。
+
+## alpha5 发布（GitHub Releases，源码仓库私有前）
+
+- 触发：tag `1.0.0-alpha5`，run 42346768448 六个作业全部 success。
+- 资产：6 个安装包 + `latest.json`(2900B) + `SHA256SUMS` + 安装验证/启动证据；**没有 `.sig` 资产**（签名本应内嵌在 latest.json，但实际未签名）。
+- 复核：从 Release 重新下载 `Palune-1.0.0-alpha5-win-x64.exe`（60,182,151B），SHA-256 = `17d202b0efd19aa70ae50c4357a68accf403ec5d68a53b181faae0ac63371f01`，与 `SHA256SUMS` 完全一致。
+- 注意：该 Release 为 prerelease，`releases/latest/download/latest.json` 当时即 404；且清单未签名。alpha6 起改由公开的 `palune-releases` 承载。
 
 ## alpha4 发布（GitHub Releases）
 
@@ -84,7 +148,7 @@
 | Release（alpha4） | **已发布**：run `42337180135` 六个作业全部 success，6 个安装包 + 清单/校验值/安装证据已上传 |
 | macOS SIGBUS 根因 | lldb 栈：`mpv_create → AppHub.init → RemoteCommandCenter.init → AppHub.getIcon → NSImage(data:) → ImageIO PNGReadPlugin`，PC 跳到 `0xbad4007`。根因是 `DYLD_LIBRARY_PATH` 含 `$(brew --prefix)/lib`，Homebrew 的 libpng/libjpeg 抢占了系统 ImageIO 的解码插件；收窄为 `libsodium/lib:mpv/lib` 后消失 |
 | CI（1d5d306） | 仅 macOS 失败（上述 SIGBUS），其余全绿 |
-| 本机 8h 浸泡 | 后台运行中（PID 13516，起于 08:23，预计 16:24 出 `qa/runtime/m2-soak-8h.json`） |
+| 本机 8h 浸泡 | **PASS**：`qa/runtime/m2-soak-8h.json`（480 分钟，RSS 242.6→131.8MB，漂移 -13.85MB/h，崩溃 0） |
 
 ## M1 遗留收口
 
@@ -121,19 +185,20 @@
 | 4 | A OSC / B dock / C 胶囊唤出隐藏 ≤100ms；4K60 UI 帧 <16.7ms | **PASS**：`m2-ui-perf.json`（show 85.6/99.6/84.9ms，hide 31.5/20.0/99.1ms，renderP95 ≤0.85ms） |
 | 5 | 50 次跨主题切换状态保持 | **PASS**：`m2-stateswitch.json` |
 | 6 | 自动降级阈值 + 配置回退 | **PASS**：`m2-compact.json`、`m2-config-fallback.json`、`m2-compact-baseline.json`（640×360 各主题 36/36） |
-| 7 | 强杀 10 次续播 ±1s；8h 浸泡 | 强杀 **PASS**：`m2-resume-kill.json`（10 轮，delta 0~0.067s）；8h 浸泡进行中 |
+| 7 | 强杀 10 次续播 ±1s；8h 浸泡 | **PASS**：强杀 `m2-resume-kill.json`（10 轮，delta 0~0.067s）；8h 浸泡 `m2-soak-8h.json`：480 分钟、RSS 242.6→131.8MB（漂移 -13.85MB/h，无增长）、崩溃 0、`verdict=PASS` |
 | 8 | 窗口行为 20 项清单 | **部分通过**：`m2-window.json` 20 项，18 PASS / 2 NOT_VERIFIED（跨屏移动、运行中 DPI 切换，需真机）；Alt-Tab/任务栏、Snap 样式、全屏、最小化恢复、几何持久化均 PASS |
 | 9 | 中/英 i18n + 无硬编码文案 lint | **PASS**：`m2-i18n.json`；QML 125 处 qsTr、10 上下文 203 条翻译全完成，硬编码 0；中/英各 37 张截图（`shots/m2-i18n-zh|en`） |
 
 ## 下一步（按顺序）
 
-1. **发布 alpha5**：`python tools/version/check_version.py`、`python tools/ci/check_brand_terms.py` 均通过；提交并推 tag `1.0.0-alpha5` 触发三平台打包 → Release；下载复核 SHA-256 与本地/CI 一致。
-2. 用 alpha5 安装包做一次真实安装 → 启动 → 逐屏截图复核（重点：拖拽、缩放、圆角、白块、按钮可点）。
-3. 等待 8h 浸泡结果（约 16:24），判定 RSS 漂移 ≤50MB/h、崩溃 0，补 M2 #7 完整结论。
-4. M3 首个 UI 任务：按 `UI-ALPHA5-COMPARISON.md` §3 的 7 项偏差逐个改（媒体库形态 → C 默认尺寸 → B 分栏/技术条 → 设置分区 → 空态隐藏）。
-5. M2 #8 剩余真机项：多屏移动、运行中 DPI（125/150/200%）切换需用户环境；自动化部分已完成。
+1. **等用户配置 `RELEASE_REPO_TOKEN`** → 推送 tag `1.0.0-alpha6`，让 CI 在本机已发布的同一 tag 上重建三平台产物、发布到 `palune-releases`、跑匿名断言；下载复核哈希并重跑签名校验（CI Qt 6.9.3 与本机 Qt 6.8.3 字节不同）。
+2. 用 alpha6 安装包做一次真实安装 → 启动 → 逐屏截图复核（重点：拖拽、缩放、圆角、白块、按钮可点）。
+3. M3 首个 UI 任务：按 `UI-ALPHA5-COMPARISON.md` §3 的 7 项偏差逐个改（媒体库形态 → C 默认尺寸 → B 分栏/技术条 → 设置分区 → 空态隐藏）。
+4. M2 #8 剩余真机项：多屏移动、运行中 DPI（125/150/200%）切换需用户环境；自动化部分已完成。
+5. stable 前：轮换离线生产签名密钥并替换 `resources/trust/update.pub`。
 
 ## 阻塞 / 需用户
 
+- **`RELEASE_REPO_TOKEN` 未配置**：CI 跨仓库发布与匿名断言未在 CI 中真实执行；需用户签发仅含 `palune-releases` `contents:write` 的细粒度 PAT。
 - M2 #1 36 界面评审签字需用户确认（截图位于 `docs/evidence/shots/m2-baseline`、`m2-scale`）。
-- 签名证书/私钥、域名、真机多屏/DPI 环境：按未签名、NOT_VERIFIED 处理，不阻塞推进。
+- 生产签名证书、域名、真机多屏/DPI 环境：alpha 阶段按测试密钥、NOT_VERIFIED 处理，不阻塞推进。

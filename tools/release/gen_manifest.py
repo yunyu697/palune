@@ -93,6 +93,9 @@ def main() -> int:
     ap.add_argument("--base-url", required=True, help="Release 资产下载前缀（不含文件名）")
     ap.add_argument("--notes", default="")
     ap.add_argument("--key-id", default=os.environ.get("PALUNE_UPDATE_KEY_ID", "palune-update-2026"))
+    ap.add_argument("--mirrors-file", default="",
+                    help="可选 JSON 文件：[{\"name\":\"...\",\"url\":\"...\"}]。"
+                         "镜像只用于安装包下载，清单与签名主链始终走发行仓库直连。")
     args = ap.parse_args()
 
     dist = Path(args.dist).resolve()
@@ -142,6 +145,19 @@ def main() -> int:
     if extras:
         # 规范之外的分发格式（客户端不读此字段，仅用于发布页与校验脚本）。
         payload["extraArtifacts"] = extras
+
+    if args.mirrors_file:
+        raw_mirrors = json.loads(Path(args.mirrors_file).read_text(encoding="utf-8"))
+        mirrors = []
+        for item in raw_mirrors:
+            name = str(item.get("name", "")).strip()
+            url = str(item.get("url", "")).strip()
+            if not name or not url:
+                print(f"[FAIL] 镜像条目缺少 name/url：{item}", file=sys.stderr)
+                return 1
+            mirrors.append({"name": name, "url": url})
+        if mirrors:
+            payload["mirrors"] = mirrors
 
     if key is not None:
         envelope = {

@@ -17,13 +17,13 @@ ColumnLayout {
         spacing: 10
 
         Text {
-            text: "当前版本 " + updater.currentVersion
+            text: qsTr("当前版本 ") + updater.currentVersion
             color: root.textColor
             font.pixelSize: 12
         }
 
         Text {
-            text: "上次检查：" + updater.lastCheckedText
+            text: qsTr("上次检查：") + updater.lastCheckedText
             color: root.mutedColor
             font.pixelSize: 11
         }
@@ -31,13 +31,13 @@ ColumnLayout {
         Item { Layout.fillWidth: true }
 
         UButton {
-            label: updater.busy ? "检查中…" : "检查更新"
+            label: updater.busy ? qsTr("检查中…") : qsTr("检查更新")
             enabled: !updater.busy
             onClicked: updater.checkForUpdates()
         }
 
         UButton {
-            label: "打开主页"
+            label: qsTr("打开主页")
             onClicked: updater.openHomePage()
         }
     }
@@ -69,13 +69,13 @@ ColumnLayout {
             RowLayout {
                 spacing: 12
                 Text {
-                    text: "新版本 " + updater.availableVersion
+                    text: qsTr("新版本 ") + updater.availableVersion
                     color: root.accent
                     font.pixelSize: 15
                     font.weight: Font.DemiBold
                 }
                 Text {
-                    text: "发布 " + updater.publishedAt.substring(0, 10) + " · " + updater.sizeText
+                    text: qsTr("发布 ") + updater.publishedAt.substring(0, 10) + " · " + updater.sizeText
                     color: root.mutedColor
                     font.pixelSize: 11
                 }
@@ -98,12 +98,12 @@ ColumnLayout {
         spacing: 6
 
         Text {
-            text: "下载通道 · 当前：" + updater.mirrorName
+            text: qsTr("下载通道 · 当前：") + updater.mirrorName
             color: root.mutedColor
             font.pixelSize: 11
         }
         Text {
-            text: "镜像只影响下载速度；SHA-256 与 Ed25519 签名校验始终基于内置公钥，不依赖镜像。"
+            text: qsTr("镜像只影响下载速度；SHA-256 与 Ed25519 签名校验始终基于内置公钥，不依赖镜像。")
             color: "#6f757b"
             font.pixelSize: 10
             wrapMode: Text.WordWrap
@@ -149,7 +149,7 @@ ColumnLayout {
                     }
                     Text {
                         visible: mirrorRow.index === updater.mirrorIndex
-                        text: "使用中"
+                        text: qsTr("使用中")
                         color: root.accent
                         font.pixelSize: 10
                     }
@@ -206,24 +206,24 @@ ColumnLayout {
 
         UButton {
             visible: updater.state === "available" || updater.state === "error"
-            label: "更新"
+            label: qsTr("更新")
             primary: true
             onClicked: updater.startUpdate()
         }
         UButton {
             visible: updater.state === "available" || updater.state === "error"
-            label: "仅下载"
+            label: qsTr("仅下载")
             onClicked: updater.startDownloadOnly()
         }
         UButton {
             visible: updater.state === "downloaded"
-            label: "安装"
+            label: qsTr("安装")
             primary: true
             onClicked: updater.installDownloaded()
         }
         UButton {
             visible: updater.state === "error"
-            label: "重试"
+            label: qsTr("重试")
             onClicked: updater.retry()
         }
 

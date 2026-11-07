@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QCoreApplication>
 #include <QList>
 #include <QObject>
 #include <QVariantList>
@@ -31,10 +32,10 @@ public:
 
     bool available() const { return !m_libraries.isEmpty(); }
     bool paired() const { return m_paired; }
-    QString emptyTitle() const { return QStringLiteral("还没有媒体库"); }
+    QString emptyTitle() const { return QCoreApplication::translate("Palune", "还没有媒体库"); }
     QString emptyHint() const
     {
-        return QStringLiteral("M1 只预留内容源接口，未接入服务器。配对入口将在媒体库里程碑开放。");
+        return QCoreApplication::translate("Palune", "M1 只预留内容源接口，未接入服务器。配对入口将在媒体库里程碑开放。");
     }
     QVariantList libraries() const { return m_libraries; }
     int adapterCount() const { return static_cast<int>(m_adapters.size()); }

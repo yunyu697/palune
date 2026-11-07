@@ -61,7 +61,7 @@ SodiumApi &api()
         Log::info(QStringLiteral("libsodium 已动态加载：%1").arg(lib->fileName()));
         return s;
     }
-    s.error = QStringLiteral("未找到 libsodium 动态库，无法校验更新签名");
+    s.error = QCoreApplication::translate("Palune", "未找到 libsodium 动态库，无法校验更新签名");
     Log::error(s.error);
     return s;
 }
@@ -84,7 +84,7 @@ bool UpdateCrypto::verifyEd25519(const QByteArray &message,
         return false;
     }
     if (signature.size() != 64 || publicKey.size() != 32) {
-        if (error) *error = QStringLiteral("签名或公钥长度不合法");
+        if (error) *error = QCoreApplication::translate("Palune", "签名或公钥长度不合法");
         return false;
     }
     const int rc = s.verifyDetached(
@@ -93,7 +93,7 @@ bool UpdateCrypto::verifyEd25519(const QByteArray &message,
         static_cast<unsigned long long>(message.size()),
         reinterpret_cast<const unsigned char *>(publicKey.constData()));
     if (rc != 0) {
-        if (error) *error = QStringLiteral("Ed25519 签名校验未通过");
+        if (error) *error = QCoreApplication::translate("Palune", "Ed25519 签名校验未通过");
         return false;
     }
     return true;
@@ -112,13 +112,13 @@ QByteArray UpdateCrypto::publicKeyFromResource(const QString &resourcePath, QStr
 {
     QFile f(resourcePath);
     if (!f.open(QIODevice::ReadOnly)) {
-        if (error) *error = QStringLiteral("无法读取内置公钥资源：%1").arg(resourcePath);
+        if (error) *error = QCoreApplication::translate("Palune", "无法读取内置公钥资源：%1").arg(resourcePath);
         return {};
     }
     const QString hex = QString::fromUtf8(f.readAll()).trimmed();
     const QByteArray key = QByteArray::fromHex(hex.toLatin1());
     if (key.size() != 32) {
-        if (error) *error = QStringLiteral("内置公钥不是 32 字节十六进制");
+        if (error) *error = QCoreApplication::translate("Palune", "内置公钥不是 32 字节十六进制");
         return {};
     }
     return key;

@@ -36,7 +36,7 @@ bool MpvClient::resolve(T &fn, const char *name)
 {
     fn = reinterpret_cast<T>(m_library->resolve(name));
     if (!fn) {
-        m_loadError = QStringLiteral("libmpv 缺少导出符号：%1").arg(name);
+        m_loadError = QCoreApplication::translate("Palune", "libmpv 缺少导出符号：%1").arg(name);
         return false;
     }
     return true;
@@ -127,7 +127,7 @@ bool MpvClient::setVideoWindow(qintptr wid)
     if (!m_mpv) {
         m_mpv = m_api->create();
         if (!m_mpv) {
-            m_loadError = QStringLiteral("mpv_create 失败");
+            m_loadError = QCoreApplication::translate("Palune", "mpv_create 失败");
             m_available = false;
             return false;
         }
@@ -135,7 +135,7 @@ bool MpvClient::setVideoWindow(qintptr wid)
         Log::info(QStringLiteral("mpv 视频窗句柄：wid=%1").arg(wid));
         const int rc = m_api->initialize(m_mpv);
         if (rc < 0) {
-            m_loadError = QStringLiteral("mpv_initialize 失败：%1").arg(m_api->errorString(rc));
+            m_loadError = QCoreApplication::translate("Palune", "mpv_initialize 失败：%1").arg(m_api->errorString(rc));
             m_api->terminateDestroy(m_mpv);
             m_mpv = nullptr;
             m_available = false;
@@ -200,7 +200,7 @@ bool MpvClient::openTestPattern()
     const char *args[] = {"loadfile", "av://lavfi:testsrc=size=1280x720:rate=30", "replace", nullptr};
     const int rc = m_api->command(m_mpv, args);
     if (rc < 0) {
-        m_errorMessage = QStringLiteral("测试图样打开失败：%1").arg(m_api->errorString(rc));
+        m_errorMessage = QCoreApplication::translate("Palune", "测试图样打开失败：%1").arg(m_api->errorString(rc));
         emit errorMessageChanged();
         emit errorOccurred(m_errorMessage);
         return false;
@@ -214,10 +214,10 @@ bool MpvClient::openTestPattern()
 QString MpvClient::mpvVersion()
 {
     if (!m_initialized)
-        return QStringLiteral("未初始化");
+        return QCoreApplication::translate("Palune", "未初始化");
     char *version = m_api->getPropertyString(m_mpv, "mpv-version");
     if (!version)
-        return QStringLiteral("未知");
+        return QCoreApplication::translate("Palune", "未知");
     const QString text = QString::fromUtf8(version);
     m_api->freeString(version);
     return text;
@@ -226,18 +226,18 @@ QString MpvClient::mpvVersion()
 QString MpvClient::backendDescription() const
 {
 #if defined(Q_OS_WIN)
-    return QStringLiteral("wid + d3d11 + gpu-next（Windows 主路径）");
+    return QCoreApplication::translate("Palune", "wid + d3d11 + gpu-next（Windows 主路径）");
 #elif defined(Q_OS_MACOS)
-    return QStringLiteral("render API (GL) — 接口已预留，M0 未在本机验证");
+    return QCoreApplication::translate("Palune", "render API (GL) — 接口已预留，M0 未在本机验证");
 #else
-    return QStringLiteral("render API (GL) — 接口已预留，M0 未在本机验证");
+    return QCoreApplication::translate("Palune", "render API (GL) — 接口已预留，M0 未在本机验证");
 #endif
 }
 
 bool MpvClient::openFile(const QString &path)
 {
     if (!m_initialized) {
-        m_loadError = QStringLiteral("mpv 尚未初始化");
+        m_loadError = QCoreApplication::translate("Palune", "mpv 尚未初始化");
         return false;
     }
     QFileInfo fi(path);
@@ -246,7 +246,7 @@ bool MpvClient::openFile(const QString &path)
     const char *args[] = {"loadfile", fileUtf8.constData(), "replace", nullptr};
     const int rc = m_api->command(m_mpv, args);
     if (rc < 0) {
-        m_errorMessage = QStringLiteral("打开文件失败：%1").arg(m_api->errorString(rc));
+        m_errorMessage = QCoreApplication::translate("Palune", "打开文件失败：%1").arg(m_api->errorString(rc));
         emit errorMessageChanged();
         emit errorOccurred(m_errorMessage);
         return false;

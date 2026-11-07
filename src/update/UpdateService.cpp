@@ -140,48 +140,48 @@ QString UpdateService::etaText() const
         return QStringLiteral("—");
     const double remain = qMax<qint64>(0, m_manifest.size - m_received) / m_speedBytesPerSecond;
     if (remain < 1)
-        return QStringLiteral("即将完成");
-    return QStringLiteral("剩余 %1 秒").arg(static_cast<int>(remain));
+        return QCoreApplication::translate("Palune", "即将完成");
+    return QCoreApplication::translate("Palune", "剩余 %1 秒").arg(static_cast<int>(remain));
 }
 
 QString UpdateService::mirrorName() const
 {
     if (m_mirrorIndex <= 0)
-        return QStringLiteral("直连");
+        return QCoreApplication::translate("Palune", "直连");
     const int idx = m_mirrorIndex - 1;
     if (idx < m_manifest.mirrors.size())
         return m_manifest.mirrors.at(idx).name;
-    return QStringLiteral("直连");
+    return QCoreApplication::translate("Palune", "直连");
 }
 
 QString UpdateService::lastCheckedText() const
 {
     if (m_lastCheckedIso.isEmpty())
-        return QStringLiteral("尚未检查");
+        return QCoreApplication::translate("Palune", "尚未检查");
     const QDateTime dt = QDateTime::fromString(m_lastCheckedIso, Qt::ISODate);
     return dt.isValid() ? dt.toLocalTime().toString(QStringLiteral("yyyy-MM-dd HH:mm"))
-                        : QStringLiteral("尚未检查");
+                        : QCoreApplication::translate("Palune", "尚未检查");
 }
 
 QString UpdateService::statusText() const
 {
     switch (m_state) {
     case State::Unchecked:
-        return QStringLiteral("尚未检查更新");
+        return QCoreApplication::translate("Palune", "尚未检查更新");
     case State::Checking:
-        return QStringLiteral("正在检查更新…");
+        return QCoreApplication::translate("Palune", "正在检查更新…");
     case State::UpToDate:
-        return QStringLiteral("已是最新版本（当前 %1）· 上次检查 %2")
+        return QCoreApplication::translate("Palune", "已是最新版本（当前 %1）· 上次检查 %2")
             .arg(currentVersion(), lastCheckedText());
     case State::Available:
-        return QStringLiteral("发现新版本 %1（发布于 %2，体积 %3）")
+        return QCoreApplication::translate("Palune", "发现新版本 %1（发布于 %2，体积 %3）")
             .arg(m_manifest.version, m_manifest.publishedAt.left(10), sizeText());
     case State::Downloading:
-        return QStringLiteral("正在下载 %1 · %2%").arg(mirrorName()).arg(m_progress);
+        return QCoreApplication::translate("Palune", "正在下载 %1 · %2%").arg(mirrorName()).arg(m_progress);
     case State::Downloaded:
-        return QStringLiteral("已下载到 %1，可安装").arg(QFileInfo(m_downloadedPath).fileName());
+        return QCoreApplication::translate("Palune", "已下载到 %1，可安装").arg(QFileInfo(m_downloadedPath).fileName());
     case State::Installing:
-        return QStringLiteral("正在安装，完成后将自动重启");
+        return QCoreApplication::translate("Palune", "正在安装，完成后将自动重启");
     case State::Error:
         return QStringLiteral("%1：%2").arg(m_errorCode, m_errorMessage);
     }
@@ -190,7 +190,7 @@ QString UpdateService::statusText() const
 
 QString UpdateService::installActionText() const
 {
-    return m_state == State::Downloaded ? QStringLiteral("安装") : QStringLiteral("更新");
+    return m_state == State::Downloaded ? QCoreApplication::translate("Palune", "安装") : QCoreApplication::translate("Palune", "更新");
 }
 
 void UpdateService::setState(State s)
@@ -288,7 +288,7 @@ void UpdateService::handleManifestReply(QNetworkReply *reply)
     const QString arch = canonicalArch(m_manifest.arch);
     const QString currentArch = canonicalArch(QSysInfo::currentCpuArchitecture());
     if (!arch.isEmpty() && arch != currentArch) {
-        fail(QStringLiteral("UPD-005"), QStringLiteral("清单架构 %1 / 当前 %2").arg(arch, currentArch));
+        fail(QStringLiteral("UPD-005"), QCoreApplication::translate("Palune", "清单架构 %1 / 当前 %2").arg(arch, currentArch));
         return;
     }
 
@@ -308,7 +308,7 @@ bool UpdateService::verifyManifestSignature(QString *error)
 {
     const QByteArray key = publicKey();
     if (key.isEmpty()) {
-        if (error) *error = QStringLiteral("内置更新公钥不可用");
+        if (error) *error = QCoreApplication::translate("Palune", "内置更新公钥不可用");
         return false;
     }
     return UpdateCrypto::verifyEd25519Base64(m_manifest.canonicalSignedPayload(),
@@ -333,7 +333,7 @@ void UpdateService::rebuildMirrors()
 {
     m_mirrors.clear();
     QVariantMap direct;
-    direct.insert(QStringLiteral("name"), QStringLiteral("直连（官方源）"));
+    direct.insert(QStringLiteral("name"), QCoreApplication::translate("Palune", "直连（官方源）"));
     direct.insert(QStringLiteral("url"), m_manifest.directUrl().toString());
     direct.insert(QStringLiteral("direct"), true);
     m_mirrors << direct;
@@ -393,12 +393,12 @@ void UpdateService::startDownloadOnly()
 void UpdateService::startDownload(Action action)
 {
     if (!m_manifest.valid) {
-        fail(QStringLiteral("UPD-003"), QStringLiteral("尚未成功获取更新清单"));
+        fail(QStringLiteral("UPD-003"), QCoreApplication::translate("Palune", "尚未成功获取更新清单"));
         return;
     }
     const QUrl url = selectedArtifactUrl();
     if (!url.isValid() || url.isEmpty()) {
-        fail(QStringLiteral("UPD-010"), QStringLiteral("下载地址为空"));
+        fail(QStringLiteral("UPD-010"), QCoreApplication::translate("Palune", "下载地址为空"));
         return;
     }
 
@@ -487,7 +487,7 @@ void UpdateService::handleDownloadProgress()
 void UpdateService::finishDownload()
 {
     if (!m_file) {
-        fail(QStringLiteral("UPD-007"), QStringLiteral("下载文件句柄已丢失"));
+        fail(QStringLiteral("UPD-007"), QCoreApplication::translate("Palune", "下载文件句柄已丢失"));
         return;
     }
     m_file->flush();
@@ -505,7 +505,7 @@ void UpdateService::finishDownload()
     const QString finalPath = m_currentPath.left(m_currentPath.size() - 5); // 去掉 ".part"
     QFile::remove(finalPath);
     if (!QFile::rename(m_currentPath, finalPath)) {
-        fail(QStringLiteral("UPD-009"), QStringLiteral("无法重命名下载文件"));
+        fail(QStringLiteral("UPD-009"), QCoreApplication::translate("Palune", "无法重命名下载文件"));
         return;
     }
     m_downloadedPath = finalPath;
@@ -534,21 +534,21 @@ bool UpdateService::verifyPackage(const QString &path, QString *error)
     hash.addData(data);
     const QString actual = QString::fromLatin1(hash.result().toHex());
     if (actual.compare(m_manifest.sha256, Qt::CaseInsensitive) != 0) {
-        if (error) *error = QStringLiteral("SHA-256 不匹配：期望 %1，实际 %2")
+        if (error) *error = QCoreApplication::translate("Palune", "SHA-256 不匹配：期望 %1，实际 %2")
                                  .arg(m_manifest.sha256, actual);
         return false;
     }
     // 完整性不依赖下载通道：再次校验清单签名，未通过则不安装。
     QString sigError;
     if (!verifyManifestSignature(&sigError)) {
-        if (error) *error = QStringLiteral("清单签名复核失败：%1").arg(sigError);
+        if (error) *error = QCoreApplication::translate("Palune", "清单签名复核失败：%1").arg(sigError);
         return false;
     }
     // 信封格式还要求产物本身带 Ed25519 签名（防镜像/仓库被替换安装包）。
     if (!m_manifest.artifactSignatureBase64.isEmpty()) {
         if (!UpdateCrypto::verifyEd25519Base64(data, m_manifest.artifactSignatureBase64.toUtf8(),
                                                publicKey(), &sigError)) {
-            if (error) *error = QStringLiteral("安装包签名校验失败：%1").arg(sigError);
+            if (error) *error = QCoreApplication::translate("Palune", "安装包签名校验失败：%1").arg(sigError);
             return false;
         }
     }
@@ -616,7 +616,7 @@ void UpdateService::launchInstaller(const QString &path)
 void UpdateService::installDownloaded()
 {
     if (m_downloadedPath.isEmpty() || !QFileInfo::exists(m_downloadedPath)) {
-        fail(QStringLiteral("UPD-006"), QStringLiteral("下载文件不存在"));
+        fail(QStringLiteral("UPD-006"), QCoreApplication::translate("Palune", "下载文件不存在"));
         return;
     }
     QString error;
@@ -682,14 +682,14 @@ void UpdateService::setDemoState(const QString &stateNameValue)
     m_manifest.version = QStringLiteral("1.0.0-alpha2");
     m_manifest.publishedAt = QStringLiteral("2026-11-06T09:30:00Z");
     m_manifest.size = 51380224;
-    m_manifest.notes = QStringLiteral("M0 技术验证版：完善全屏与 DPI 切换，修复窗口偏移。");
+    m_manifest.notes = QCoreApplication::translate("Palune", "M0 技术验证版：完善全屏与 DPI 切换，修复窗口偏移。");
     m_manifest.url = QStringLiteral("Palune-1.0.0-alpha2-win-x64.exe");
-    UpdateMirror m1{QStringLiteral("镜像 A · 华东"), QUrl(QStringLiteral("https://mirror-a.example.com/palune/"))};
-    UpdateMirror m2{QStringLiteral("镜像 B · 华南"), QUrl(QStringLiteral("https://mirror-b.example.com/palune/"))};
+    UpdateMirror m1{QCoreApplication::translate("Palune", "镜像 A · 华东"), QUrl(QStringLiteral("https://mirror-a.example.com/palune/"))};
+    UpdateMirror m2{QCoreApplication::translate("Palune", "镜像 B · 华南"), QUrl(QStringLiteral("https://mirror-b.example.com/palune/"))};
     m_manifest.mirrors = {m1, m2};
     m_mirrors.clear();
     QVariantMap direct;
-    direct.insert(QStringLiteral("name"), QStringLiteral("直连（官方源）"));
+    direct.insert(QStringLiteral("name"), QCoreApplication::translate("Palune", "直连（官方源）"));
     direct.insert(QStringLiteral("url"), QStringLiteral("https://updates.palune.app/beta/Palune-1.0.0-alpha2-win-x64.exe"));
     direct.insert(QStringLiteral("direct"), true);
     m_mirrors << direct;
@@ -732,18 +732,18 @@ void UpdateService::setDemoState(const QString &stateNameValue)
 QString UpdateService::readableError(const QString &code)
 {
     static const QHash<QString, QString> map = {
-        {QStringLiteral("UPD-001"), QStringLiteral("网络不可达或请求超时，请检查网络后重试")},
-        {QStringLiteral("UPD-002"), QStringLiteral("更新服务器返回异常状态")},
-        {QStringLiteral("UPD-003"), QStringLiteral("更新清单无法解析")},
-        {QStringLiteral("UPD-004"), QStringLiteral("更新清单签名校验失败，已拒绝使用")},
-        {QStringLiteral("UPD-005"), QStringLiteral("该更新包与当前平台或架构不匹配")},
-        {QStringLiteral("UPD-006"), QStringLiteral("安装包完整性校验失败，已拒绝安装")},
-        {QStringLiteral("UPD-007"), QStringLiteral("下载中断，可重试或切换镜像")},
-        {QStringLiteral("UPD-008"), QStringLiteral("无法启动安装程序")},
-        {QStringLiteral("UPD-009"), QStringLiteral("没有写入权限或磁盘空间不足")},
-        {QStringLiteral("UPD-010"), QStringLiteral("镜像地址无效")},
+        {QStringLiteral("UPD-001"), QCoreApplication::translate("Palune", "网络不可达或请求超时，请检查网络后重试")},
+        {QStringLiteral("UPD-002"), QCoreApplication::translate("Palune", "更新服务器返回异常状态")},
+        {QStringLiteral("UPD-003"), QCoreApplication::translate("Palune", "更新清单无法解析")},
+        {QStringLiteral("UPD-004"), QCoreApplication::translate("Palune", "更新清单签名校验失败，已拒绝使用")},
+        {QStringLiteral("UPD-005"), QCoreApplication::translate("Palune", "该更新包与当前平台或架构不匹配")},
+        {QStringLiteral("UPD-006"), QCoreApplication::translate("Palune", "安装包完整性校验失败，已拒绝安装")},
+        {QStringLiteral("UPD-007"), QCoreApplication::translate("Palune", "下载中断，可重试或切换镜像")},
+        {QStringLiteral("UPD-008"), QCoreApplication::translate("Palune", "无法启动安装程序")},
+        {QStringLiteral("UPD-009"), QCoreApplication::translate("Palune", "没有写入权限或磁盘空间不足")},
+        {QStringLiteral("UPD-010"), QCoreApplication::translate("Palune", "镜像地址无效")},
     };
-    return map.value(code, QStringLiteral("未知更新错误"));
+    return map.value(code, QCoreApplication::translate("Palune", "未知更新错误"));
 }
 
 } // namespace palune

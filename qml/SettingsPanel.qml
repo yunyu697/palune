@@ -25,7 +25,7 @@ Item {
     // 避免设置卡片超出窗口造成截断（M2 缩放基线判据）。
     readonly property bool narrow: panelRoot.width < 720 || panelRoot.height < 520
 
-    readonly property var pageTitles: ["通用", "播放", "字幕", "音频", "快捷键", "关于"]
+    readonly property var pageTitles: [qsTr("通用"), qsTr("播放"), qsTr("字幕"), qsTr("音频"), qsTr("快捷键"), qsTr("关于")]
 
     Rectangle {
         anchors.fill: parent
@@ -53,7 +53,7 @@ Item {
                 Column {
                     spacing: 4
                     Text {
-                        text: "设置"
+                        text: qsTr("设置")
                         color: panelRoot.textColor
                         font.pixelSize: panelRoot.narrow ? 16 : 20
                         font.weight: Font.DemiBold
@@ -76,7 +76,7 @@ Item {
                     color: closeHover.containsMouse ? "#22ffffff" : "#10ffffff"
                     Text {
                         anchors.centerIn: parent
-                        text: "关闭"
+                        text: qsTr("关闭")
                         color: panelRoot.textColor
                         font.pixelSize: 12
                     }
@@ -208,7 +208,7 @@ Item {
                         spacing: 12
 
                         Text {
-                            text: "外观"
+                            text: qsTr("外观")
                             color: panelRoot.textColor
                             font.pixelSize: 14
                             font.weight: Font.DemiBold
@@ -216,7 +216,7 @@ Item {
                         RowLayout {
                             spacing: 12
                             Text {
-                                text: "主题"
+                                text: qsTr("主题")
                                 color: panelRoot.mutedColor
                                 font.pixelSize: 12
                             }
@@ -238,7 +238,7 @@ Item {
                                                       ? panelRoot.accent : panelRoot.lineColor
                                         Text {
                                             anchors.centerIn: parent
-                                            text: "布局 " + modelData
+                                            text: qsTr("布局 ") + modelData
                                             color: panelRoot.textColor
                                             font.pixelSize: 11
                                         }
@@ -263,7 +263,7 @@ Item {
                             }
                         }
                         Text {
-                            text: "只提供 A / B / C 三套布局，不设皮肤或主题包入口。"
+                            text: qsTr("只提供 A / B / C 三套布局，不设皮肤或主题包入口。")
                             color: panelRoot.mutedColor
                             font.pixelSize: 11
                         }
@@ -271,15 +271,15 @@ Item {
                         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
 
                         Text {
-                            text: "紧凑模式"
+                            text: qsTr("紧凑模式")
                             color: panelRoot.textColor
                             font.pixelSize: 14
                             font.weight: Font.DemiBold
                         }
                         Text {
-                            text: "断点：" + (typeof compactMode !== "undefined" ? compactMode.breakpoint : "-")
-                                  + "px · 滞回 ±" + (typeof compactMode !== "undefined" ? compactMode.hysteresis : "-")
-                                  + "px · 当前：" + (panelRoot.compact ? "紧凑" : "常规")
+                            text: qsTr("断点：") + (typeof compactMode !== "undefined" ? compactMode.breakpoint : "-")
+                                  + qsTr("px · 滞回 ±") + (typeof compactMode !== "undefined" ? compactMode.hysteresis : "-")
+                                  + qsTr("px · 当前：") + (panelRoot.compact ? qsTr("紧凑") : qsTr("常规"))
                             color: panelRoot.mutedColor
                             font.pixelSize: 12
                             elide: Text.ElideRight
@@ -292,7 +292,7 @@ Item {
                             font.pixelSize: 11
                         }
                         Text {
-                            text: "断点在 settings.toml 的 [ui.layout.<主题>] compactBelow 中配置，非法值回退 560。"
+                            text: qsTr("断点在 settings.toml 的 [ui.layout.<主题>] compactBelow 中配置，非法值回退 560。")
                             color: panelRoot.mutedColor
                             font.pixelSize: 11
                             wrapMode: Text.WordWrap
@@ -308,22 +308,22 @@ Item {
                         visible: panelRoot.page === 1
                         spacing: 10
 
-                        Text { text: "当前播放"; color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
-                        Text { text: "文件：" + (player.filePath === "" ? "未打开" : player.filePath)
+                        Text { text: qsTr("当前播放"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text { text: qsTr("文件：") + (player.filePath === "" ? qsTr("未打开") : player.filePath)
                                color: panelRoot.mutedColor; font.pixelSize: 12; elide: Text.ElideMiddle; Layout.fillWidth: true }
-                        Text { text: "标题：" + (player.title === "" ? "未打开" : player.title)
+                        Text { text: qsTr("标题：") + (player.title === "" ? qsTr("未打开") : player.title)
                                color: panelRoot.mutedColor; font.pixelSize: 12; elide: Text.ElideMiddle; Layout.fillWidth: true }
-                        Text { text: "状态：" + (player.paused ? "暂停" : "播放中")
+                        Text { text: qsTr("状态：") + (player.paused ? qsTr("暂停") : qsTr("播放中"))
                                color: panelRoot.mutedColor; font.pixelSize: 12 }
-                        Text { text: "时长：" + Math.round(player.duration) + "s · 速度：" + player.speed + "x"
+                        Text { text: qsTr("时长：") + Math.round(player.duration) + qsTr("s · 速度：") + player.speed + "x"
                                color: panelRoot.mutedColor; font.pixelSize: 12 }
 
                         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
 
-                        Text { text: "解码与渲染"; color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
-                        Text { text: "渲染：libmpv（动态加载）· 输出：" + Qt.platform.os + " 原生窗口"
+                        Text { text: qsTr("解码与渲染"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text { text: qsTr("渲染：libmpv（动态加载）· 输出：") + Qt.platform.os + qsTr(" 原生窗口")
                                color: panelRoot.mutedColor; font.pixelSize: 12; wrapMode: Text.WordWrap; Layout.fillWidth: true }
-                        Text { text: "硬件解码、缓冲与 HDR 状态在 M3/M4 接入。"
+                        Text { text: qsTr("硬件解码、缓冲与 HDR 状态在 M3/M4 接入。")
                                color: panelRoot.mutedColor; font.pixelSize: 11 }
 
                         Item { Layout.fillHeight: true }
@@ -335,26 +335,26 @@ Item {
                         visible: panelRoot.page === 2
                         spacing: 10
 
-                        Text { text: "字幕轨道"; color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text { text: qsTr("字幕轨道"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
                         Repeater {
                             model: player.subtitleTracks
                             delegate: Text {
                                 required property var modelData
-                                text: (modelData.selected ? "● " : "○ ") + (modelData.title || ("轨道 " + modelData.id))
+                                text: (modelData.selected ? "● " : "○ ") + (modelData.title || (qsTr("轨道 ") + modelData.id))
                                 color: panelRoot.mutedColor
                                 font.pixelSize: 12
                             }
                         }
                         Text {
                             visible: player.subtitleTracks.length === 0
-                            text: "当前文件没有内嵌字幕轨道。"
+                            text: qsTr("当前文件没有内嵌字幕轨道。")
                             color: panelRoot.mutedColor
                             font.pixelSize: 12
                         }
 
                         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
 
-                        Text { text: "字号 / 延迟 / 外挂字幕在 M3 接入；本页为轨道状态展示。"
+                        Text { text: qsTr("字号 / 延迟 / 外挂字幕在 M3 接入；本页为轨道状态展示。")
                                color: panelRoot.mutedColor; font.pixelSize: 11; wrapMode: Text.WordWrap; Layout.fillWidth: true }
 
                         Item { Layout.fillHeight: true }
@@ -366,7 +366,7 @@ Item {
                         visible: panelRoot.page === 3
                         spacing: 12
 
-                        Text { text: "音量"; color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text { text: qsTr("音量"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
                         RowLayout {
                             spacing: 12
                             VolumeBar {
@@ -374,32 +374,32 @@ Item {
                                 onVolumeSet: function (v) { win.action("volumeSet", v) }
                             }
                             Text {
-                                text: Math.round(player.volume) + "%" + (player.muted ? "（静音）" : "")
+                                text: Math.round(player.volume) + "%" + (player.muted ? qsTr("（静音）") : "")
                                 color: panelRoot.mutedColor
                                 font.pixelSize: 12
                             }
                         }
                         PillButton {
-                            label: player.muted ? "取消静音" : "静音"
+                            label: player.muted ? qsTr("取消静音") : qsTr("静音")
                             actionId: "toggleMute"
                             onClicked: win.action("toggleMute")
                         }
 
                         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
 
-                        Text { text: "音频轨道"; color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text { text: qsTr("音频轨道"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
                         Repeater {
                             model: player.audioTracks
                             delegate: Text {
                                 required property var modelData
-                                text: (modelData.selected ? "● " : "○ ") + (modelData.title || ("轨道 " + modelData.id))
+                                text: (modelData.selected ? "● " : "○ ") + (modelData.title || (qsTr("轨道 ") + modelData.id))
                                 color: panelRoot.mutedColor
                                 font.pixelSize: 12
                             }
                         }
                         Text {
                             visible: player.audioTracks.length === 0
-                            text: "当前文件没有音频轨道。"
+                            text: qsTr("当前文件没有音频轨道。")
                             color: panelRoot.mutedColor
                             font.pixelSize: 12
                         }
@@ -413,11 +413,11 @@ Item {
                         visible: panelRoot.page === 4
                         spacing: 8
 
-                        Text { text: "已接线快捷键"; color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text { text: qsTr("已接线快捷键"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
                         Text {
-                            text: "空格 播放/暂停 · F11 全屏 · Esc 退出面板/全屏 · O 打开文件\n"
-                                  + "← / → 后退/前进 10 秒 · ↑ / ↓ 音量 ±5 · Enter 激活焦点控件\n"
-                                  + "Tab 在可操作控件间移动焦点"
+                            text: qsTr("空格 播放/暂停 · F11 全屏 · Esc 退出面板/全屏 · O 打开文件\n")
+                                  + qsTr("← / → 后退/前进 10 秒 · ↑ / ↓ 音量 ±5 · Enter 激活焦点控件\n")
+                                  + qsTr("Tab 在可操作控件间移动焦点")
                             color: panelRoot.mutedColor
                             font.pixelSize: 12
                             lineHeight: 1.4
@@ -427,9 +427,9 @@ Item {
 
                         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
 
-                        Text { text: "快捷键系统进度"; color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text { text: qsTr("快捷键系统进度"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
                         Text {
-                            text: "40 个 P0 动作的绑定表、启动冲突检测与解绑界面尚未完成（M2 待办）。当前 10 项为主窗口直接接线。"
+                            text: qsTr("40 个 P0 动作的绑定表、启动冲突检测与解绑界面尚未完成（M2 待办）。当前 10 项为主窗口直接接线。")
                             color: panelRoot.mutedColor
                             font.pixelSize: 11
                             wrapMode: Text.WordWrap
@@ -446,13 +446,13 @@ Item {
                         spacing: 12
 
                         Text { text: "Palune " + panelRoot.appVersion; color: panelRoot.textColor; font.pixelSize: 16; font.weight: Font.DemiBold }
-                        Text { text: "Qt " + Qt.application.version + " · libmpv 动态链接 · 渲染路径：" + Qt.platform.os
+                        Text { text: "Qt " + Qt.application.version + qsTr(" · libmpv 动态链接 · 渲染路径：") + Qt.platform.os
                                color: panelRoot.mutedColor; font.pixelSize: 12
                                wrapMode: Text.WordWrap; Layout.fillWidth: true }
                         Text {
                             visible: panelRoot.hasWindow
                             text: panelRoot.hasWindow
-                                  ? "配置：" + win.configDir + "\n日志：" + win.logFile + "\n崩溃：" + win.crashDir
+                                  ? qsTr("配置：") + win.configDir + qsTr("\n日志：") + win.logFile + qsTr("\n崩溃：") + win.crashDir
                                   : ""
                             color: panelRoot.mutedColor
                             font.pixelSize: 11
@@ -462,7 +462,7 @@ Item {
 
                         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
 
-                        Text { text: "更新"; color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text { text: qsTr("更新"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
                         UpdateSection {
                             Layout.fillWidth: true
                             Layout.fillHeight: true

@@ -9,6 +9,8 @@
 #include <QApplication>
 #include <QCoreApplication>
 #include <QDir>
+#include <QLocale>
+#include <QTranslator>
 #include <QUrlQuery>
 
 #include <cstdio>
@@ -189,7 +191,8 @@ int main(int argc, char *argv[])
     const char *valueFlags[] = {"--video", "--report", "--ui-shot", "--update-url",
                                 "--download-dir", "--e2e-mode", "--e2e-marker", "--open",
                                 "--media", "--switch-count", "--soak-minute",
-                                "--state-switch-count", "--shot-backdrop", "--shot-size"};
+                                "--state-switch-count", "--shot-backdrop", "--shot-size",
+                                "--lang"};
     for (int i = 1; i < argc; ++i) {
         const QString arg = QString::fromLocal8Bit(argv[i]);
         bool isValueFlag = false;
@@ -215,6 +218,19 @@ int main(int argc, char *argv[])
         CrashBreadcrumb::record(QStringLiteral("已确认 palune:// 协议注册"));
     }
 #endif
+
+    // 界面语言：默认跟随系统；非中文环境加载英文翻译（QML 文案用 qsTr 标记）。
+    QTranslator translator;
+    QString language = valueArg(argc, argv, "--lang");
+    if (language.isEmpty()) {
+        const QStringList uiLanguages = QLocale::system().uiLanguages();
+        language = uiLanguages.isEmpty() ? QString() : uiLanguages.value(0);
+    }
+    if (!language.startsWith(QLatin1String("zh")) && translator.load(
+            QStringLiteral(":/i18n/palune_en_US.qm"))) {
+        app.installTranslator(&translator);
+    }
+    Log::info(QStringLiteral("界面语言：%1").arg(language));
 
     AppController controller(options, &settings);
     controller.start();

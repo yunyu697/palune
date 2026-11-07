@@ -54,7 +54,7 @@ Item {
                 font.weight: Font.DemiBold
             }
             Text {
-                text: player.title === "" ? "未打开文件" : player.title
+                text: player.title === "" ? qsTr("未打开文件") : player.title
                 color: tokens.text
                 font.pixelSize: tokens.fontM
                 elide: Text.ElideRight
@@ -62,16 +62,16 @@ Item {
             }
             Item { Layout.fillWidth: true }
 
-            PillButton { label: "打开"; actionId: "openFile"; onClicked: win.action("openFile") }
-            PillButton { visible: !layoutA.compact; label: "文件夹"; actionId: "openFolder"; onClicked: win.action("openFolder") }
-            PillButton { visible: !layoutA.compact; label: "媒体库"; actionId: "openLibrary"; onClicked: win.action("openLibrary") }
-            PillButton { label: "设置"; actionId: "openSettings"; onClicked: win.action("openSettings") }
+            PillButton { label: qsTr("打开"); actionId: "openFile"; onClicked: win.action("openFile") }
+            PillButton { visible: !layoutA.compact; label: qsTr("文件夹"); actionId: "openFolder"; onClicked: win.action("openFolder") }
+            PillButton { visible: !layoutA.compact; label: qsTr("媒体库"); actionId: "openLibrary"; onClicked: win.action("openLibrary") }
+            PillButton { label: qsTr("设置"); actionId: "openSettings"; onClicked: win.action("openSettings") }
             PillButton {
-                label: win.fullscreen ? "退出全屏" : "全屏"
+                label: win.fullscreen ? qsTr("退出全屏") : qsTr("全屏")
                 actionId: "toggleFullscreen"
                 onClicked: win.action("toggleFullscreen")
             }
-            PillButton { label: "关闭"; actionId: "exit"; onClicked: win.action("exit") }
+            PillButton { label: qsTr("关闭"); actionId: "exit"; onClicked: win.action("exit") }
         }
     }
 
@@ -103,7 +103,7 @@ Item {
                 spacing: 10
 
                 PillButton {
-                    label: player.paused ? "播放" : "暂停"
+                    label: player.paused ? qsTr("播放") : qsTr("暂停")
                     highlighted: true
                     actionId: "playPause"
                     onClicked: win.action("playPause")
@@ -113,7 +113,7 @@ Item {
 
                 Text {
                     visible: !layoutA.compact
-                    text: player.muted ? "已静音" : "音量"
+                    text: player.muted ? qsTr("已静音") : qsTr("音量")
                     color: tokens.textMuted
                     font.pixelSize: tokens.fontS
                 }
@@ -123,7 +123,7 @@ Item {
                     onVolumeSet: function (v) { win.action("volumeSet", v) }
                 }
                 PillButton {
-                    label: player.muted ? "取消静音" : "静音"
+                    label: player.muted ? qsTr("取消静音") : qsTr("静音")
                     actionId: "toggleMute"
                     onClicked: win.action("toggleMute")
                 }
@@ -137,18 +137,18 @@ Item {
                 }
                 PillButton {
                     visible: !layoutA.compact
-                    label: "音轨 " + player.audioTracks.length
+                    label: qsTr("音轨 ") + player.audioTracks.length
                     actionId: "cycleAudio"
                     onClicked: win.action("cycleAudio")
                 }
                 PillButton {
                     visible: !layoutA.compact
-                    label: "字幕 " + player.subtitleTracks.length
+                    label: qsTr("字幕 ") + player.subtitleTracks.length
                     actionId: "cycleSubtitle"
                     onClicked: win.action("cycleSubtitle")
                 }
                 PillButton {
-                    label: "切换布局"
+                    label: qsTr("切换布局")
                     actionId: "cycleTheme"
                     onClicked: win.action("cycleTheme")
                 }

@@ -34,6 +34,10 @@ jobs:
         run: python tools/ci/check_layers.py
       - name: 品牌卫生检查（禁止外部播放器品牌名）
         run: python tools/ci/check_brand_terms.py
+      - name: 硬编码用户可见文案检查
+        run: python tools/ci/check_hardcoded_text.py
+      - name: i18n 完整性检查
+        run: python tools/ci/check_i18n.py
 
   coverage:
     name: 单测覆盖率

@@ -52,7 +52,7 @@
 | 6 | 自动降级阈值 + 配置回退 | **PASS**：`m2-compact.json`、`m2-config-fallback.json`、`m2-compact-baseline.json`（640×360 各主题 36/36） |
 | 7 | 强杀 10 次续播 ±1s；8h 浸泡 | 强杀 **PASS**：`m2-resume-kill.json`（10 轮，delta 0~0.067s）；8h 浸泡进行中 |
 | 8 | 窗口行为 20 项清单 | 未做（真机项标注 NOT_VERIFIED） |
-| 9 | 中/英 i18n + 无硬编码文案 lint | 未做 |
+| 9 | 中/英 i18n + 无硬编码文案 lint | **PASS**：`m2-i18n.json`；QML 125 处 qsTr、10 上下文 203 条翻译全完成，硬编码 0；中/英各 37 张截图（`shots/m2-i18n-zh|en`） |
 
 ## 下一步（按顺序）
 

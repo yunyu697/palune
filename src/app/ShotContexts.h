@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QCoreApplication>
 #include <QObject>
 #include <QString>
 #include <QStringList>
@@ -95,9 +96,9 @@ public:
     QVariantList recentFiles() const { return m_recentFiles; }
     void setRecentFiles(const QVariantList &v) { m_recentFiles = v; emit recentFilesChanged(); }
     QString version() const { return QStringLiteral(PALUNE_VERSION); }
-    QString configDir() const { return QStringLiteral("(截图模式)"); }
-    QString crashDir() const { return QStringLiteral("(截图模式)"); }
-    QString logFile() const { return QStringLiteral("(截图模式)"); }
+    QString configDir() const { return QCoreApplication::translate("Palune", "(截图模式)"); }
+    QString crashDir() const { return QCoreApplication::translate("Palune", "(截图模式)"); }
+    QString logFile() const { return QCoreApplication::translate("Palune", "(截图模式)"); }
     QStringList actionNames() const { return m_actions; }
 
     Q_INVOKABLE void action(const QString &name) { m_actions << name; }

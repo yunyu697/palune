@@ -1,0 +1,23 @@
+{
+  "mode": "m2-i18n",
+  "languages": ["zh", "en"],
+  "defaultLanguage": "zh",
+  "translationSource": "i18n/palune_en_US.ts",
+  "compiled": "i18n/palune_en_US.qm",
+  "contexts": 10,
+  "entries": 203,
+  "unfinished": 0,
+  "qmlQsTrReferences": 125,
+  "hardcodedQmlTexts": 0,
+  "screenshots": {
+    "zh": "docs/evidence/shots/m2-i18n-zh",
+    "en": "docs/evidence/shots/m2-i18n-en",
+    "perLanguage": 37
+  },
+  "checks": [
+    "python tools/ci/check_hardcoded_text.py",
+    "python tools/ci/check_i18n.py"
+  ],
+  "verdict": "PASS",
+  "generatedAt": "2026-11-07T09:40:00+08:00"
+}

@@ -1,0 +1,378 @@
+{
+    "expected": 36,
+    "generatedAt": "2026-11-07T09:39:26",
+    "items": [
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-A-main.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "main",
+            "theme": "A",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-A-paused.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "paused",
+            "theme": "A",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-A-fullscreen.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "fullscreen",
+            "theme": "A",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-A-settings-general.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "settings-general",
+            "theme": "A",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-A-settings-playback.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "settings-playback",
+            "theme": "A",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-A-settings-subtitle.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "settings-subtitle",
+            "theme": "A",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-A-settings-audio.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "settings-audio",
+            "theme": "A",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-A-settings-shortcuts.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "settings-shortcuts",
+            "theme": "A",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-A-settings-about.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "settings-about",
+            "theme": "A",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-A-error.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "error",
+            "theme": "A",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-A-empty.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "empty",
+            "theme": "A",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-A-mini.png",
+            "height": 540,
+            "logicalHeight": 270,
+            "logicalWidth": 480,
+            "screen": "mini",
+            "theme": "A",
+            "width": 960
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-B-main.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "main",
+            "theme": "B",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-B-paused.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "paused",
+            "theme": "B",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-B-fullscreen.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "fullscreen",
+            "theme": "B",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-B-settings-general.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "settings-general",
+            "theme": "B",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-B-settings-playback.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "settings-playback",
+            "theme": "B",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-B-settings-subtitle.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "settings-subtitle",
+            "theme": "B",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-B-settings-audio.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "settings-audio",
+            "theme": "B",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-B-settings-shortcuts.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "settings-shortcuts",
+            "theme": "B",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-B-settings-about.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "settings-about",
+            "theme": "B",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-B-error.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "error",
+            "theme": "B",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-B-empty.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "empty",
+            "theme": "B",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-B-mini.png",
+            "height": 540,
+            "logicalHeight": 270,
+            "logicalWidth": 480,
+            "screen": "mini",
+            "theme": "B",
+            "width": 960
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-C-main.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "main",
+            "theme": "C",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-C-paused.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "paused",
+            "theme": "C",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-C-fullscreen.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "fullscreen",
+            "theme": "C",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-C-settings-general.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "settings-general",
+            "theme": "C",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-C-settings-playback.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "settings-playback",
+            "theme": "C",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-C-settings-subtitle.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "settings-subtitle",
+            "theme": "C",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-C-settings-audio.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "settings-audio",
+            "theme": "C",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-C-settings-shortcuts.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "settings-shortcuts",
+            "theme": "C",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-C-settings-about.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "settings-about",
+            "theme": "C",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-C-error.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "error",
+            "theme": "C",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-C-empty.png",
+            "height": 1440,
+            "logicalHeight": 720,
+            "logicalWidth": 1280,
+            "screen": "empty",
+            "theme": "C",
+            "width": 2560
+        },
+        {
+            "devicePixelRatio": 2,
+            "file": "m2-C-mini.png",
+            "height": 540,
+            "logicalHeight": 270,
+            "logicalWidth": 480,
+            "screen": "mini",
+            "theme": "C",
+            "width": 960
+        }
+    ],
+    "logicalHeight": 720,
+    "logicalWidth": 1280,
+    "mode": "m2-ui-baseline",
+    "saved": 36,
+    "screensPerTheme": 12,
+    "themes": [
+        "A",
+        "B",
+        "C"
+    ],
+    "verdict": "PASS",
+    "version": "1.0.0-alpha4"
+}

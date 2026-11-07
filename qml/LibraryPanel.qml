@@ -35,14 +35,14 @@ Item {
             RowLayout {
                 Layout.fillWidth: true
                 Text {
-                    text: "媒体库"
+                    text: qsTr("媒体库")
                     color: tokens.text
                     font.pixelSize: tokens.fontL
                     font.weight: Font.DemiBold
                 }
                 Item { Layout.fillWidth: true }
                 PillButton {
-                    label: "关闭"
+                    label: qsTr("关闭")
                     onClicked: libraryPanel.closeRequested()
                 }
             }

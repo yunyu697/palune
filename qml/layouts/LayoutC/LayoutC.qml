@@ -48,7 +48,7 @@ Item {
             anchors.right: parent.right
             anchors.rightMargin: 16
             anchors.verticalCenter: parent.verticalCenter
-            text: win.fullscreen ? "全屏" : "窗口"
+            text: win.fullscreen ? qsTr("全屏") : qsTr("窗口")
             color: tokens.textFaint
             font.pixelSize: tokens.fontS
         }
@@ -74,7 +74,7 @@ Item {
             spacing: 10
 
             PillButton {
-                label: player.paused ? "播放" : "暂停"
+                label: player.paused ? qsTr("播放") : qsTr("暂停")
                 highlighted: true
                 actionId: "playPause"
                 onClicked: win.action("playPause")
@@ -98,17 +98,17 @@ Item {
                 actionId: "speedUp"
                 onClicked: win.action("speedUp")
             }
-            PillButton { visible: !layoutC.compact; label: "音轨"; actionId: "cycleAudio"; onClicked: win.action("cycleAudio") }
-            PillButton { visible: !layoutC.compact; label: "字幕"; actionId: "cycleSubtitle"; onClicked: win.action("cycleSubtitle") }
-            PillButton { label: "打开"; actionId: "openFile"; onClicked: win.action("openFile") }
-            PillButton { label: "切换布局"; actionId: "cycleTheme"; onClicked: win.action("cycleTheme") }
-            PillButton { label: "设置"; actionId: "openSettings"; onClicked: win.action("openSettings") }
+            PillButton { visible: !layoutC.compact; label: qsTr("音轨"); actionId: "cycleAudio"; onClicked: win.action("cycleAudio") }
+            PillButton { visible: !layoutC.compact; label: qsTr("字幕"); actionId: "cycleSubtitle"; onClicked: win.action("cycleSubtitle") }
+            PillButton { label: qsTr("打开"); actionId: "openFile"; onClicked: win.action("openFile") }
+            PillButton { label: qsTr("切换布局"); actionId: "cycleTheme"; onClicked: win.action("cycleTheme") }
+            PillButton { label: qsTr("设置"); actionId: "openSettings"; onClicked: win.action("openSettings") }
             PillButton {
-                label: win.fullscreen ? "还原" : "全屏"
+                label: win.fullscreen ? qsTr("还原") : qsTr("全屏")
                 actionId: "toggleFullscreen"
                 onClicked: win.action("toggleFullscreen")
             }
-            PillButton { label: "关闭"; actionId: "exit"; onClicked: win.action("exit") }
+            PillButton { label: qsTr("关闭"); actionId: "exit"; onClicked: win.action("exit") }
         }
     }
 

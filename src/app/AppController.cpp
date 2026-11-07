@@ -979,11 +979,11 @@ void AppController::runM2Actions()
 
     QVariantList recent;
     for (int i = 1; i <= 8; ++i)
-        recent.append(QVariantMap{{QStringLiteral("name"), QStringLiteral("示例影片 %1").arg(i)},
+        recent.append(QVariantMap{{QStringLiteral("name"), QCoreApplication::translate("Palune", "示例影片 %1").arg(i)},
                                   {QStringLiteral("path"), QStringLiteral("D:/qa/sample-%1.mp4").arg(i)}});
     shotWin.setRecentFiles(recent);
     shotPlayer.setFilePath(QStringLiteral("D:/qa/demo-1080p.mp4"));
-    shotPlayer.setTitle(QStringLiteral("示例影片 · 1080p"));
+    shotPlayer.setTitle(QCoreApplication::translate("Palune", "示例影片 · 1080p"));
     shotPlayer.setDuration(7200.0);
     shotPlayer.setPosition(30.0);
     shotPlayer.setVolume(100.0);
@@ -1268,7 +1268,7 @@ void AppController::runM2UiPerf()
     ShotPlayer shotPlayer;
     ShotWindow shotWin;
     shotPlayer.setFilePath(QStringLiteral("D:/qa/demo-4k60.mp4"));
-    shotPlayer.setTitle(QStringLiteral("示例影片 · 4K60"));
+    shotPlayer.setTitle(QCoreApplication::translate("Palune", "示例影片 · 4K60"));
     shotPlayer.setDuration(7200.0);
     shotPlayer.setPosition(30.0);
 
@@ -1446,15 +1446,15 @@ void AppController::runShotMatrix()
 
     QVariantList recent;
     for (int i = 1; i <= 8; ++i)
-        recent.append(QVariantMap{{QStringLiteral("name"), QStringLiteral("示例影片 %1").arg(i)},
+        recent.append(QVariantMap{{QStringLiteral("name"), QCoreApplication::translate("Palune", "示例影片 %1").arg(i)},
                                   {QStringLiteral("path"), QStringLiteral("D:/qa/sample-%1.mp4").arg(i)}});
     shotWin.setRecentFiles(recent);
     QVariantList audio;
-    audio.append(QVariantMap{{QStringLiteral("id"), 1}, {QStringLiteral("title"), QStringLiteral("主音轨")}, {QStringLiteral("selected"), true}});
-    audio.append(QVariantMap{{QStringLiteral("id"), 2}, {QStringLiteral("title"), QStringLiteral("评论音轨")}, {QStringLiteral("selected"), false}});
+    audio.append(QVariantMap{{QStringLiteral("id"), 1}, {QStringLiteral("title"), QCoreApplication::translate("Palune", "主音轨")}, {QStringLiteral("selected"), true}});
+    audio.append(QVariantMap{{QStringLiteral("id"), 2}, {QStringLiteral("title"), QCoreApplication::translate("Palune", "评论音轨")}, {QStringLiteral("selected"), false}});
     shotPlayer.setAudioTracks(audio);
     shotPlayer.setSubtitleTracks(QVariantList{
-        QVariantMap{{QStringLiteral("id"), 1}, {QStringLiteral("title"), QStringLiteral("简体中文")}, {QStringLiteral("selected"), true}}});
+        QVariantMap{{QStringLiteral("id"), 1}, {QStringLiteral("title"), QCoreApplication::translate("Palune", "简体中文")}, {QStringLiteral("selected"), true}}});
 
     QQuickView view;
     view.setFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint
@@ -1525,11 +1525,11 @@ void AppController::runShotMatrix()
         for (const ShotSpec &shot : screens) {
             const bool mini = shot.mini;
             shotPlayer.setFilePath(shot.empty ? QString() : QStringLiteral("D:/qa/demo-1080p.mp4"));
-            shotPlayer.setTitle(shot.empty ? QString() : QStringLiteral("示例影片 · 1080p"));
+            shotPlayer.setTitle(shot.empty ? QString() : QCoreApplication::translate("Palune", "示例影片 · 1080p"));
             shotPlayer.setPosition(shot.empty ? 0 : 96.0);
             shotPlayer.setDuration(shot.empty ? 0 : 7200.0);
             shotPlayer.setPaused(shot.paused);
-            shotPlayer.setErrorMessage(shot.error ? QStringLiteral("播放失败：无法解码该文件（样本错误）") : QString());
+            shotPlayer.setErrorMessage(shot.error ? QCoreApplication::translate("Palune", "播放失败：无法解码该文件（样本错误）") : QString());
             shotWin.setFullscreen(shot.fullscreen);
             demoUi.setChromeVisible(shot.chrome);
             root->setProperty("overlayPanel", shot.page >= 0 ? QStringLiteral("settings") : QString());

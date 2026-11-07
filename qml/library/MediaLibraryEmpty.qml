@@ -32,13 +32,13 @@ Item {
         }
         Text {
             Layout.alignment: Qt.AlignHCenter
-            text: "已注册内容源：" + library.adapterCount + " · 可用库：" + library.libraries.length
+            text: qsTr("已注册内容源：") + library.adapterCount + qsTr(" · 可用库：") + library.libraries.length
             color: tokens.textFaint
             font.pixelSize: tokens.fontS
         }
         PillButton {
             Layout.alignment: Qt.AlignHCenter
-            label: "刷新"
+            label: qsTr("刷新")
             highlighted: true
             onClicked: library.refresh()
         }

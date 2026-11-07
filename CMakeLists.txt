@@ -106,6 +106,7 @@ qt_add_resources(Palune "app_resources"
         qml/library/MediaLibraryEmpty.qml
         resources/trust/update.pub
         resources/trust/test-update.pub
+        i18n/palune_en_US.qm
 )
 
 if(WIN32)

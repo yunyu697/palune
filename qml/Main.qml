@@ -115,7 +115,7 @@ Item {
             spacing: 10
 
             Text {
-                text: "播放失败"
+                text: qsTr("播放失败")
                 color: tokens.accent
                 font.pixelSize: 16
                 font.weight: Font.DemiBold
@@ -130,13 +130,13 @@ Item {
             Row {
                 spacing: 10
                 PillButton {
-                    label: "打开其他文件"
+                    label: qsTr("打开其他文件")
                     highlighted: true
                     actionId: "openFile"
                     onClicked: win.action("openFile")
                 }
                 PillButton {
-                    label: "知道了"
+                    label: qsTr("知道了")
                     onClicked: root.errorDismissed = true
                 }
             }

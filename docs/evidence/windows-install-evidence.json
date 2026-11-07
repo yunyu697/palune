@@ -1,64 +1,62 @@
-﻿{
-    "installer":  "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\Palune-1.0.0-alpha4-win-x64.exe",
-    "installDir":  "C:\\PaluneVerify",
-    "expectedShortcuts":  [
-                              "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Palune\\Palune.lnk",
-                              "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Palune\\Uninstall Palune.lnk",
-                              "C:\\Users\\Public\\Desktop\\Palune.lnk"
-                          ],
-    "installExitCode":  0,
-    "files":  {
-                  "bin\\Palune.exe":  true,
-                  "bin\\Qt6Core.dll":  true,
-                  "bin\\Qt6Gui.dll":  true,
-                  "bin\\Qt6Qml.dll":  true,
-                  "bin\\Qt6Quick.dll":  true,
-                  "bin\\Qt6QuickControls2.dll":  true,
-                  "bin\\platforms\\qwindows.dll":  true,
-                  "bin\\vcruntime140.dll":  true,
-                  "bin\\msvcp140.dll":  true,
-                  "bin\\libmpv-2.dll":  true,
-                  "bin\\libsodium.dll":  true,
-                  "bin\\NOTICE.md":  true,
-                  "uninstall.exe":  true,
-                  "bin\\qml":  true
-              },
-    "shortcuts":  {
-                      "startMenuExe":  "C:\\PaluneVerify\\bin\\Palune.exe",
-                      "startMenuUninstall":  "C:\\PaluneVerify\\Uninstall.exe",
-                      "desktop":  "C:\\PaluneVerify\\bin\\Palune.exe",
-                      "startMenuRootStray":  [
-
-                                             ]
-                  },
-    "uninstallEntry":  {
-                           "uninstallerFile":  true,
-                           "registryKeys":  [
-                                                "HKLM:\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Palune"
-                                            ]
-                       },
-    "launch":  {
-                   "exitCode":  0,
-                   "report":  {
-                                  "configDir":  "C:\\Users\\Tyler Zhang\\AppData\\Roaming\\Palune",
-                                  "fallbackReason":  "",
-                                  "generatedAt":  "2026-11-07T07:07:35",
-                                  "mode":  "m2-config-check",
-                                  "played":  false,
-                                  "playerAvailable":  true,
-                                  "settingsParseFailed":  false,
-                                  "theme":  "C",
-                                  "verdict":  "PASS",
-                                  "version":  "1.0.0-alpha4",
-                                  "windowReadyMs":  2014,
-                                  "windowReadyWithin800ms":  false
-                              },
-                   "ok":  true
-               },
-    "uninstall":  {
-                      "installDirGone":  true,
-                      "startMenuGone":  true,
-                      "desktopGone":  true
-                  },
-    "verdict":  "PASS"
+{
+  "installer": "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\palune\\dist\\Palune-1.0.0-alpha7-win-x64.exe",
+  "installDir": "C:\\PaluneVerify",
+  "expectedShortcuts": [
+    "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Palune\\Palune.lnk",
+    "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Palune\\Uninstall Palune.lnk",
+    "C:\\Users\\Public\\Desktop\\Palune.lnk"
+  ],
+  "installExitCode": 0,
+  "files": {
+    "bin\\Palune.exe": true,
+    "bin\\Qt6Core.dll": true,
+    "bin\\Qt6Gui.dll": true,
+    "bin\\Qt6Qml.dll": true,
+    "bin\\Qt6Quick.dll": true,
+    "bin\\Qt6QuickControls2.dll": true,
+    "bin\\platforms\\qwindows.dll": true,
+    "bin\\vcruntime140.dll": true,
+    "bin\\msvcp140.dll": true,
+    "bin\\libmpv-2.dll": true,
+    "bin\\libsodium.dll": true,
+    "bin\\NOTICE.md": true,
+    "uninstall.exe": true,
+    "bin\\qml": true
+  },
+  "shortcuts": {
+    "startMenuExe": "C:\\PaluneVerify\\bin\\Palune.exe",
+    "startMenuUninstall": "C:\\PaluneVerify\\Uninstall.exe",
+    "desktop": "C:\\PaluneVerify\\bin\\Palune.exe",
+    "startMenuRootStray": []
+  },
+  "uninstallEntry": {
+    "uninstallerFile": true,
+    "registryKeys": [
+      "HKLM:\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Palune"
+    ]
+  },
+  "launch": {
+    "exitCode": 0,
+    "report": {
+      "configDir": "C:\\Users\\Tyler Zhang\\AppData\\Roaming\\Palune",
+      "fallbackReason": "",
+      "generatedAt": "2026-11-07T23:20:41",
+      "mode": "m2-config-check",
+      "played": false,
+      "playerAvailable": true,
+      "settingsParseFailed": false,
+      "theme": "C",
+      "verdict": "PASS",
+      "version": "1.0.0-alpha7",
+      "windowReadyMs": 1481,
+      "windowReadyWithin800ms": false
+    },
+    "ok": true
+  },
+  "uninstall": {
+    "installDirGone": true,
+    "startMenuGone": true,
+    "desktopGone": true
+  },
+  "verdict": "PASS"
 }

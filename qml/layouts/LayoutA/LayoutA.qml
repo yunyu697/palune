@@ -11,19 +11,30 @@ Item {
 
     readonly property bool compact: typeof compactMode !== "undefined" && compactMode.compact
     readonly property bool showSecondary: width >= 900 && !layoutA.compact
+    // 设计稿 §1.5：A 的空态隐藏标题条与控制条，只留空态卡。
+    readonly property bool hasFile: player.filePath !== ""
+    // 媒体库以 352px 滑出侧栏打开时，底部控制条右边界收至 368px（设计稿 §3.A）。
+    readonly property bool libraryOpen: typeof uiState !== "undefined" && uiState.overlayOpen
 
     Tokens { id: tokens }
 
     EmptyState {
-        visible: player.filePath === ""
+        visible: !layoutA.hasFile
         anchors.centerIn: parent
         onOpenRequested: win.action("openFile")
+    }
+
+    // 空态下标题条隐藏，但仍需要能关闭/最小化窗口（窗口按钮单独浮在右上）。
+    WindowButtons {
+        visible: !layoutA.hasFile && uiState.chromeVisible
+        anchors { top: parent.top; right: parent.right; margins: 18 }
+        compact: layoutA.compact
     }
 
     // 顶部悬浮标题条
     Rectangle {
         id: topBar
-        visible: uiState.chromeVisible
+        visible: uiState.chromeVisible && layoutA.hasFile
         anchors {
             top: parent.top
             left: parent.left
@@ -70,12 +81,15 @@ Item {
     // 底部双行控制栏
     Rectangle {
         id: bottomBar
-        visible: uiState.chromeVisible
+        visible: uiState.chromeVisible && layoutA.hasFile
         anchors {
             bottom: parent.bottom
             left: parent.left
             right: parent.right
-            margins: 10
+            topMargin: 0
+            bottomMargin: 10
+            leftMargin: 10
+            rightMargin: layoutA.libraryOpen ? 368 : 10
         }
         height: layoutA.compact ? 64 : tokens.transportHeight
         radius: 16

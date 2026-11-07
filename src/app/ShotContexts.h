@@ -24,6 +24,12 @@ class ShotPlayer : public QObject
     Q_PROPERTY(QVariantList audioTracks READ audioTracks WRITE setAudioTracks NOTIFY tracksChanged)
     Q_PROPERTY(QVariantList subtitleTracks READ subtitleTracks WRITE setSubtitleTracks NOTIFY tracksChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage WRITE setErrorMessage NOTIFY errorMessageChanged)
+    // M3 技术信息条：与 MpvClient 同名属性，截图用固定样本值。
+    Q_PROPERTY(QString videoCodec READ videoCodec WRITE setVideoCodec NOTIFY videoInfoChanged)
+    Q_PROPERTY(double videoFps READ videoFps WRITE setVideoFps NOTIFY videoInfoChanged)
+    Q_PROPERTY(double videoBitrate READ videoBitrate WRITE setVideoBitrate NOTIFY videoInfoChanged)
+    Q_PROPERTY(QString hwdec READ hwdec WRITE setHwdec NOTIFY videoInfoChanged)
+    Q_PROPERTY(QString hdrMode READ hdrMode WRITE setHdrMode NOTIFY videoInfoChanged)
 
 public:
     explicit ShotPlayer(QObject *parent = nullptr) : QObject(parent) {}
@@ -50,6 +56,16 @@ public:
     void setSubtitleTracks(const QVariantList &v) { m_subtitleTracks = v; emit tracksChanged(); }
     QString errorMessage() const { return m_errorMessage; }
     void setErrorMessage(const QString &v) { if (m_errorMessage != v) { m_errorMessage = v; emit errorMessageChanged(); } }
+    QString videoCodec() const { return m_videoCodec; }
+    void setVideoCodec(const QString &v) { if (m_videoCodec != v) { m_videoCodec = v; emit videoInfoChanged(); } }
+    double videoFps() const { return m_videoFps; }
+    void setVideoFps(double v) { if (m_videoFps != v) { m_videoFps = v; emit videoInfoChanged(); } }
+    double videoBitrate() const { return m_videoBitrate; }
+    void setVideoBitrate(double v) { if (m_videoBitrate != v) { m_videoBitrate = v; emit videoInfoChanged(); } }
+    QString hwdec() const { return m_hwdec; }
+    void setHwdec(const QString &v) { if (m_hwdec != v) { m_hwdec = v; emit videoInfoChanged(); } }
+    QString hdrMode() const { return m_hdrMode; }
+    void setHdrMode(const QString &v) { if (m_hdrMode != v) { m_hdrMode = v; emit videoInfoChanged(); } }
 
 signals:
     void positionChanged();
@@ -62,6 +78,7 @@ signals:
     void speedChanged();
     void tracksChanged();
     void errorMessageChanged();
+    void videoInfoChanged();
 
 private:
     double m_position = 0;
@@ -75,6 +92,11 @@ private:
     QVariantList m_audioTracks;
     QVariantList m_subtitleTracks;
     QString m_errorMessage;
+    QString m_videoCodec;
+    QString m_hwdec;
+    QString m_hdrMode;
+    double m_videoFps = 0.0;
+    double m_videoBitrate = 0.0;
 };
 
 // 窗口上下文桩：动作只记账，截图不触发真实窗口操作。
@@ -107,6 +129,8 @@ public:
     Q_INVOKABLE void openFile(const QString &) {}
     Q_INVOKABLE void openFileDialog() {}
     Q_INVOKABLE void openRecentFile(const QString &) {}
+    // 布局 B 会给检查器让位，截图模式只记账不下发原生几何。
+    Q_INVOKABLE void setVideoInsets(double, double, double, double) {}
 
 signals:
     void fullscreenChanged();

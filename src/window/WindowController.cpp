@@ -126,6 +126,12 @@ bool WindowController::start(int width, int height)
 {
     QElapsedTimer step;
     step.start();
+    // 设计稿 §5.2：Capsule 的设计基准是 1100×680（1180×700 是 A/B 的基准）。
+    // 只影响「首次启动/没有保存几何」的情况，用户已保存的几何优先级更高。
+    if (m_themeRegistry && m_themeRegistry->currentTheme() == QLatin1String("C")) {
+        width = 1100;
+        height = 680;
+    }
     m_video = new VideoWindow();
     m_overlay = new OverlayWindow();
 
@@ -345,11 +351,17 @@ ApplyResult WindowController::applyGeometry(const QRect &rect)
     HWND videoHwnd = m_video ? reinterpret_cast<HWND>(m_video->winId()) : nullptr;
     HWND overlayHwnd = m_overlay ? reinterpret_cast<HWND>(m_overlay->winId()) : nullptr;
     const qreal dpr = m_overlay ? m_overlay->devicePixelRatio() : 1.0;
+    // 视频区可以按布局要求内缩（B 的 344px 检查器）：覆盖窗仍是整窗，视频窗只占主区。
+    const QRect videoRect(rect.x() + qRound(m_insetLeft), rect.y() + qRound(m_insetTop),
+                          qMax(0, rect.width() - qRound(m_insetLeft) - qRound(m_insetRight)),
+                          qMax(0, rect.height() - qRound(m_insetTop) - qRound(m_insetBottom)));
     const QRect native(qRound(rect.x() * dpr), qRound(rect.y() * dpr),
                        qRound(rect.width() * dpr), qRound(rect.height() * dpr));
+    const QRect videoNative(qRound(videoRect.x() * dpr), qRound(videoRect.y() * dpr),
+                            qRound(videoRect.width() * dpr), qRound(videoRect.height() * dpr));
     if (videoHwnd) {
-        SetWindowPos(videoHwnd, overlayHwnd, native.x(), native.y(), native.width(),
-                     native.height(), SWP_NOACTIVATE | SWP_NOOWNERZORDER);
+        SetWindowPos(videoHwnd, overlayHwnd, videoNative.x(), videoNative.y(),
+                     videoNative.width(), videoNative.height(), SWP_NOACTIVATE | SWP_NOOWNERZORDER);
     }
     if (overlayHwnd) {
         SetWindowPos(overlayHwnd, nullptr, native.x(), native.y(), native.width(),
@@ -541,14 +553,31 @@ void WindowController::syncVideoToOverlay()
     if (videoHwnd && overlayHwnd) {
         RECT rc{};
         GetWindowRect(overlayHwnd, &rc);
-        SetWindowPos(videoHwnd, overlayHwnd, rc.left, rc.top, rc.right - rc.left,
-                     rc.bottom - rc.top, SWP_NOACTIVATE | SWP_NOOWNERZORDER);
+        const qreal dpr = m_overlay->devicePixelRatio();
+        const int left = qRound(m_insetLeft * dpr);
+        const int top = qRound(m_insetTop * dpr);
+        const int right = qRound(m_insetRight * dpr);
+        const int bottom = qRound(m_insetBottom * dpr);
+        const int w = qMax(0, (rc.right - rc.left) - left - right);
+        const int h = qMax(0, (rc.bottom - rc.top) - top - bottom);
+        SetWindowPos(videoHwnd, overlayHwnd, rc.left + left, rc.top + top, w, h,
+                     SWP_NOACTIVATE | SWP_NOOWNERZORDER);
         applyWindowRegion();
     }
 #else
     applyGeometry(m_overlay->geometry());
 #endif
     m_syncing = false;
+}
+
+void WindowController::setVideoInsets(double left, double top, double right, double bottom)
+{
+    m_insetLeft = qMax(0.0, left);
+    m_insetTop = qMax(0.0, top);
+    m_insetRight = qMax(0.0, right);
+    m_insetBottom = qMax(0.0, bottom);
+    // 内缩变化要把视频窗立即对齐到覆盖窗当前几何，否则会短暂露出桌面底色。
+    syncVideoToOverlay();
 }
 
 void WindowController::applyWindowRegion()

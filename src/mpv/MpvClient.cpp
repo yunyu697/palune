@@ -271,6 +271,7 @@ bool MpvClient::openFile(const QString &path)
     }
     m_errorMessage.clear();
     emit errorMessageChanged();
+    clearVideoInfo();
     m_filePath = absolute;
     emit filePathChanged();
     return true;
@@ -330,6 +331,7 @@ void MpvClient::stop()
         return;
     const char *args[] = {"stop", nullptr};
     m_api->command(m_mpv, args);
+    clearVideoInfo();
 }
 
 void MpvClient::setSpeed(double speed)
@@ -405,7 +407,86 @@ void MpvClient::poll()
         return;
     handleEvents();
     updateProperties();
+    // 技术信息低频刷新（约 0.5s 一次；poll 间隔 5ms），避免每帧取字符串属性。
+    if (++m_propTick >= 100) {
+        m_propTick = 0;
+        updateVideoInfo();
+    }
     refreshTrackList();
+}
+
+void MpvClient::clearVideoInfo()
+{
+    if (m_videoCodec.isEmpty() && m_hwdec.isEmpty() && m_hdrMode.isEmpty()
+        && m_videoFps == 0.0 && m_videoBitrate == 0.0) {
+        return;
+    }
+    m_videoCodec.clear();
+    m_hwdec.clear();
+    m_hdrMode.clear();
+    m_videoFps = 0.0;
+    m_videoBitrate = 0.0;
+    emit videoInfoChanged();
+}
+
+void MpvClient::updateVideoInfo()
+{
+    auto stringProperty = [this](const char *name) {
+        char *raw = m_api->getPropertyString(m_mpv, name);
+        if (!raw)
+            return QString();
+        const QString value = QString::fromUtf8(raw);
+        m_api->freeString(raw);
+        return value;
+    };
+
+    const QString codec = stringProperty("video-codec");
+    const QString hwdecCurrent = stringProperty("hwdec-current");
+    const QString primaries = stringProperty("video-params/primaries");
+    const QString gamma = stringProperty("video-params/gamma");
+
+    QString hdr;
+    if (!primaries.isEmpty() || !gamma.isEmpty()) {
+        if (gamma == QLatin1String("pq"))
+            hdr = QStringLiteral("HDR10");
+        else if (gamma == QLatin1String("hlg"))
+            hdr = QStringLiteral("HLG");
+        else if (primaries == QLatin1String("bt.2020"))
+            hdr = QStringLiteral("HDR");
+        else
+            hdr = QStringLiteral("SDR");
+    }
+
+    double fps = 0.0;
+    if (m_api->getProperty(m_mpv, "container-fps", MPV_FORMAT_DOUBLE, &fps) < 0
+        && m_api->getProperty(m_mpv, "estimated-vf-fps", MPV_FORMAT_DOUBLE, &fps) < 0) {
+        fps = 0.0;
+    }
+    double bitrate = 0.0;
+    if (m_api->getProperty(m_mpv, "video-bitrate", MPV_FORMAT_DOUBLE, &bitrate) < 0)
+        bitrate = 0.0;
+    if (bitrate <= 0.0) {
+        // 部分容器不提供 video-bitrate：用文件大小 / 时长折算整体码率（含音轨）。
+        int64_t fileSize = 0;
+        double duration = 0.0;
+        if (m_api->getProperty(m_mpv, "file-size", MPV_FORMAT_INT64, &fileSize) >= 0
+            && m_api->getProperty(m_mpv, "duration", MPV_FORMAT_DOUBLE, &duration) >= 0
+            && duration > 0.0) {
+            bitrate = static_cast<double>(fileSize) * 8.0 / duration;
+        }
+    }
+
+    if (codec == m_videoCodec && hwdecCurrent == m_hwdec && hdr == m_hdrMode
+        && qFuzzyCompare(fps + 1.0, m_videoFps + 1.0)
+        && qFuzzyCompare(bitrate + 1.0, m_videoBitrate + 1.0)) {
+        return;
+    }
+    m_videoCodec = codec;
+    m_hwdec = hwdecCurrent;
+    m_hdrMode = hdr;
+    m_videoFps = fps;
+    m_videoBitrate = bitrate;
+    emit videoInfoChanged();
 }
 
 void MpvClient::handleEvents()

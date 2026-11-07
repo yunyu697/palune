@@ -30,6 +30,12 @@ class MpvClient : public QObject
     Q_PROPERTY(int startFileCount READ startFileCount NOTIFY playbackEventsChanged)
     Q_PROPERTY(int endFileCount READ endFileCount NOTIFY playbackEventsChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
+    // 技术信息条（设计稿 §4：字段映射 mpv 属性，无文件时统一为空，由 QML 显示 —）。
+    Q_PROPERTY(QString videoCodec READ videoCodec NOTIFY videoInfoChanged)
+    Q_PROPERTY(double videoFps READ videoFps NOTIFY videoInfoChanged)
+    Q_PROPERTY(double videoBitrate READ videoBitrate NOTIFY videoInfoChanged)
+    Q_PROPERTY(QString hwdec READ hwdec NOTIFY videoInfoChanged)
+    Q_PROPERTY(QString hdrMode READ hdrMode NOTIFY videoInfoChanged)
 
 public:
     explicit MpvClient(QObject *parent = nullptr);
@@ -72,6 +78,11 @@ public:
     int startFileCount() const { return m_startFileCount; }
     int endFileCount() const { return m_endFileCount; }
     QString errorMessage() const { return m_errorMessage; }
+    QString videoCodec() const { return m_videoCodec; }
+    double videoFps() const { return m_videoFps; }
+    double videoBitrate() const { return m_videoBitrate; }
+    QString hwdec() const { return m_hwdec; }
+    QString hdrMode() const { return m_hdrMode; }
     double audioPts() const { return m_audioPts; }
 
     // M0 证据采集
@@ -97,6 +108,7 @@ signals:
     void endFile(const QString &reason);
     void errorOccurred(const QString &message);
     void errorMessageChanged();
+    void videoInfoChanged();
 
 private slots:
     void poll();
@@ -107,6 +119,9 @@ private:
     void applyOptions(qintptr wid);
     void handleEvents();
     void updateProperties();
+    // 解码器 / 帧率 / 码率 / HDR 等信息不是每 5ms 都需要，按低频采样。
+    void updateVideoInfo();
+    void clearVideoInfo();
     void refreshTrackList();
     template <typename T>
     bool resolve(T &fn, const char *name);
@@ -141,6 +156,12 @@ private:
     int m_startFileCount = 0;
     int m_endFileCount = 0;
     QString m_errorMessage;
+    QString m_videoCodec;
+    QString m_hwdec;
+    QString m_hdrMode;
+    double m_videoFps = 0.0;
+    double m_videoBitrate = 0.0;
+    int m_propTick = 0;
 };
 
 } // namespace palune

@@ -21,6 +21,19 @@ Item {
     readonly property string appVersion: hasWindow ? win.version
                                                     : (typeof updater !== "undefined" ? updater.currentVersion : "")
     readonly property bool compact: typeof compactMode !== "undefined" && compactMode.compact
+    // 设置形态跟随布局（设计稿 §1.3）：A 居中 1020×660 双栏、B 居中 1080×660 三栏、
+    // C 右下 560×452 弹出卡（两栏：导航 + 表单）。
+    readonly property string layoutMode: typeof themeRegistry !== "undefined"
+                                         ? themeRegistry.currentTheme : "A"
+    readonly property bool capsulePopup: panelRoot.layoutMode === "C"
+    readonly property bool threeColumn: panelRoot.layoutMode === "B" && !panelRoot.narrow
+    readonly property int cardWidth: panelRoot.capsulePopup
+                                     ? Math.min(560, parent.width - 24)
+                                     : Math.min(panelRoot.layoutMode === "B" ? 1080 : 1020,
+                                                parent.width - (panelRoot.narrow ? 16 : 72))
+    readonly property int cardHeight: panelRoot.capsulePopup
+                                      ? Math.min(452, parent.height - 24)
+                                      : Math.min(660, parent.height - (panelRoot.narrow ? 16 : 72))
     // 窄/矮窗口（480×270 及紧凑断点附近）：页签改横向、内容区可滚动，
     // 避免设置卡片超出窗口造成截断（M2 缩放基线判据）。
     readonly property bool narrow: panelRoot.width < 720 || panelRoot.height < 520
@@ -34,9 +47,10 @@ Item {
 
     Rectangle {
         id: card
-        anchors.centerIn: parent
-        width: Math.min(1000, parent.width - (panelRoot.narrow ? 16 : 72))
-        height: Math.min(660, parent.height - (panelRoot.narrow ? 16 : 72))
+        width: panelRoot.cardWidth
+        height: panelRoot.cardHeight
+        x: panelRoot.capsulePopup ? parent.width - width - 16 : (parent.width - width) / 2
+        y: panelRoot.capsulePopup ? parent.height - height - 16 : (parent.height - height) / 2
         radius: panelRoot.narrow ? 8 : 18
         color: "#f20d0e11"
         border.width: 1
@@ -60,7 +74,7 @@ Item {
                     }
                     Text {
                         visible: !panelRoot.narrow || panelRoot.height >= 320
-                        text: "Palune " + panelRoot.appVersion + " · M2"
+                        text: "Palune " + panelRoot.appVersion + " · M3"
                         color: panelRoot.mutedColor
                         font.pixelSize: panelRoot.narrow ? 10 : 11
                     }
@@ -99,7 +113,7 @@ Item {
             // 窄窗口下页签横向排列，省出垂直空间给内容区
             Flow {
                 id: compactTabs
-                visible: panelRoot.narrow
+                visible: panelRoot.narrow && !panelRoot.capsulePopup
                 Layout.fillWidth: true
                 Layout.preferredHeight: 26
                 spacing: 4
@@ -139,9 +153,9 @@ Item {
                 Layout.fillHeight: true
                 spacing: 18
 
-                // 左侧页签（窄窗口下隐藏，改用上方横向页签）
+                // 左侧页签（窄窗口下隐藏，改用上方横向页签；C 的 560×452 弹出卡保留两栏）
                 Column {
-                    visible: !panelRoot.narrow
+                    visible: !panelRoot.narrow || panelRoot.capsulePopup
                     spacing: 6
                     Repeater {
                         model: panelRoot.pageTitles
@@ -176,7 +190,7 @@ Item {
                 }
 
                 Rectangle {
-                    visible: !panelRoot.narrow
+                    visible: !panelRoot.narrow || panelRoot.capsulePopup
                     Layout.preferredWidth: 1
                     Layout.fillHeight: true
                     color: panelRoot.lineColor
@@ -186,6 +200,9 @@ Item {
                 Flickable {
                     id: contentFlick
                     Layout.fillWidth: true
+                    // 有第三栏时 RowLayout 会按 preferredWidth 分剩余空间，这里给出基准宽度，
+                    // 否则内容区会被压到 0（实机表现为「表单空白、第三栏占满」）。
+                    Layout.preferredWidth: 420
                     Layout.fillHeight: true
                     contentWidth: width
                     contentHeight: contentColumn.implicitHeight
@@ -470,6 +487,103 @@ Item {
                     }
                     }   // contentColumn
                 }       // contentFlick
+
+                // B 的第三栏：字幕预览 + BT.2390 曲线（设计稿 §3.B / §7.1）
+                Rectangle {
+                    visible: panelRoot.threeColumn
+                    Layout.preferredWidth: 1
+                    Layout.fillHeight: true
+                    color: panelRoot.lineColor
+                }
+
+                ColumnLayout {
+                    visible: panelRoot.threeColumn
+                    Layout.preferredWidth: 300
+                    Layout.maximumWidth: 300
+                    Layout.fillHeight: true
+                    spacing: 10
+
+                    Text {
+                        text: qsTr("字幕预览")
+                        color: panelRoot.textColor
+                        font.pixelSize: 14
+                        font.weight: Font.DemiBold
+                    }
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 150
+                        radius: 10
+                        color: "#0b0c10"
+                        border.width: 1
+                        border.color: panelRoot.lineColor
+
+                        Text {
+                            anchors.centerIn: parent
+                            width: parent.width - 32
+                            horizontalAlignment: Text.AlignHCenter
+                            text: qsTr("这是一行用于校准字号与描边的字幕预览")
+                            color: panelRoot.textColor
+                            font.pixelSize: 15
+                            wrapMode: Text.WordWrap
+                        }
+                    }
+                    Text {
+                        text: qsTr("字号 15 · 描边 1px · 底部安全距 8%")
+                        color: panelRoot.mutedColor
+                        font.pixelSize: 11
+                    }
+
+                    Text {
+                        text: qsTr("BT.2390 色调映射")
+                        color: panelRoot.textColor
+                        font.pixelSize: 14
+                        font.weight: Font.DemiBold
+                        Layout.topMargin: 6
+                    }
+                    Canvas {
+                        id: toneCurve
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 140
+                        onPaint: {
+                            var ctx = getContext("2d")
+                            ctx.reset()
+                            ctx.strokeStyle = "#26ffffff"
+                            ctx.lineWidth = 1
+                            for (var i = 1; i < 4; ++i) {
+                                var gx = width * i / 4
+                                var gy = height * i / 4
+                                ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, height); ctx.stroke()
+                                ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(width, gy); ctx.stroke()
+                            }
+                            // BT.2390：高光段压缩更平缓（低段近线性）
+                            ctx.strokeStyle = "#e7b27c"
+                            ctx.lineWidth = 2
+                            ctx.beginPath()
+                            for (var x = 0; x <= width; ++x) {
+                                var t = x / width
+                                var y = height * (1 - (t < 0.6 ? t : 0.6 + (t - 0.6) * 0.7))
+                                if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y)
+                            }
+                            ctx.stroke()
+                            // 参考线性曲线
+                            ctx.strokeStyle = "#55e7b27c"
+                            ctx.lineWidth = 1
+                            ctx.beginPath()
+                            ctx.moveTo(0, height); ctx.lineTo(width, 0)
+                            ctx.stroke()
+                        }
+                        onWidthChanged: requestPaint()
+                        onHeightChanged: requestPaint()
+                    }
+                    Text {
+                        text: qsTr("目标 1000 nits · 输入 HDR10（占位曲线，接入 mpv 色调映射参数后替换）")
+                        color: panelRoot.mutedColor
+                        font.pixelSize: 10
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                    }
+                    Item { Layout.fillHeight: true }
+                }
             }
         }
     }

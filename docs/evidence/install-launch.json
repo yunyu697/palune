@@ -1,0 +1,14 @@
+{
+    "configDir": "C:\\Users\\Tyler Zhang\\AppData\\Roaming\\Palune",
+    "fallbackReason": "",
+    "generatedAt": "2026-11-07T23:20:41",
+    "mode": "m2-config-check",
+    "played": false,
+    "playerAvailable": true,
+    "settingsParseFailed": false,
+    "theme": "C",
+    "verdict": "PASS",
+    "version": "1.0.0-alpha7",
+    "windowReadyMs": 1481,
+    "windowReadyWithin800ms": false
+}

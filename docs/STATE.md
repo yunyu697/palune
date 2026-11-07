@@ -2,9 +2,41 @@
 
 > 自动推进的续跑点。每完成一个可验证节点更新本文件；撞到单轮上限时以本文件为准。
 
-更新时间：2026-11-07 19:00（Asia/Shanghai）
-当前里程碑：**M2 收口 + 更新链路重构（alpha6）**
-版本：`1.0.0-alpha6`
+更新时间：2026-11-07 23:30（Asia/Shanghai）
+当前里程碑：**M3 UI 设计稿偏差收口（alpha7）**
+版本：`1.0.0-alpha7`
+
+## alpha7：M3 UI 结构收口（设计稿逐屏对齐）
+
+按既定工作方式自动推进：本地构建/验证、不打 Release、不推跨仓产物、不依赖线上更新仓库。
+
+### 修复项（对照 alpha5 §3 的 7 项偏差）
+
+| # | 偏差 | 实现 | 证据 |
+|---|---|---|---|
+| 1 | 媒体库形态 | `LibraryPanel` 按主题分支：A 右侧 352 滑出侧栏（不压暗，自 104px 起）；B 居中宽面板；C 右侧 76% 抽屉。A 打开时底部控制条右边界收至 368 | `docs/evidence/shots/alpha7-matrix/m2-{A,C}-library.png` |
+| 2 | C 默认几何 | `WindowController::start`：无保存几何且主题 C → 1100×680 | `ui-alpha7-window-geometry.json`：覆盖窗 2200×1360 物理 |
+| 3 | B 视频让位 | 新增 `setVideoInsets()`；B 按检查器宽度内缩视频窗；检查器改不透明 | 同上 JSON：B 视频 1720×1400，右内缩 640 物理 / 320 逻辑 |
+| 4 | B 技术条 | `MpvClient` 新增 `videoCodec/videoFps/videoBitrate/hwdec/hdrMode`；映射 mpv 属性，`video-bitrate` 缺失时用 `file-size/duration` 折算 | `shots/alpha7-ui/main-B.png`：H.264 · d3d11va · 30.000 fps · 5.50 Mbps · SDR |
+| 5 | 设置形态 | A 1020×660 双栏；B 1080×660 三栏（字幕预览 + BT.2390 曲线）；C 右下 560×452 弹出卡（两栏） | `m2-{A,B,C}-settings-general.png` 等 18 张 |
+| 6 | 空态规则 | A 隐藏标题/控制条（保留右上窗口按钮）；B 隐藏技术条、检查器 `—`；C 仅窗口按钮 | `shots/alpha7-ui/empty-{A,B,C}.png` |
+| 7 | 媒体库数据 | 内容源未接入 | **NOT_VERIFIED**，转 M4 |
+
+### 验证
+
+| 项 | 结果 |
+|---|---|
+| 单元测试 | `ctest -C Release` **7/7 PASS** |
+| 版本/品牌检查 | `check_version.py` OK（并修正证据日志里 GitHub Cookie 的误报）；`check_brand_terms.py` 0 命中 |
+| 实机截图 | 6 张原生窗口合成（3 主题 × 主界面/空态）+ 39 张自渲染矩阵（13 屏 × 3 主题），对照文档 `docs/evidence/UI-ALPHA7-COMPARISON.md` |
+| 本地安装包 | `dist/Palune-1.0.0-alpha7-win-x64.exe`，59,214,724 B，SHA-256 `dc3a8216ec668261a26a0591b91ca0099fa17e0b2e06ca95f8248647f6ee17df` |
+| 安装→启动→卸载 | **PASS**（`docs/evidence/windows-install-evidence.json`、`install-launch.json`，version=1.0.0-alpha7） |
+| 判定 | **PASS**（偏差 #7 NOT_VERIFIED，不阻塞） |
+
+### 下一阶段
+
+**M4**：媒体库真实内容源（扫描/索引/海报/列表与表格形态），并继续每里程碑「截图 × 设计稿」对照。
+
 
 ## alpha6：私有源码 + 公开发行仓库（更新链路重构）
 

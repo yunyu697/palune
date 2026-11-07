@@ -84,6 +84,9 @@ public:
     Q_INVOKABLE void startSystemResize(int edges);
     Q_INVOKABLE void toggleMaximize();
     Q_INVOKABLE void minimizeWindow();
+    // 布局 B 等需要给侧栏让位时，由布局下发视频区在窗口内的逻辑像素内缩。
+    // 布局切换时新布局会在 onCompleted 里重新下发，A/C 下发 0 即恢复满窗。
+    Q_INVOKABLE void setVideoInsets(double left, double top, double right, double bottom);
 
     ApplyResult applyGeometry(const QRect &rect);
     ApplyResult toggleFullscreenForTest();
@@ -149,6 +152,11 @@ private:
     bool m_maximized = false;
     bool m_syncing = false;
     int m_cornerRadius = 14;
+    // 视频区相对覆盖窗的内缩（逻辑像素）；0 表示视频铺满整窗（A/C 与全屏）。
+    double m_insetLeft = 0.0;
+    double m_insetTop = 0.0;
+    double m_insetRight = 0.0;
+    double m_insetBottom = 0.0;
     QRect m_normalGeometry;
     QRect m_restoreGeometry;
     QString m_windowTitle = QStringLiteral("Palune");

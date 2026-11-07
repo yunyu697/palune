@@ -1719,6 +1719,7 @@ void AppController::runShotMatrix()
         {QStringLiteral("settings-about"), 5, false, false, true, false, false, false},
         {QStringLiteral("error"), -1, false, false, true, false, true, false},
         {QStringLiteral("empty"), -1, false, false, true, true, false, false},
+        {QStringLiteral("library"), -2, false, false, true, false, false, false},
         {QStringLiteral("mini"), -1, false, false, true, false, false, true},
     };
 
@@ -1734,10 +1735,18 @@ void AppController::runShotMatrix()
             shotPlayer.setPosition(shot.empty ? 0 : 96.0);
             shotPlayer.setDuration(shot.empty ? 0 : 7200.0);
             shotPlayer.setPaused(shot.paused);
+            shotPlayer.setVideoCodec(shot.empty ? QString() : QStringLiteral("hevc (Main 10)"));
+            shotPlayer.setHwdec(shot.empty ? QString() : QStringLiteral("d3d11va"));
+            shotPlayer.setVideoFps(shot.empty ? 0.0 : 23.976);
+            shotPlayer.setVideoBitrate(shot.empty ? 0.0 : 8240000.0);
+            shotPlayer.setHdrMode(shot.empty ? QString() : QStringLiteral("HDR10"));
             shotPlayer.setErrorMessage(shot.error ? QCoreApplication::translate("Palune", "播放失败：无法解码该文件（样本错误）") : QString());
             shotWin.setFullscreen(shot.fullscreen);
             demoUi.setChromeVisible(shot.chrome);
-            root->setProperty("overlayPanel", shot.page >= 0 ? QStringLiteral("settings") : QString());
+            const QString panel = shot.page >= 0 ? QStringLiteral("settings")
+                                                 : (shot.page == -2 ? QStringLiteral("library") : QString());
+            root->setProperty("overlayPanel", panel);
+            demoUi.setOverlayOpen(!panel.isEmpty());
             root->setProperty("errorDismissed", false);
             if (settingsPanel && shot.page >= 0)
                 settingsPanel->setProperty("page", shot.page);

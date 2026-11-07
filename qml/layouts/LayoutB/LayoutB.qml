@@ -15,6 +15,7 @@ Item {
     readonly property int storedWidth: typeof uiState !== "undefined" ? uiState.panelWidth("B") : 344
     readonly property int dockWidth: layoutB.compact ? 224 : (dragWidth > 0 ? dragWidth : storedWidth)
     readonly property bool shortHeight: layoutB.height < 360
+    readonly property bool hasFile: player.filePath !== ""
     property string inspectorTab: "media"
 
     readonly property int topBarHeight: 52
@@ -116,7 +117,7 @@ Item {
             topMargin: layoutB.topBarHeight
             bottomMargin: layoutB.techBarHeight + layoutB.controlBarHeight
         }
-        color: tokens.glassSoft
+        color: "#f20c0e12"
         border.width: 1
         border.color: tokens.border
 
@@ -139,7 +140,7 @@ Item {
                 }
                 Text {
                     Layout.fillWidth: true
-                    text: player.title === "" ? qsTr("未打开文件") : player.title
+                    text: layoutB.hasFile ? player.title : "—"
                     color: tokens.text
                     font.pixelSize: 16
                     font.weight: Font.DemiBold
@@ -147,24 +148,37 @@ Item {
                 }
                 Text {
                     Layout.fillWidth: true
-                    text: player.filePath
+                    text: layoutB.hasFile ? player.filePath : ""
                     color: tokens.textMuted
                     font.pixelSize: tokens.fontS
                     elide: Text.ElideMiddle
                 }
                 Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: tokens.border }
                 Text {
-                    text: qsTr("时长 ") + fmt(player.duration)
+                    text: layoutB.hasFile ? qsTr("时长 ") + fmt(player.duration) : qsTr("时长 —")
                     color: tokens.textMuted
                     font.pixelSize: tokens.fontS
                 }
                 Text {
-                    text: qsTr("音轨 ") + player.audioTracks.length + qsTr(" · 字幕 ") + player.subtitleTracks.length
+                    text: layoutB.hasFile
+                          ? qsTr("音轨 ") + player.audioTracks.length + qsTr(" · 字幕 ") + player.subtitleTracks.length
+                          : qsTr("音轨 — · 字幕 —")
                     color: tokens.textMuted
                     font.pixelSize: tokens.fontS
                 }
                 Text {
-                    text: qsTr("速度 ") + (Math.round(player.speed * 100) / 100) + "x"
+                    text: layoutB.hasFile
+                          ? qsTr("解码 ") + layoutB.codecShort(player.videoCodec)
+                          : qsTr("解码 —")
+                    color: tokens.textMuted
+                    font.pixelSize: tokens.fontS
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                }
+                Text {
+                    text: layoutB.hasFile
+                          ? qsTr("速度 ") + (Math.round(player.speed * 100) / 100) + "x"
+                          : qsTr("速度 —")
                     color: tokens.textMuted
                     font.pixelSize: tokens.fontS
                 }
@@ -293,10 +307,10 @@ Item {
         }
     }
 
-    // 底部技术信息条
+    // 底部技术信息条（设计稿 §4：字段映射 mpv 属性；空态隐藏）
     Rectangle {
         id: techBar
-        visible: uiState.chromeVisible && !layoutB.compact
+        visible: uiState.chromeVisible && !layoutB.compact && layoutB.hasFile
         height: layoutB.techBarHeight
         anchors {
             left: parent.left
@@ -313,10 +327,34 @@ Item {
             anchors.rightMargin: 18
             spacing: 18
             Text {
-                text: qsTr("时长 ") + fmt(player.duration)
+                text: qsTr("解码 ") + layoutB.codecShort(player.videoCodec)
+                color: tokens.textFaint
+                font.pixelSize: tokens.fontS
+                elide: Text.ElideRight
+                Layout.maximumWidth: 260
+            }
+            Text {
+                text: qsTr("硬解 ") + layoutB.techValue(player.hwdec)
                 color: tokens.textFaint
                 font.pixelSize: tokens.fontS
                 font.family: "Consolas"
+            }
+            Text {
+                text: player.videoFps > 0 ? player.videoFps.toFixed(3) + " fps" : "—"
+                color: tokens.textFaint
+                font.pixelSize: tokens.fontS
+                font.family: "Consolas"
+            }
+            Text {
+                text: layoutB.bitrateText(player.videoBitrate)
+                color: tokens.textFaint
+                font.pixelSize: tokens.fontS
+                font.family: "Consolas"
+            }
+            Text {
+                text: qsTr("HDR ") + layoutB.techValue(player.hdrMode)
+                color: tokens.textFaint
+                font.pixelSize: tokens.fontS
             }
             Text {
                 text: qsTr("音轨 ") + player.audioTracks.length
@@ -329,6 +367,12 @@ Item {
                 font.pixelSize: tokens.fontS
             }
             Item { Layout.fillWidth: true }
+            Text {
+                text: qsTr("时长 ") + fmt(player.duration)
+                color: tokens.textFaint
+                font.pixelSize: tokens.fontS
+                font.family: "Consolas"
+            }
             Text {
                 text: qsTr("工作台")
                 color: tokens.textFaint
@@ -383,6 +427,40 @@ Item {
             PillButton { visible: !layoutB.compact; label: qsTr("字幕"); actionId: "cycleSubtitle"; onClicked: win.action("cycleSubtitle") }
             PillButton { label: qsTr("切换布局"); actionId: "cycleTheme"; onClicked: win.action("cycleTheme") }
         }
+    }
+
+    // 视频区让位给右侧常驻检查器；布局切换时新布局会重新下发自己的内缩值。
+    function syncVideoInsets() {
+        if (typeof win === "undefined")
+            return
+        win.setVideoInsets(0, 0, dock.visible ? dock.width : 0, 0)
+    }
+
+    Component.onCompleted: layoutB.syncVideoInsets()
+    Component.onDestruction: if (typeof win !== "undefined") win.setVideoInsets(0, 0, 0, 0)
+
+    Connections {
+        target: dock
+        function onWidthChanged() { layoutB.syncVideoInsets() }
+        function onVisibleChanged() { layoutB.syncVideoInsets() }
+    }
+
+    function techValue(value) {
+        return value && value !== "" ? value : "—"
+    }
+
+    // mpv 的 video-codec 会给出完整描述（H.264 / AVC / MPEG-4 AVC / ...），
+    // 技术条只显示第一段，避免把其余字段挤出可视区。
+    function codecShort(value) {
+        if (!value || value === "")
+            return "—"
+        return String(value).split(" / ")[0]
+    }
+
+    function bitrateText(value) {
+        if (!value || value <= 0)
+            return "—"
+        return (value / 1000000).toFixed(2) + " Mbps"
     }
 
     function fmt(seconds) {

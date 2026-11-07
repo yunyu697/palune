@@ -14,6 +14,7 @@
 #include "theme/ThemeRegistry.h"
 #include "ui/CompactController.h"
 #include "ui/UiStateStore.h"
+#include "ui/ActionRegistry.h"
 #include "update/UpdateService.h"
 #include "window/WindowController.h"
 
@@ -28,6 +29,7 @@
 #include <QGuiApplication>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QKeyEvent>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QSysInfo>
@@ -89,6 +91,10 @@ void AppController::start()
     }
     if (m_options.m2ConfigCheck) {
         runM2ConfigCheck();
+        return;
+    }
+    if (m_options.m2Actions) {
+        runM2Actions();
         return;
     }
     if (m_options.m2Compact) {
@@ -925,6 +931,297 @@ void AppController::runM2ConfigCheck()
                                 ? defaultReportPath(QStringLiteral("m2-config-check"))
                                 : m_options.reportPath);
     finishWithCode(pass ? 0 : 2);
+}
+
+void AppController::runM2Actions()
+{
+    UpdateService demo;
+    Settings demoSettings;
+    ThemeRegistry demoTheme(&demoSettings, [](const QString &) { return true; });
+    UiStateStore demoUi(&demoSettings);
+    CompactController demoCompact(&demoSettings);
+    MediaLibraryService demoLibrary;
+    ShotPlayer shotPlayer;
+    ShotWindow shotWin;
+
+    QVariantList recent;
+    for (int i = 1; i <= 8; ++i)
+        recent.append(QVariantMap{{QStringLiteral("name"), QStringLiteral("示例影片 %1").arg(i)},
+                                  {QStringLiteral("path"), QStringLiteral("D:/qa/sample-%1.mp4").arg(i)}});
+    shotWin.setRecentFiles(recent);
+    shotPlayer.setFilePath(QStringLiteral("D:/qa/demo-1080p.mp4"));
+    shotPlayer.setTitle(QStringLiteral("示例影片 · 1080p"));
+    shotPlayer.setDuration(7200.0);
+    shotPlayer.setPosition(30.0);
+    shotPlayer.setVolume(100.0);
+
+    // 让 40 个动作都有可核对的状态变化（截图/自动化桩，不触发真实解码）。
+    ActionRegistry registry;
+    QStringList dispatched;
+    registry.setInvoker([&](const QString &id, const QVariant &value) {
+        dispatched << id;
+        shotWin.action(id, value);
+        if (id == QLatin1String("playPause")) {
+            shotPlayer.setPaused(!shotPlayer.paused());
+        } else if (id == QLatin1String("stop")) {
+            shotPlayer.setPaused(true);
+            shotPlayer.setPosition(0.0);
+        } else if (id == QLatin1String("seekForward10")) {
+            shotPlayer.setPosition(shotPlayer.position() + 10.0);
+        } else if (id == QLatin1String("seekBack10")) {
+            shotPlayer.setPosition(qMax(0.0, shotPlayer.position() - 10.0));
+        } else if (id == QLatin1String("seekForward60")) {
+            shotPlayer.setPosition(shotPlayer.position() + 60.0);
+        } else if (id == QLatin1String("seekBack60")) {
+            shotPlayer.setPosition(qMax(0.0, shotPlayer.position() - 60.0));
+        } else if (id == QLatin1String("seekForward1")) {
+            shotPlayer.setPosition(shotPlayer.position() + 1.0);
+        } else if (id == QLatin1String("seekBack1")) {
+            shotPlayer.setPosition(qMax(0.0, shotPlayer.position() - 1.0));
+        } else if (id == QLatin1String("seekToStart")) {
+            shotPlayer.setPosition(0.0);
+        } else if (id == QLatin1String("seekToEnd")) {
+            shotPlayer.setPosition(shotPlayer.duration() - 0.5);
+        } else if (id == QLatin1String("volumeUp")) {
+            shotPlayer.setVolume(qMin(100.0, shotPlayer.volume() + 5.0));
+        } else if (id == QLatin1String("volumeDown")) {
+            shotPlayer.setVolume(qMax(0.0, shotPlayer.volume() - 5.0));
+        } else if (id == QLatin1String("toggleMute")) {
+            shotPlayer.setMuted(!shotPlayer.muted());
+        } else if (id == QLatin1String("speedUp")) {
+            shotPlayer.setSpeed(qMin(4.0, shotPlayer.speed() * 1.25));
+        } else if (id == QLatin1String("speedDown")) {
+            shotPlayer.setSpeed(qMax(0.25, shotPlayer.speed() / 1.25));
+        } else if (id == QLatin1String("speedReset")) {
+            shotPlayer.setSpeed(1.0);
+        } else if (id == QLatin1String("toggleChrome")) {
+            demoUi.setChromeVisible(!demoUi.chromeVisible());
+        } else if (id == QLatin1String("toggleFullscreen")) {
+            shotWin.setFullscreen(!shotWin.fullscreen());
+        } else if (id == QLatin1String("themeA") || id == QLatin1String("themeB")
+                   || id == QLatin1String("themeC")) {
+            demoTheme.switchTo(id.right(1));
+            demoCompact.setTheme(id.right(1));
+        } else if (id == QLatin1String("cycleTheme")) {
+            demoTheme.cycleTheme();
+            demoCompact.setTheme(demoTheme.currentTheme());
+        }
+    });
+
+    QQuickView view;
+    view.setFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint);
+    view.setColor(QColor(QStringLiteral("#0b0c10")));
+    view.setOpacity(0.0); // 键盘用例需要焦点，但不希望用户看到窗口
+    view.setResizeMode(QQuickView::SizeRootObjectToView);
+    auto *ctx = view.engine()->rootContext();
+    ctx->setContextProperty(QStringLiteral("player"), &shotPlayer);
+    ctx->setContextProperty(QStringLiteral("updater"), &demo);
+    ctx->setContextProperty(QStringLiteral("win"), &shotWin);
+    ctx->setContextProperty(QStringLiteral("themeRegistry"), &demoTheme);
+    ctx->setContextProperty(QStringLiteral("uiState"), &demoUi);
+    ctx->setContextProperty(QStringLiteral("compactMode"), &demoCompact);
+    ctx->setContextProperty(QStringLiteral("actions"), &registry);
+    ctx->setContextProperty(QStringLiteral("library"), &demoLibrary);
+    view.resize(1280, 720);
+    view.setSource(QUrl(QStringLiteral("qrc:/qml/Main.qml")));
+    if (view.status() != QQuickView::Ready) {
+        for (const auto &error : view.errors())
+            Log::error(QStringLiteral("QML: %1").arg(error.toString()));
+        finishWithCode(5);
+        return;
+    }
+    view.show();
+    view.requestActivate();
+    sleepMs(200);
+    QQuickItem *root = view.rootObject();
+    if (root)
+        root->forceActiveFocus();
+    sleepMs(100);
+
+    LayoutHost host(view.engine(), &demoTheme);
+    host.setHostItem(root ? root->findChild<QQuickItem *>(QStringLiteral("layoutSlot")) : nullptr);
+
+    auto pressKey = [&](int key, int modifiers) {
+        QKeyEvent press(QEvent::KeyPress, key, Qt::KeyboardModifiers(modifiers));
+        QCoreApplication::sendEvent(&view, &press);
+        QKeyEvent release(QEvent::KeyRelease, key, Qt::KeyboardModifiers(modifiers));
+        QCoreApplication::sendEvent(&view, &release);
+        sleepMs(90);
+    };
+
+    auto focusedAction = [&]() -> QString {
+        QObject *obj = view.focusObject();
+        QQuickItem *item = qobject_cast<QQuickItem *>(obj);
+        while (item) {
+            const QString id = item->property("actionId").toString();
+            if (!id.isEmpty())
+                return id;
+            item = item->parentItem();
+        }
+        return {};
+    };
+
+    QJsonObject report;
+    report.insert(QStringLiteral("mode"), QStringLiteral("m2-actions"));
+    report.insert(QStringLiteral("version"), QStringLiteral(PALUNE_VERSION));
+    report.insert(QStringLiteral("platform"), ActionRegistry::currentPlatform());
+    report.insert(QStringLiteral("total"), registry.count());
+    report.insert(QStringLiteral("conflicts"), QJsonArray::fromVariantList(registry.conflicts()));
+    const QVariantList actionList = registry.actions();
+    bool bindableAll = true;
+    for (const QVariant &entry : actionList) {
+        const QVariantMap map = entry.toMap();
+        const QVariantMap keys = map.value(QStringLiteral("keys")).toMap();
+        if (keys.value(ActionRegistry::currentPlatform()).toString().isEmpty())
+            bindableAll = false;
+    }
+    report.insert(QStringLiteral("bindableAll"), bindableAll);
+
+    QJsonArray themes;
+    bool allPass = registry.count() == 40 && registry.conflicts().isEmpty() && bindableAll;
+    for (const QString &theme : {QStringLiteral("A"), QStringLiteral("B"), QStringLiteral("C")}) {
+        demoTheme.switchTo(theme);
+        demoCompact.setTheme(theme);
+        demoCompact.reset();
+        demoCompact.feedWidth(1280);
+        demoCompact.flush();
+        // 上一轮 40 动作分发会把全屏/控件可见性改掉；每轮先回到基线再采集。
+        shotWin.setFullscreen(false);
+        demoUi.setChromeVisible(true);
+        shotPlayer.setPaused(false);
+        shotPlayer.setPosition(30.0);
+        shotPlayer.setMuted(false);
+        shotPlayer.setVolume(100.0);
+        sleepMs(200);
+        if (root)
+            root->forceActiveFocus();
+        sleepMs(80);
+
+        // 控件（可点击 + 可聚焦）清单
+        QJsonObject controls;
+        std::function<void(QQuickItem *)> walk = [&](QQuickItem *item) {
+            const QString id = item->property("actionId").toString();
+            if (!id.isEmpty() && item->isVisible()) {
+                QJsonObject entry;
+                entry.insert(QStringLiteral("visible"), true);
+                entry.insert(QStringLiteral("x"), item->x());
+                entry.insert(QStringLiteral("y"), item->y());
+                controls.insert(id, entry);
+            }
+            for (QQuickItem *child : item->childItems())
+                walk(child);
+        };
+        if (root)
+            walk(root);
+
+        // 焦点顺序：沿 Qt 的焦点链记录带 actionId 的控件
+        QStringList focusOrder;
+        if (root) {
+            QQuickItem *first = root->nextItemInFocusChain(true);
+            QQuickItem *cursor = first;
+            for (int i = 0; i < 80 && cursor && cursor != root; ++i) {
+                const QString id = cursor->property("actionId").toString();
+                if (!id.isEmpty() && cursor->isVisible())
+                    focusOrder << id;
+                QQuickItem *next = cursor->nextItemInFocusChain(true);
+                if (next == first)
+                    break;
+                cursor = next;
+            }
+        }
+
+        // 用例 1：Space 暂停 / Right 快进 / Space 继续
+        shotPlayer.setPaused(false);
+        shotPlayer.setPosition(30.0);
+        shotPlayer.setMuted(false);
+        shotPlayer.setVolume(100.0);
+        if (root)
+            root->forceActiveFocus();
+        sleepMs(80);
+        pressKey(Qt::Key_Space, Qt::NoModifier);
+        const bool pausedAfter = shotPlayer.paused();
+        pressKey(Qt::Key_Right, Qt::NoModifier);
+        const double posAfter = shotPlayer.position();
+        pressKey(Qt::Key_Space, Qt::NoModifier);
+        const bool resumedAfter = !shotPlayer.paused();
+        QJsonArray case1Steps;
+        case1Steps.append(QJsonObject{{QStringLiteral("key"), QStringLiteral("Space")},
+                                      {QStringLiteral("paused"), pausedAfter}});
+        case1Steps.append(QJsonObject{{QStringLiteral("key"), QStringLiteral("Right")},
+                                      {QStringLiteral("position"), posAfter}});
+        case1Steps.append(QJsonObject{{QStringLiteral("key"), QStringLiteral("Space")},
+                                      {QStringLiteral("paused"), !resumedAfter}});
+        const bool case1 = pausedAfter && qAbs(posAfter - 40.0) < 0.01 && resumedAfter;
+
+        // 用例 2：纯键盘 Tab 焦点 + Enter 激活等价动作
+        root->forceActiveFocus();
+        sleepMs(80);
+        for (int i = 0; i < 3; ++i)
+            pressKey(Qt::Key_Tab, Qt::NoModifier);
+        const QString focusId = focusedAction();
+        // 控件是直接调用 win.action()，不走 ActionRegistry，所以用 ShotWindow 记账核对。
+        const int beforeEnter = shotWin.actionNames().size();
+        pressKey(Qt::Key_Return, Qt::NoModifier);
+        QString activated;
+        if (shotWin.actionNames().size() > beforeEnter)
+            activated = shotWin.actionNames().last();
+        const bool case2 = !focusId.isEmpty() && activated == focusId;
+
+        // 用例 3：静音 / 音量 / 主题 1、2、3
+        pressKey(Qt::Key_M, Qt::NoModifier);
+        const bool muted = shotPlayer.muted();
+        pressKey(Qt::Key_Down, Qt::NoModifier);
+        const double volume = shotPlayer.volume();
+        pressKey(Qt::Key_1, Qt::NoModifier);
+        const QString theme1 = demoTheme.currentTheme();
+        pressKey(Qt::Key_2, Qt::NoModifier);
+        const QString theme2 = demoTheme.currentTheme();
+        pressKey(Qt::Key_3, Qt::NoModifier);
+        const QString theme3 = demoTheme.currentTheme();
+        const bool case3 = muted && qAbs(volume - 95.0) < 0.01
+            && theme1 == QLatin1String("A") && theme2 == QLatin1String("B")
+            && theme3 == QLatin1String("C");
+
+        // 40 个动作在该主题下都能被分发（绑定的可达性）
+        dispatched.clear();
+        for (const QVariant &entry : actionList)
+            registry.dispatch(entry.toMap().value(QStringLiteral("id")).toString(), QVariant());
+        const int dispatchedCount = dispatched.size();
+
+        QJsonObject themeEntry;
+        themeEntry.insert(QStringLiteral("theme"), theme);
+        themeEntry.insert(QStringLiteral("controls"), controls);
+        themeEntry.insert(QStringLiteral("controlCount"), controls.size());
+        themeEntry.insert(QStringLiteral("focusOrder"), QJsonArray::fromStringList(focusOrder));
+        themeEntry.insert(QStringLiteral("keyboardCases"), QJsonArray{
+            QJsonObject{{QStringLiteral("id"), QStringLiteral("space-seek-space")},
+                        {QStringLiteral("steps"), case1Steps}, {QStringLiteral("pass"), case1}},
+            QJsonObject{{QStringLiteral("id"), QStringLiteral("tab-enter")},
+                        {QStringLiteral("focusAction"), focusId},
+                        {QStringLiteral("activated"), activated},
+                        {QStringLiteral("pass"), case2}},
+            QJsonObject{{QStringLiteral("id"), QStringLiteral("mute-volume-theme")},
+                        {QStringLiteral("muted"), muted},
+                        {QStringLiteral("volume"), volume},
+                        {QStringLiteral("themes"), QJsonArray{theme1, theme2, theme3}},
+                        {QStringLiteral("pass"), case3}},
+        });
+        themeEntry.insert(QStringLiteral("dispatchedCount"), dispatchedCount);
+        themeEntry.insert(QStringLiteral("verdict"),
+                          (case1 && case2 && case3 && dispatchedCount == registry.count()
+                           && !controls.isEmpty()) ? QStringLiteral("PASS") : QStringLiteral("FAIL"));
+        allPass = allPass && case1 && case2 && case3 && dispatchedCount == registry.count()
+            && !controls.isEmpty();
+        themes.append(themeEntry);
+    }
+
+    report.insert(QStringLiteral("themes"), themes);
+    report.insert(QStringLiteral("verdict"), allPass ? QStringLiteral("PASS") : QStringLiteral("FAIL"));
+    report.insert(QStringLiteral("generatedAt"), QDateTime::currentDateTime().toString(Qt::ISODate));
+    writeJsonReport(report, m_options.reportPath.isEmpty()
+                                ? defaultReportPath(QStringLiteral("m2-actions"))
+                                : m_options.reportPath);
+    finishWithCode(allPass ? 0 : 2);
 }
 
 void AppController::runShotMatrix()

@@ -159,6 +159,21 @@ def build_one(out: Path, spec, tmpdir: Path) -> None:
                 print(f"[WARN] {name}：编码器 {codec} 不可用，改用 {fallback}")
                 aargs = list(aargs)
                 aargs[index] = fallback
+                if fallback == "libopus":
+                    # 部分发行版的 libopus 不接受 "-q:a" 质量模式，必须显式码率。
+                    cleaned = []
+                    skip = False
+                    for arg in aargs:
+                        if skip:
+                            skip = False
+                            continue
+                        if arg == "-q:a":
+                            skip = True
+                            continue
+                        cleaned.append(arg)
+                    if "-b:a" not in cleaned:
+                        cleaned += ["-b:a", "96k"]
+                    aargs = cleaned
         cmd += aargs
     if "subtitle" in extra:
         cmd += ["-c:s", "srt"]

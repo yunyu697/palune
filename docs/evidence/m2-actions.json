@@ -1,0 +1,382 @@
+{
+    "bindableAll": true,
+    "conflicts": [
+    ],
+    "generatedAt": "2026-11-07T08:51:15",
+    "mode": "m2-actions",
+    "platform": "windows",
+    "themes": [
+        {
+            "controlCount": 14,
+            "controls": {
+                "cycleAudio": {
+                    "visible": true,
+                    "x": 1020,
+                    "y": 5
+                },
+                "cycleSubtitle": {
+                    "visible": true,
+                    "x": 1091,
+                    "y": 5
+                },
+                "cycleTheme": {
+                    "visible": true,
+                    "x": 1162,
+                    "y": 5
+                },
+                "exit": {
+                    "visible": true,
+                    "x": 1198,
+                    "y": 13
+                },
+                "openFile": {
+                    "visible": true,
+                    "x": 894,
+                    "y": 13
+                },
+                "openFolder": {
+                    "visible": true,
+                    "x": 950,
+                    "y": 13
+                },
+                "openLibrary": {
+                    "visible": true,
+                    "x": 1018,
+                    "y": 13
+                },
+                "openSettings": {
+                    "visible": true,
+                    "x": 1086,
+                    "y": 13
+                },
+                "playPause": {
+                    "visible": true,
+                    "x": 0,
+                    "y": 5
+                },
+                "seekBack10": {
+                    "visible": true,
+                    "x": 60,
+                    "y": 5
+                },
+                "seekForward10": {
+                    "visible": true,
+                    "x": 121,
+                    "y": 5
+                },
+                "speedUp": {
+                    "visible": true,
+                    "x": 970,
+                    "y": 5
+                },
+                "toggleFullscreen": {
+                    "visible": true,
+                    "x": 1142,
+                    "y": 13
+                },
+                "toggleMute": {
+                    "visible": true,
+                    "x": 348,
+                    "y": 5
+                }
+            },
+            "dispatchedCount": 40,
+            "focusOrder": [
+                "openFile",
+                "openFolder",
+                "openLibrary",
+                "openSettings",
+                "toggleFullscreen",
+                "exit",
+                "playPause",
+                "seekBack10",
+                "seekForward10",
+                "toggleMute",
+                "speedUp",
+                "cycleAudio",
+                "cycleSubtitle",
+                "cycleTheme"
+            ],
+            "keyboardCases": [
+                {
+                    "id": "space-seek-space",
+                    "pass": true,
+                    "steps": [
+                        {
+                            "key": "Space",
+                            "paused": true
+                        },
+                        {
+                            "key": "Right",
+                            "position": 40
+                        },
+                        {
+                            "key": "Space",
+                            "paused": false
+                        }
+                    ]
+                },
+                {
+                    "activated": "openLibrary",
+                    "focusAction": "openLibrary",
+                    "id": "tab-enter",
+                    "pass": true
+                },
+                {
+                    "id": "mute-volume-theme",
+                    "muted": true,
+                    "pass": true,
+                    "themes": [
+                        "A",
+                        "B",
+                        "C"
+                    ],
+                    "volume": 95
+                }
+            ],
+            "theme": "A",
+            "verdict": "PASS"
+        },
+        {
+            "controlCount": 13,
+            "controls": {
+                "cycleAudio": {
+                    "visible": true,
+                    "x": 0,
+                    "y": 0
+                },
+                "cycleSubtitle": {
+                    "visible": true,
+                    "x": 56,
+                    "y": 0
+                },
+                "cycleTheme": {
+                    "visible": true,
+                    "x": 222,
+                    "y": 0
+                },
+                "exit": {
+                    "visible": true,
+                    "x": 112,
+                    "y": 0
+                },
+                "openFile": {
+                    "visible": true,
+                    "x": 124,
+                    "y": 0
+                },
+                "openFolder": {
+                    "visible": true,
+                    "x": 180,
+                    "y": 0
+                },
+                "openLibrary": {
+                    "visible": true,
+                    "x": 0,
+                    "y": 0
+                },
+                "openSettings": {
+                    "visible": true,
+                    "x": 56,
+                    "y": 0
+                },
+                "playPause": {
+                    "visible": true,
+                    "x": 0,
+                    "y": 0
+                },
+                "seekBack10": {
+                    "visible": true,
+                    "x": 56,
+                    "y": 0
+                },
+                "seekForward10": {
+                    "visible": true,
+                    "x": 113,
+                    "y": 0
+                },
+                "speedUp": {
+                    "visible": true,
+                    "x": 256,
+                    "y": 0
+                },
+                "toggleFullscreen": {
+                    "visible": true,
+                    "x": 0,
+                    "y": 0
+                }
+            },
+            "dispatchedCount": 40,
+            "focusOrder": [
+                "openLibrary",
+                "openFile",
+                "openFolder",
+                "toggleFullscreen",
+                "openSettings",
+                "exit",
+                "playPause",
+                "seekBack10",
+                "seekForward10",
+                "speedUp",
+                "cycleAudio",
+                "cycleSubtitle",
+                "cycleTheme"
+            ],
+            "keyboardCases": [
+                {
+                    "id": "space-seek-space",
+                    "pass": true,
+                    "steps": [
+                        {
+                            "key": "Space",
+                            "paused": true
+                        },
+                        {
+                            "key": "Right",
+                            "position": 40
+                        },
+                        {
+                            "key": "Space",
+                            "paused": false
+                        }
+                    ]
+                },
+                {
+                    "activated": "openFolder",
+                    "focusAction": "openFolder",
+                    "id": "tab-enter",
+                    "pass": true
+                },
+                {
+                    "id": "mute-volume-theme",
+                    "muted": true,
+                    "pass": true,
+                    "themes": [
+                        "A",
+                        "B",
+                        "C"
+                    ],
+                    "volume": 95
+                }
+            ],
+            "theme": "B",
+            "verdict": "PASS"
+        },
+        {
+            "controlCount": 11,
+            "controls": {
+                "cycleAudio": {
+                    "visible": true,
+                    "x": 456,
+                    "y": 5
+                },
+                "cycleSubtitle": {
+                    "visible": true,
+                    "x": 516,
+                    "y": 5
+                },
+                "cycleTheme": {
+                    "visible": true,
+                    "x": 636,
+                    "y": 5
+                },
+                "exit": {
+                    "visible": true,
+                    "x": 840,
+                    "y": 5
+                },
+                "openFile": {
+                    "visible": true,
+                    "x": 576,
+                    "y": 5
+                },
+                "openSettings": {
+                    "visible": true,
+                    "x": 720,
+                    "y": 5
+                },
+                "playPause": {
+                    "visible": true,
+                    "x": 0,
+                    "y": 5
+                },
+                "seekBack10": {
+                    "visible": true,
+                    "x": 60,
+                    "y": 5
+                },
+                "seekForward10": {
+                    "visible": true,
+                    "x": 116,
+                    "y": 5
+                },
+                "speedUp": {
+                    "visible": true,
+                    "x": 406,
+                    "y": 5
+                },
+                "toggleFullscreen": {
+                    "visible": true,
+                    "x": 780,
+                    "y": 5
+                }
+            },
+            "dispatchedCount": 40,
+            "focusOrder": [
+                "playPause",
+                "seekBack10",
+                "seekForward10",
+                "speedUp",
+                "cycleAudio",
+                "cycleSubtitle",
+                "openFile",
+                "cycleTheme",
+                "openSettings",
+                "toggleFullscreen",
+                "exit"
+            ],
+            "keyboardCases": [
+                {
+                    "id": "space-seek-space",
+                    "pass": true,
+                    "steps": [
+                        {
+                            "key": "Space",
+                            "paused": true
+                        },
+                        {
+                            "key": "Right",
+                            "position": 40
+                        },
+                        {
+                            "key": "Space",
+                            "paused": false
+                        }
+                    ]
+                },
+                {
+                    "activated": "seekForward10",
+                    "focusAction": "seekForward10",
+                    "id": "tab-enter",
+                    "pass": true
+                },
+                {
+                    "id": "mute-volume-theme",
+                    "muted": true,
+                    "pass": true,
+                    "themes": [
+                        "A",
+                        "B",
+                        "C"
+                    ],
+                    "volume": 95
+                }
+            ],
+            "theme": "C",
+            "verdict": "PASS"
+        }
+    ],
+    "total": 40,
+    "verdict": "PASS",
+    "version": "1.0.0-alpha4"
+}

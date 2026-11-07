@@ -79,8 +79,8 @@ Item {
                 actionId: "playPause"
                 onClicked: win.action("playPause")
             }
-            PillButton { label: "-10"; actionId: "seekBack"; onClicked: win.action("seekBy", -10) }
-            PillButton { label: "+10"; actionId: "seekForward"; onClicked: win.action("seekBy", 10) }
+            PillButton { label: "-10"; actionId: "seekBack10"; onClicked: win.action("seekBack10") }
+            PillButton { label: "+10"; actionId: "seekForward10"; onClicked: win.action("seekForward10") }
             Text {
                 visible: !layoutC.compact
                 text: fmt(player.position) + " / " + fmt(player.duration)
@@ -95,8 +95,8 @@ Item {
             }
             PillButton {
                 label: Math.round(player.speed * 100) / 100 + "x"
-                actionId: "speedCycle"
-                onClicked: win.action("speedCycle")
+                actionId: "speedUp"
+                onClicked: win.action("speedUp")
             }
             PillButton { visible: !layoutC.compact; label: "音轨"; actionId: "cycleAudio"; onClicked: win.action("cycleAudio") }
             PillButton { visible: !layoutC.compact; label: "字幕"; actionId: "cycleSubtitle"; onClicked: win.action("cycleSubtitle") }

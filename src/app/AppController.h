@@ -47,6 +47,7 @@ public:
         bool m2StateSwitch = false;  // --m2-stateswitch：50 次跨主题状态保持
         bool m2Compact = false;      // --m2-compact：断点/滞回/防抖
         bool m2ConfigCheck = false;  // --m2-config-check：配置回退（子进程场景用）
+        bool m2Actions = false;      // --m2-actions：40 动作绑定/焦点/键盘用例
         bool shotMatrix = false;     // --shot-matrix：3 主题 × 12 界面截图
         int stateSwitchCount = 50;
         QSize shotSize;              // --shot-size：非迷你界面逻辑尺寸（默认 1440x900）
@@ -75,6 +76,7 @@ private:
     void runM2StateSwitch();
     void runM2Compact();
     void runM2ConfigCheck();
+    void runM2Actions();
     void runShotMatrix();
     QStringList collectMedia() const;
     bool waitFor(const std::function<bool()> &predicate, int timeoutMs);

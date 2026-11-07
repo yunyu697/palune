@@ -50,6 +50,9 @@ public:
     Q_INVOKABLE void toggleMute();
     Q_INVOKABLE void stop();
     Q_INVOKABLE void setSpeed(double speed);
+    // M2 快捷键：逐帧步进与字幕延迟。
+    Q_INVOKABLE void frameStep(bool forward);
+    Q_INVOKABLE void addSubtitleDelay(double delta);
     Q_INVOKABLE void setAudioTrack(int id);
     Q_INVOKABLE void setSubtitleTrack(int id); // -1 = 关闭字幕
     // 长时压测用：循环播放避免样本先于压测时长结束（产品默认关闭）。
@@ -63,6 +66,7 @@ public:
     QString title() const { return m_title; }
     QString filePath() const { return m_filePath; }
     double speed() const { return m_speed; }
+    double subtitleDelay() const { return m_subtitleDelay; }
     QVariantList audioTracks() const { return m_audioTracks; }
     QVariantList subtitleTracks() const { return m_subtitleTracks; }
     int startFileCount() const { return m_startFileCount; }
@@ -129,6 +133,7 @@ private:
     bool m_initialized = false;
     bool m_pendingFile = false;
     double m_speed = 1.0;
+    double m_subtitleDelay = 0.0;
     double m_audioPts = 0.0;
     QVariantList m_audioTracks;
     QVariantList m_subtitleTracks;

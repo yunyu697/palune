@@ -8,6 +8,7 @@
 #include "settings/Settings.h"
 #include "theme/LayoutHost.h"
 #include "theme/ThemeRegistry.h"
+#include "ui/ActionRegistry.h"
 #include "ui/CompactController.h"
 #include "ui/UiStateStore.h"
 #include "update/UpdateService.h"
@@ -15,6 +16,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <functional>
+#include <algorithm>
 #include <QElapsedTimer>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -61,6 +63,8 @@ WindowController::WindowController(MpvClient *player,
     m_themeRegistry = new ThemeRegistry(m_settings, {}, this);
     m_uiState = new UiStateStore(m_settings, this);
     m_compactMode = new CompactController(m_settings, this);
+    m_actions = new ActionRegistry(this);
+    m_actions->setInvoker([this](const QString &id, const QVariant &value) { action(id, value); });
     m_compactMode->setTheme(m_themeRegistry->currentTheme());
     connect(m_themeRegistry, &ThemeRegistry::currentThemeChanged, this, [this]() {
         m_compactMode->setTheme(m_themeRegistry->currentTheme());
@@ -141,6 +145,7 @@ bool WindowController::loadQml()
     ctx->setContextProperty(QStringLiteral("themeRegistry"), m_themeRegistry);
     ctx->setContextProperty(QStringLiteral("uiState"), m_uiState);
     ctx->setContextProperty(QStringLiteral("compactMode"), m_compactMode);
+    ctx->setContextProperty(QStringLiteral("actions"), m_actions);
     ctx->setContextProperty(QStringLiteral("library"), m_library);
 
     m_overlay->setSource(QUrl(QStringLiteral("qrc:/qml/Main.qml")));
@@ -467,42 +472,118 @@ void WindowController::action(const QString &name)
 
 void WindowController::action(const QString &name, const QVariant &value)
 {
-    if (!m_player)
+    // 布局里的旧动作 ID（seekBy/seekForward/volumeSet…）继续走 C++；
+    // 只有纯 UI 动作（设置、媒体库、提示）交给 QML shell。
+    static const QStringList kLegacyIds = {
+        QStringLiteral("seekTo"), QStringLiteral("seekBy"), QStringLiteral("seekForward"),
+        QStringLiteral("seekBack"), QStringLiteral("volumeSet"), QStringLiteral("volumeBy"),
+        QStringLiteral("speedSet"), QStringLiteral("speedCycle"), QStringLiteral("audioSet"),
+        QStringLiteral("subtitleSet"), QStringLiteral("setTheme"),
+    };
+    if (!m_actions->has(name) && !kLegacyIds.contains(name)) {
+        emit uiActionRequested(name, value);
         return;
+    }
     if (name == QLatin1String("openFile")) {
         openFileDialog();
     } else if (name == QLatin1String("openFolder")) {
         openFolderDialog();
     } else if (name == QLatin1String("playPause")) {
-        m_player->togglePause();
-        CrashBreadcrumb::record(m_player->paused() ? QStringLiteral("暂停") : QStringLiteral("播放"));
+        if (m_player)
+            m_player->togglePause();
+        CrashBreadcrumb::record(QStringLiteral("播放/暂停"));
+    } else if (name == QLatin1String("stop")) {
+        if (m_player)
+            m_player->stop();
     } else if (name == QLatin1String("seekTo")) {
-        m_player->seek(qMax(0.0, qMin(value.toDouble(), m_player->duration())));
-    } else if (name == QLatin1String("seekBy")) {
-        m_player->seek(qMax(0.0, m_player->position() + value.toDouble()));
-    } else if (name == QLatin1String("volumeSet")) {
-        m_player->setVolume(qBound(0.0, value.toDouble(), 100.0));
-    } else if (name == QLatin1String("volumeBy")) {
-        m_player->setVolume(qBound(0.0, m_player->volume() + value.toDouble(), 100.0));
-    } else if (name == QLatin1String("toggleMute")) {
-        m_player->toggleMute();
-    } else if (name == QLatin1String("speedSet")) {
-        m_player->setSpeed(value.toDouble());
-    } else if (name == QLatin1String("speedCycle")) {
-        static const double speeds[] = {0.5, 1.0, 1.25, 1.5, 2.0, 3.0};
-        int index = 1;
-        for (int i = 0; i < 6; ++i) {
-            if (qFuzzyCompare(m_player->speed() + 1.0, speeds[i] + 1.0)) {
-                index = (i + 1) % 6;
-                break;
-            }
+        if (m_player)
+            m_player->seek(qMax(0.0, qMin(value.toDouble(), m_player->duration())));
+    } else if (name == QLatin1String("seekBy") || name == QLatin1String("seekForward")
+               || name == QLatin1String("seekBack")) {
+        if (m_player) {
+            double delta = value.toDouble();
+            if (name == QLatin1String("seekForward"))
+                delta = 10;
+            else if (name == QLatin1String("seekBack"))
+                delta = -10;
+            m_player->seek(qMax(0.0, m_player->position() + delta));
         }
-        m_player->setSpeed(speeds[index]);
+    } else if (name == QLatin1String("seekForward10") || name == QLatin1String("seekForward60")
+               || name == QLatin1String("seekForward1")) {
+        const double delta = name == QLatin1String("seekForward1") ? 1
+            : (name == QLatin1String("seekForward10") ? 10 : 60);
+        if (m_player)
+            m_player->seek(qMax(0.0, m_player->position() + delta));
+    } else if (name == QLatin1String("seekBack10") || name == QLatin1String("seekBack60")
+               || name == QLatin1String("seekBack1")) {
+        const double delta = name == QLatin1String("seekBack1") ? 1
+            : (name == QLatin1String("seekBack10") ? 10 : 60);
+        if (m_player)
+            m_player->seek(qMax(0.0, m_player->position() - delta));
+    } else if (name == QLatin1String("seekToStart")) {
+        if (m_player)
+            m_player->seek(0.0);
+    } else if (name == QLatin1String("seekToEnd")) {
+        if (m_player && m_player->duration() > 0.0)
+            m_player->seek(m_player->duration() - 0.5);
+    } else if (name == QLatin1String("frameStepForward")) {
+        if (m_player)
+            m_player->frameStep(true);
+    } else if (name == QLatin1String("frameStepBack")) {
+        if (m_player)
+            m_player->frameStep(false);
+    } else if (name == QLatin1String("nextEpisode")) {
+        playSibling(1);
+    } else if (name == QLatin1String("prevEpisode")) {
+        playSibling(-1);
+    } else if (name == QLatin1String("volumeSet")) {
+        if (m_player)
+            m_player->setVolume(qBound(0.0, value.toDouble(), 100.0));
+    } else if (name == QLatin1String("volumeBy")) {
+        if (m_player)
+            m_player->setVolume(qBound(0.0, m_player->volume() + value.toDouble(), 100.0));
+    } else if (name == QLatin1String("volumeUp")) {
+        if (m_player)
+            m_player->setVolume(qBound(0.0, m_player->volume() + 5.0, 100.0));
+    } else if (name == QLatin1String("volumeDown")) {
+        if (m_player)
+            m_player->setVolume(qBound(0.0, m_player->volume() - 5.0, 100.0));
+    } else if (name == QLatin1String("toggleMute")) {
+        if (m_player)
+            m_player->toggleMute();
+    } else if (name == QLatin1String("speedSet")) {
+        if (m_player)
+            m_player->setSpeed(value.toDouble());
+    } else if (name == QLatin1String("speedUp")) {
+        if (m_player)
+            m_player->setSpeed(qMin(4.0, m_player->speed() * 1.25));
+    } else if (name == QLatin1String("speedDown")) {
+        if (m_player)
+            m_player->setSpeed(qMax(0.25, m_player->speed() / 1.25));
+    } else if (name == QLatin1String("speedReset")) {
+        if (m_player)
+            m_player->setSpeed(1.0);
+    } else if (name == QLatin1String("speedCycle")) {
+        if (m_player) {
+            static const double speeds[] = {0.5, 1.0, 1.25, 1.5, 2.0, 3.0};
+            int index = 1;
+            for (int i = 0; i < 6; ++i) {
+                if (qFuzzyCompare(m_player->speed() + 1.0, speeds[i] + 1.0)) {
+                    index = (i + 1) % 6;
+                    break;
+                }
+            }
+            m_player->setSpeed(speeds[index]);
+        }
     } else if (name == QLatin1String("audioSet")) {
-        m_player->setAudioTrack(value.toInt());
+        if (m_player)
+            m_player->setAudioTrack(value.toInt());
     } else if (name == QLatin1String("subtitleSet")) {
-        m_player->setSubtitleTrack(value.toInt());
+        if (m_player)
+            m_player->setSubtitleTrack(value.toInt());
     } else if (name == QLatin1String("cycleAudio")) {
+        if (!m_player)
+            return;
         const QVariantList tracks = m_player->audioTracks();
         if (tracks.size() > 1) {
             int current = -1;
@@ -514,6 +595,8 @@ void WindowController::action(const QString &name, const QVariant &value)
             m_player->setAudioTrack(tracks.at(next).toMap().value(QStringLiteral("id")).toInt());
         }
     } else if (name == QLatin1String("cycleSubtitle")) {
+        if (!m_player)
+            return;
         const QVariantList tracks = m_player->subtitleTracks();
         int current = -2;
         for (int i = 0; i < tracks.size(); ++i) {
@@ -529,10 +612,51 @@ void WindowController::action(const QString &name, const QVariant &value)
         } else {
             m_player->setSubtitleTrack(tracks.at(current + 1).toMap().value(QStringLiteral("id")).toInt());
         }
+    } else if (name == QLatin1String("toggleSubtitle")) {
+        if (m_player) {
+            const QVariantList tracks = m_player->subtitleTracks();
+            const bool selected = std::any_of(tracks.cbegin(), tracks.cend(), [](const QVariant &track) {
+                return track.toMap().value(QStringLiteral("selected")).toBool();
+            });
+            if (selected || tracks.isEmpty())
+                m_player->setSubtitleTrack(-1);
+            else
+                m_player->setSubtitleTrack(tracks.first().toMap().value(QStringLiteral("id")).toInt());
+        }
+    } else if (name == QLatin1String("subtitleDelayUp")) {
+        if (m_player)
+            m_player->addSubtitleDelay(0.1);
+    } else if (name == QLatin1String("subtitleDelayDown")) {
+        if (m_player)
+            m_player->addSubtitleDelay(-0.1);
     } else if (name == QLatin1String("toggleFullscreen")) {
         toggleFullscreen();
-    } else if (name == QLatin1String("exit")) {
-        close();
+    } else if (name == QLatin1String("toggleMaximize")) {
+        if (!m_fullscreen && m_overlay) {
+            if (m_overlay->windowState() & Qt::WindowMaximized)
+                m_overlay->showNormal();
+            else
+                m_overlay->showMaximized();
+            if (m_video)
+                m_video->showMaximized();
+        }
+    } else if (name == QLatin1String("windowScaleUp") || name == QLatin1String("windowScaleDown")) {
+        if (m_overlay) {
+            const double factor = name == QLatin1String("windowScaleUp") ? 1.25 : 0.8;
+            QRect r = m_overlay->geometry();
+            QSize size(qBound(480, int(r.width() * factor), 7680),
+                       qBound(270, int(r.height() * factor), 4320));
+            r.setSize(size);
+            r.moveCenter(m_overlay->geometry().center());
+            applyGeometry(r);
+        }
+    } else if (name == QLatin1String("toggleChrome")) {
+        if (m_uiState)
+            m_uiState->setChromeVisible(!m_uiState->chromeVisible());
+    } else if (name == QLatin1String("themeA") || name == QLatin1String("themeB")
+               || name == QLatin1String("themeC")) {
+        m_themeRegistry->switchTo(name.right(1));
+        CrashBreadcrumb::record(QStringLiteral("切换主题为 %1").arg(m_themeRegistry->currentTheme()));
     } else if (name == QLatin1String("cycleTheme")) {
         m_themeRegistry->cycleTheme();
         CrashBreadcrumb::record(QStringLiteral("切换主题为 %1").arg(m_themeRegistry->currentTheme()));
@@ -540,11 +664,34 @@ void WindowController::action(const QString &name, const QVariant &value)
         m_themeRegistry->switchTo(value.toString());
         CrashBreadcrumb::record(QStringLiteral("切换主题为 %1").arg(m_themeRegistry->currentTheme()));
     } else if (name == QLatin1String("openRecent")) {
-        openRecentFile(value.toString());
+        emit uiActionRequested(QStringLiteral("openLibrary"), QVariant());
+    } else if (name == QLatin1String("exit")) {
+        close();
     } else {
-        // openSettings / openLibrary 等纯 UI 动作交给 QML shell 处理。
+        // 其余 UI 动作（设置、媒体库）交给 QML shell。
         emit uiActionRequested(name, value);
     }
+}
+
+void WindowController::playSibling(int delta)
+{
+    if (!m_player)
+        return;
+    const QFileInfo current(m_player->filePath());
+    if (!current.exists())
+        return;
+    const QDir dir(current.absolutePath());
+    QFileInfoList entries = dir.entryInfoList(QDir::Files, QDir::Name);
+    QStringList media;
+    for (const QFileInfo &entry : entries) {
+        if (isMediaFile(entry))
+            media << entry.absoluteFilePath();
+    }
+    const int index = media.indexOf(current.absoluteFilePath());
+    if (index < 0 || media.size() < 2)
+        return;
+    const int next = (index + delta + media.size()) % media.size();
+    openFile(QUrl::fromLocalFile(media.at(next)));
 }
 
 void WindowController::openFile(const QUrl &url)

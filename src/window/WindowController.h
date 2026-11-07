@@ -18,6 +18,7 @@ class LayoutHost;
 class UiStateStore;
 class CompactController;
 class MediaLibraryService;
+class ActionRegistry;
 
 // 双窗几何同步结果（M0 判据用）。
 struct ApplyResult {
@@ -64,6 +65,7 @@ public:
     LayoutHost *layoutHost() const { return m_layoutHost; }
     UiStateStore *uiState() const { return m_uiState; }
     CompactController *compactMode() const { return m_compactMode; }
+    ActionRegistry *actions() const { return m_actions; }
     Settings *settings() const { return m_settings; }
 
     // 布局统一动作入口（布局只发动作名，不直接调用播放器）。
@@ -109,6 +111,7 @@ private:
     void showWindows();
     void saveWindowState();
     void rememberFile(const QString &path);
+    void playSibling(int delta);
 
     MpvClient *m_player = nullptr;
     UpdateService *m_updater = nullptr;
@@ -118,6 +121,7 @@ private:
     LayoutHost *m_layoutHost = nullptr;
     UiStateStore *m_uiState = nullptr;
     CompactController *m_compactMode = nullptr;
+    ActionRegistry *m_actions = nullptr;
     VideoWindow *m_video = nullptr;
     OverlayWindow *m_overlay = nullptr;
     bool m_ready = false;

@@ -327,6 +327,27 @@ void MpvClient::setSpeed(double speed)
     }
 }
 
+void MpvClient::frameStep(bool forward)
+{
+    if (!m_initialized)
+        return;
+    const char *args[] = {forward ? "frame-step" : "frame-back-step", nullptr};
+    if (m_api->command(m_mpv, args) < 0)
+        Log::warn(QStringLiteral("逐帧步进失败：%1").arg(forward ? QStringLiteral("前进") : QStringLiteral("后退")));
+}
+
+void MpvClient::addSubtitleDelay(double delta)
+{
+    if (!m_initialized)
+        return;
+    const double v = qBound(-10.0, m_subtitleDelay + delta, 10.0);
+    double writable = v;
+    if (m_api->setProperty(m_mpv, "sub-delay", MPV_FORMAT_DOUBLE, &writable) >= 0) {
+        m_subtitleDelay = v;
+        Log::info(QStringLiteral("字幕延迟 %1s").arg(v, 0, 'f', 2));
+    }
+}
+
 void MpvClient::setAudioTrack(int id)
 {
     if (!m_initialized)

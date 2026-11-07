@@ -35,6 +35,8 @@ add_library(palune_core STATIC
     src/ui/UiStateStore.h
     src/ui/CompactController.cpp
     src/ui/CompactController.h
+    src/ui/ActionRegistry.cpp
+    src/ui/ActionRegistry.h
     src/media/MediaLibraryService.cpp
     src/media/MediaLibraryService.h
     src/media/MediaServerAdapter.h

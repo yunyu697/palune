@@ -164,6 +164,7 @@ int main(int argc, char *argv[])
     options.m2StateSwitch = hasArg(argc, argv, "--m2-stateswitch");
     options.m2Compact = hasArg(argc, argv, "--m2-compact");
     options.m2ConfigCheck = hasArg(argc, argv, "--m2-config-check");
+    options.m2Actions = hasArg(argc, argv, "--m2-actions");
     options.shotMatrix = hasArg(argc, argv, "--shot-matrix");
     options.backdropPath = valueArg(argc, argv, "--shot-backdrop");
     const QString shotSize = valueArg(argc, argv, "--shot-size");
@@ -178,6 +179,7 @@ int main(int argc, char *argv[])
     const bool automation = options.selftest || options.updateCheckOnly || !options.e2eMode.isEmpty()
         || options.m1Smoke || options.m1Perf || options.m1ThemeSwitch || options.m1Soak
         || options.m2StateSwitch || options.m2Compact || options.m2ConfigCheck
+        || options.m2Actions
         || !options.shotDir.isEmpty();
 
     // 位置参数作为待打开文件（跳过已知的取值参数，避免把 flag 的值误当文件）

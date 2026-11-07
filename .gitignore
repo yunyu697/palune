@@ -1,6 +1,8 @@
 # 构建产物
 build/
 build-m2/
+build-m2b/
+build-*/
 out/
 dist/
 *.user

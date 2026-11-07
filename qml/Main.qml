@@ -161,35 +161,18 @@ Item {
         onCloseRequested: root.closePanel()
     }
 
+    // 快捷键统一走 C++ ActionRegistry（40 个 P0 动作、平台键位、冲突检测）。
     Keys.onPressed: function (event) {
-        if (event.key === Qt.Key_Space) {
-            win.action("playPause")
-            event.accepted = true
-        } else if (event.key === Qt.Key_F11) {
-            win.action("toggleFullscreen")
-            event.accepted = true
-        } else if (event.key === Qt.Key_Escape) {
+        if (event.key === Qt.Key_Escape) {
             if (root.overlayPanel !== "")
                 root.closePanel()
             else if (win.fullscreen)
                 win.action("toggleFullscreen")
             event.accepted = true
-        } else if (event.key === Qt.Key_O) {
-            win.action("openFile")
-            event.accepted = true
-        } else if (event.key === Qt.Key_Left) {
-            win.action("seekBy", -10)
-            event.accepted = true
-        } else if (event.key === Qt.Key_Right) {
-            win.action("seekBy", 10)
-            event.accepted = true
-        } else if (event.key === Qt.Key_Up) {
-            win.action("volumeBy", 5)
-            event.accepted = true
-        } else if (event.key === Qt.Key_Down) {
-            win.action("volumeBy", -5)
-            event.accepted = true
+            return
         }
+        if (typeof actions !== "undefined" && actions.handleKey(event.key, event.modifiers))
+            event.accepted = true
     }
 
     Connections {

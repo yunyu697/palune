@@ -32,6 +32,8 @@ jobs:
           python-version: "3.12"
       - name: 检查四层主题与内容源分层约束
         run: python tools/ci/check_layers.py
+      - name: 品牌卫生检查（禁止外部播放器品牌名）
+        run: python tools/ci/check_brand_terms.py
 
   coverage:
     name: 单测覆盖率

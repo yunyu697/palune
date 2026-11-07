@@ -182,13 +182,13 @@ Item {
                     actionId: "playPause"
                     onClicked: win.action("playPause")
                 }
-                PillButton { label: "-10s"; actionId: "seekBack"; onClicked: win.action("seekBy", -10) }
-                PillButton { label: "+10s"; actionId: "seekForward"; onClicked: win.action("seekBy", 10) }
+                PillButton { label: "-10s"; actionId: "seekBack10"; onClicked: win.action("seekBack10") }
+                PillButton { label: "+10s"; actionId: "seekForward10"; onClicked: win.action("seekForward10") }
                 Item { Layout.fillWidth: true }
                 PillButton {
                     label: Math.round(player.speed * 100) / 100 + "x"
-                    actionId: "speedCycle"
-                    onClicked: win.action("speedCycle")
+                    actionId: "speedUp"
+                    onClicked: win.action("speedUp")
                 }
             }
 

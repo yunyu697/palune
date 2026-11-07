@@ -243,9 +243,10 @@ endforeach()
 # 用户名带空格）不加引号，cpack 的 install 阶段会直接失败；统一改用下面的 windeployqt。
 # 非 Windows 仍走官方脚本（macOS 的 macdeployqt 由它调用）。
 if(NOT WIN32)
+    # Qt 6.9 的 macdeployqt 已移除 --compiler-runtime 参数，显式传入会直接报
+    # "Unknown argument"；编译器运行库由系统提供，不需要也不应再传。
     qt_generate_deploy_app_script(TARGET Palune OUTPUT_SCRIPT PALUNE_DEPLOY_SCRIPT
-        NO_UNSUPPORTED_PLATFORM_ERROR
-        DEPLOY_TOOL_OPTIONS --compiler-runtime)
+        NO_UNSUPPORTED_PLATFORM_ERROR)
     install(SCRIPT ${PALUNE_DEPLOY_SCRIPT})
 endif()
 

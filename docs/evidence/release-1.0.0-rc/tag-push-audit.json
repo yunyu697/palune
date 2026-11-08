@@ -1,0 +1,49 @@
+{
+  "recordedAt": "2026-11-08T17:30:00+08:00",
+  "task": "推送 alpha8 / alpha9 / alpha10 三个历史 tag，并确认不产生正式通道产物",
+  "preconditions": {
+    "taggedCommitWorkflow": {
+      "1.0.0-alpha8": "旧版：含注释「不加 --prerelease」，publish 不带预发布参数",
+      "1.0.0-alpha9": "同上",
+      "1.0.0-alpha10": "同上"
+    },
+    "VERSION_at_tags": {"1.0.0-alpha8": "1.0.0-alpha8", "1.0.0-alpha9": "1.0.0-alpha9", "1.0.0-alpha10": "1.0.0-alpha10"},
+    "whyItMatters": "GitHub 对 push 事件使用 tag 指向提交里的工作流文件。三个历史提交带的是旧逻辑，直接推送会创建非预发布 Release 并接管 releases/latest。",
+    "releaseRepoToken": "源码仓 Secrets 只有 PALUNE_UPDATE_KEY_ID / PALUNE_UPDATE_PRIVATE_KEY，**没有 RELEASE_REPO_TOKEN**；即使推送也不会跨仓发布成功",
+    "mitigation": "推送期间用 gh workflow disable Release 停用发布工作流，推送完成后立即 gh workflow enable Release 恢复"
+  },
+  "workflowState": {
+    "beforePush": ["CI active", "Release 已停用（列表中只剩 CI）"],
+    "afterPush": ["CI active", "Release active"],
+    "restored": true
+  },
+  "push": {
+    "attempts": 3,
+    "failedAttempts": [
+      "fatal: unable to access 'https://github.com/yunyu697/palune.git/': Failed to connect to github.com:443 after 21070 ms",
+      "同上（第二次，21062 ms）"
+    ],
+    "successAttempt": 3,
+    "output": [
+      "1.0.0-alpha8 -> 1.0.0-alpha8",
+      "1.0.0-alpha9 -> 1.0.0-alpha9",
+      "1.0.0-alpha10 -> 1.0.0-alpha10"
+    ]
+  },
+  "verification": {
+    "remoteTags": ["1.0.0-alpha1", "1.0.0-alpha10", "1.0.0-alpha4", "1.0.0-alpha5", "1.0.0-alpha7", "1.0.0-alpha8", "1.0.0-alpha9"],
+    "newRunsCreated": 0,
+    "latestRunStill": "42386259786 / 2026-11-07T15:24:50Z（CI，main）",
+    "releaseRepoReleases": [
+      {"tag": "1.0.0-RC", "prerelease": true, "assets": 5},
+      {"tag": "1.0.0-alpha6", "prerelease": false, "isLatest": true, "assets": 5}
+    ],
+    "latestPointer": "1.0.0-alpha6（未变化）"
+  },
+  "guardResult": {
+    "stableChannelArtifacts": "未生成",
+    "releasesLatestTakenOver": "否",
+    "prereleaseFlagCheck": "不适用：本次没有任何 Release 被创建（工作流停用 + 历史提交为旧逻辑），因此无可核对的标记与资产清单",
+    "notPushed": "1.0.0（按指示保留，等 RC 收口与 P0 全闭合后按正式通道处理）"
+  }
+}

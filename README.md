@@ -227,8 +227,8 @@ docs/evidence/  实测报告与截图
 - **平台**：macOS/Linux 只有 CI 构建与冒烟，未在真机安装运行；MSI 未产出（本机无 WiX）；生产签名未轮换（`update.pub` 与测试私钥同对）
 - **跨屏 DPI**：单显示器环境，跨屏拖动与运行时 DPI 切换只能模拟
 - **冷启动**：安装包实测 1878ms，高于 800ms 基线（P3，未修）
-- **更新链**：`releases/latest/download/latest.json` 在部分地区 GitHub 边缘节点返回 504（alpha6 历史资产同样如此，与本版本无关）
-- **源码仓 tag**：远端只到 `alpha7`，`alpha8/alpha9/alpha10/1.0.0` 未推送（推送会触发 workflow 以 stable 口径自动发布，需先改工作流）
+- **更新链**：`releases/latest/download/latest.json` 在本机与独立出口均返回 GitHub 边缘 504（alpha6 历史资产同样如此）；资产经 API 签名直链可下载且哈希一致，属 GitHub 下载边缘问题
+- **源码仓 tag**：alpha1/4/5/7/8/9/10 已在远端；`1.0.0` 暂留本地，等 RC 收口后按正式通道处理（历史 tag 的提交带旧工作流，推送时须先停用 Release 工作流）
 
 ## 明确不做（M0 与文档排除项）
 

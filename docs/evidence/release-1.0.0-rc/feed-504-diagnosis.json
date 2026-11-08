@@ -1,0 +1,76 @@
+{
+  "recordedAt": "2026-11-08T17:32:00+08:00",
+  "question": "公开下载链 504 是「本机网络」还是「所有人都会遇到」",
+  "conclusion": "NOT_VERIFIED（是否影响所有用户无法证明，但已证实在两个独立出口同样失败）",
+  "probes": [
+    {
+      "id": "latest-feed-head",
+      "command": "curl -I https://github.com/yunyu697/palune-releases/releases/latest/download/latest.json",
+      "result": "HTTP/1.1 302 Found，Location: https://github.com/yunyu697/palune-releases/releases/download/1.0.0-alpha6/latest.json",
+      "interpretation": "latest 主链本身解析正常，跳转到 alpha6 定点资产"
+    },
+    {
+      "id": "alpha6-asset-head",
+      "command": "curl -I https://github.com/yunyu697/palune-releases/releases/download/1.0.0-alpha6/latest.json",
+      "result": "Recv failure: Connection was reset（另一次为 504）",
+      "interpretation": "历史资产同样失败，不是 RC 发布引入"
+    },
+    {
+      "id": "rc-asset-head",
+      "command": "curl -D - https://github.com/yunyu697/palune-releases/releases/download/1.0.0-RC/latest.json",
+      "result": "HTTP/1.1 504 Gateway Time-out；X-GitHub-Request-Id: E474:0D7A:B8D912:11C585C:6AF03DCA；x-github-edge-region: southeastasia",
+      "interpretation": "响应由 GitHub 边缘节点生成，不是本地代理伪造"
+    },
+    {
+      "id": "no-proxy",
+      "command": "curl --noproxy \"*\" -L ...",
+      "result": "504",
+      "interpretation": "绕过本机 HTTP 代理仍失败"
+    },
+    {
+      "id": "independent-egress",
+      "command": "服务端抓取器 WebFetch GET https://github.com/yunyu697/palune-releases/releases/download/1.0.0-RC/latest.json",
+      "result": "504 Gateway Time-out（与浏览器端纯文本一致）",
+      "interpretation": "**换出口（非本机网络）同样 504**，说明不是本机链路独有的问题"
+    },
+    {
+      "id": "github-web-page",
+      "command": "curl -L https://github.com/yunyu697/palune-releases/releases/tag/1.0.0-RC",
+      "result": "200",
+      "interpretation": "Release 页面本身可访问；「网页端点下载」走的就是同一个 /releases/download/ 路径，因此同样 504"
+    },
+    {
+      "id": "asset-api-signed-url",
+      "command": "curl -L -H 'Authorization: token …' -H 'Accept: application/octet-stream' https://api.github.com/repos/yunyu697/palune-releases/releases/assets/723464358",
+      "result": "http=200 size=1297 sha256=B2D33EE7E16602A1CA75CA4EFEAE7125054EB1C6372904B2211EF9B61D538DA",
+      "interpretation": "资产字节完好：经 API 302 跳到 release-assets.githubusercontent.com 的签名直链可下载，且哈希与本地一致"
+    },
+    {
+      "id": "objects-host",
+      "command": "curl -I https://objects.githubusercontent.com",
+      "result": "HTTP/1.1 404 Not Found（主机可达）",
+      "interpretation": "对象存储主机可解析可连通，故障点在 github.com 的 /releases/download/ 跳转"
+    },
+    {
+      "id": "git-endpoint-instability",
+      "command": "curl https://github.com/yunyu697/palune.git/info/refs?service=git-upload-pack（两次）",
+      "result": "200；随后 Connection timed out after 12005 ms",
+      "interpretation": "本机到 github.com 的链路本身也不稳定（推送 3 次才成功）"
+    }
+  ],
+  "factsEstablished": [
+    "alpha6 历史资产与 RC 新资产在同一路径族上都失败 → 非本次发布导致",
+    "两个独立出口（本机直连/无代理、服务端抓取器）均为 504 → 非本机独有",
+    "Release 页面 200、API 200、签名直链 200 → 仓库与资产本身正常",
+    "故障点是 github.com 的 /releases/download/ 边缘响应"
+  ],
+  "cannotEstablish": [
+    "是否全球所有用户都受影响（无法获取 GitHub 官方状态页或多地区探针）",
+    "故障持续时间与恢复时间"
+  ],
+  "userImpact": {
+    "level": "更新链不可用（对经过相同边缘的用户）",
+    "detail": "客户端清单固定走 releases/latest/download/latest.json，镜像只用于安装包下载、不参与清单。因此该边缘返回 504 时，「检查更新」会直接失败；本地已安装用户仍可正常播放，不影响安装包分发以外的功能。",
+    "workaround": "可用 tag 定点直链（release-assets 签名 URL）或镜像托管清单作为临时绕行，但当前代码不支持清单走镜像。"
+  }
+}

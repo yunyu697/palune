@@ -69,14 +69,14 @@
 
 | 项 | 值 |
 |---|---|
-| 源仓 tag | 本地 8 个（`1.0.0`、alpha1/4/5/7/8/9/10），远端只有 alpha1/4/5/7；alpha8 起未推送 |
-| 源仓 Release | alpha1、alpha4、alpha5（均为 Pre-release）；alpha7 起无 Release |
+| 源仓 tag | 本地 8 个；远端原有 alpha1/4/5/7，11-08 补齐 alpha8/9/10（推送期间停用 Release 工作流）；`1.0.0` 仍只在本地 |
+| 源仓 Release | alpha1、alpha4、alpha5（均为 Pre-release）；alpha7 起无 Release（alpha7 的 Release run 当时被取消） |
 | 发行仓 | `1.0.0-alpha6`（旧规则、非预发布、挂着 Latest）→ 新增 `1.0.0-RC`（`prerelease=true`，不接管 Latest） |
 | RC 资产 | exe 59,649,289 B、`latest.json`、`SHA256SUMS`、安装证据 2 份；GitHub digest 与本地 SHA-256 一致 |
 | 清单验签 | `docs/evidence/release-1.0.0-rc/manifest-verify.json` PASS（信任公钥 `resources/trust/update.pub`，keyId `palune-test`） |
-| 匿名主链 | NOT_VERIFIED：GitHub 边缘对 `releases/download/*` 返回 504，alpha6 历史资产同样；记录见 `github-publish-audit.json` |
+| 匿名主链 | NOT_VERIFIED：本机与独立出口均 504；API 签名直链 200 且哈希一致。见 `feed-504-diagnosis.json` |
 | 工作流改动 | `publish` 按通道加 `--prerelease`；`assert-public-feed` 预发布改断 tag 定点 URL |
-| 未做 | 源码仓 tag 补推（会以 stable 口径发布）、mac/Linux 产物、MSI、生产签名 |
+| 未做 | `1.0.0` tag 推送、mac/Linux 产物、MSI、生产签名、alpha8/9/10 的 Release |
 
 ## alpha10：六项实机缺陷
 

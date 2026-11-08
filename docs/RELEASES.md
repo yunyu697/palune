@@ -118,11 +118,15 @@ gh secret set RELEASE_REPO_TOKEN -R yunyu697/palune
 | 验签 | `tools/release/verify_manifest.py` 用 `resources/trust/update.pub` 独立复算 SHA-256 并验 Ed25519，`PASS` |
 | 发布方式 | 本地 `gh release create`（keyring 账号 `yunyu697`，权限 `repo`），未推送源码仓 tag |
 | 内容寻址 | GitHub 侧资产的 `digest` 字段与本地 SHA-256 一致（exe `4f1cb5ca…b82c`） |
-| 匿名可达 | **NOT_VERIFIED**：`releases/download/*` 与 `releases/latest/download/*` 在本机均返回 GitHub 边缘 504（alpha6 同路径也一样），非本次发布导致 |
-| 未提供 | macOS/Linux 产物、MSI、生产签名；源码仓 tag（alpha8 起）未推送 |
+| 匿名可达 | **NOT_VERIFIED**：`releases/download/*` 与 `releases/latest/download/*` 在本机与**独立出口**均返回 GitHub 边缘 504（alpha6 同路径也一样）；资产本身经 API 签名直链可下载且哈希一致 |
+| 未提供 | macOS/Linux 产物、MSI、生产签名；源码仓 `1.0.0` tag 未推送 |
 
 `docs/evidence/release-1.0.0-rc/github-publish-audit.json` 是本次核对的原始记录。
 
-## 9. 源码仓 tag 为何仍停在 alpha7
+## 9. 源码仓 tag 现状（2026-11-08）
 
-`.github/workflows/release.yml` 监听 `refs/tags/*`。推送 `1.0.0` 会按 `VERSION` 推出 `channel=stable`，进而创建**非预发布** Release 并接管 `releases/latest`，与 RC 口径冲突。本轮已把 `publish` 与 `assert-public-feed` 改成按通道处理（alpha/RC 走 prerelease 与 tag 定点断言），但源码仓 tag 补推仍需一次专门的核对与放行。
+- 远端已补齐 `1.0.0-alpha8` / `alpha9` / `alpha10`；`1.0.0` 暂不推送，等 RC 收口、P0 全闭合后按正式通道处理。
+- **推送前必须先确认 tag 指向提交里的工作流版本**：GitHub 对 push 事件使用被推提交里的工作流文件。三个历史 tag 的提交仍是旧逻辑（`publish` 不加 `--prerelease`），直接推送会创建非预发布 Release 并接管 `releases/latest`。
+- 本轮做法：推送期间 `gh workflow disable Release` → 推 tag → 核对无新 run、无新 Release → `gh workflow enable Release`。结果：远端多出 3 个 tag，`releases/latest` 仍指向 `1.0.0-alpha6`，未生成任何正式通道产物。
+- 因此本轮**没有可核对的 Release 标记与资产清单**（没有任何 Release 被创建）。若要让这三个 tag 产出预发布 Release，需要二选一：补上 `RELEASE_REPO_TOKEN` 并让 tag 指向含新工作流的提交，或手动 `gh release create --prerelease` 上传本地包。
+- 根因是历史提交不可改：工作流修正只对之后的新提交生效。

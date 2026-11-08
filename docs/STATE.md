@@ -30,7 +30,20 @@
 
 单元测试 `ctest -C Release` 7/7 PASS。复验脚本 `qa/runtime/alpha10_walkthrough.py`，结果 `docs/evidence/ui-alpha10-walkthrough.json`，截图 `docs/evidence/shots/alpha10-ui/`。
 
-已知限制：本机 200% 单屏，跨屏 DPI 迁移与 100/150% 只能以 `QT_SCALE_FACTOR` 重启模拟；截图含第三方远控叠加层（左上 FPS 文本），非本应用绘制。
+状态矩阵（`qa/runtime/alpha10_matrix.py`，结果 `docs/evidence/ui-alpha10-matrix.json`，截图 `shots/alpha10-ui/matrix-*.png`）：
+
+| 状态 | 截图 | 结论 |
+|---|---|---|
+| 布局 A 200% | `matrix-theme-A.png` | 控制栏/窗口按钮完整 |
+| 布局 B 200% | `matrix-theme-B.png` | 右栏不透明、底边与控制条留 16px，不重叠 |
+| 布局 C 200% | `matrix-theme-C.png` | 胶囊条与右上按钮完整 |
+| 全屏 A | `matrix-state-full-A.png` | 全屏几何 3840×2160，无边框 |
+| 最大化 A | `matrix-state-max-A.png` | 3840×2064，边缘无浅色框、控制栏完整 |
+| DPR 100% | `matrix-dpi-100-A.png` | 1180×700 逻辑尺寸，控件不裁剪 |
+| DPR 150% | `matrix-dpi-150-A.png` | 1770×1050 逻辑尺寸，控件不裁剪 |
+| DPR 200% | `matrix-theme-A.png` | 2360×1400 |
+
+已知限制：本机 200% 单屏，DPR 100/150 以 `QT_SCALE_FACTOR` 重启模拟（0.5/0.75），非真实跨屏迁移；截图含第三方远控叠加层（左上 FPS 文本），非本应用绘制；示例视频自带十字/方块图形。
 
 ### alpha10 收口记录
 

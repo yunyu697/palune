@@ -1,0 +1,81 @@
+{
+  "rows": [
+    {
+      "tag": "theme-A",
+      "path": "docs\\evidence\\shots\\alpha10-ui\\matrix-theme-A.png",
+      "rect": [
+        738,
+        330,
+        2360,
+        1400
+      ],
+      "dpr": 2.0
+    },
+    {
+      "tag": "theme-B",
+      "path": "docs\\evidence\\shots\\alpha10-ui\\matrix-theme-B.png",
+      "rect": [
+        738,
+        330,
+        2360,
+        1400
+      ],
+      "dpr": 2.0
+    },
+    {
+      "tag": "theme-C",
+      "path": "docs\\evidence\\shots\\alpha10-ui\\matrix-theme-C.png",
+      "rect": [
+        738,
+        330,
+        2360,
+        1400
+      ],
+      "dpr": 2.0
+    },
+    {
+      "tag": "state-full-A",
+      "path": "docs\\evidence\\shots\\alpha10-ui\\matrix-state-full-A.png",
+      "rect": [
+        0,
+        0,
+        3840,
+        2160
+      ],
+      "dpr": 2.0
+    },
+    {
+      "tag": "state-max-A",
+      "path": "docs\\evidence\\shots\\alpha10-ui\\matrix-state-max-A.png",
+      "rect": [
+        0,
+        0,
+        3840,
+        2064
+      ],
+      "dpr": 2.0
+    },
+    {
+      "tag": "dpi-100-A",
+      "path": "docs\\evidence\\shots\\alpha10-ui\\matrix-dpi-100-A.png",
+      "rect": [
+        1329,
+        681,
+        1180,
+        700
+      ],
+      "dpr": 1.0
+    },
+    {
+      "tag": "dpi-150-A",
+      "path": "docs\\evidence\\shots\\alpha10-ui\\matrix-dpi-150-A.png",
+      "rect": [
+        1034,
+        506,
+        1770,
+        1050
+      ],
+      "dpr": 1.5
+    }
+  ]
+}

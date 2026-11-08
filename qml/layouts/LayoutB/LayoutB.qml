@@ -105,17 +105,21 @@ Item {
     }
 
     // 右侧检查器
+    // 右侧检查器：设计稿里是浮在视频之上的独立卡片（四周留 12px，圆角 8），
+    // 不是贴死窗口右缘/底缘的实心栏。
     Rectangle {
         id: dock
         objectName: "dockB"
         visible: uiState.chromeVisible
         width: layoutB.dockWidth
+        radius: tokens.radiusS
         anchors {
             right: parent.right
             top: parent.top
             bottom: parent.bottom
-            topMargin: layoutB.topBarHeight
-            bottomMargin: layoutB.techBarHeight + layoutB.controlBarHeight
+            rightMargin: 12
+            topMargin: layoutB.topBarHeight + 8
+            bottomMargin: layoutB.techBarHeight + layoutB.controlBarHeight + 12
         }
         color: "#f20c0e12"
         border.width: 1
@@ -433,7 +437,7 @@ Item {
     function syncVideoInsets() {
         if (typeof win === "undefined")
             return
-        win.setVideoInsets(0, 0, dock.visible ? dock.width : 0, 0)
+        win.setVideoInsets(0, 0, dock.visible ? dock.width + 12 : 0, 0)
     }
 
     Component.onCompleted: layoutB.syncVideoInsets()

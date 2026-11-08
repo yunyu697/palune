@@ -19,6 +19,7 @@ class UiStateStore;
 class CompactController;
 class MediaLibraryService;
 class ActionRegistry;
+class SettingsWindow;
 
 // 双窗几何同步结果（M0 判据用）。
 struct ApplyResult {
@@ -93,6 +94,12 @@ public:
     ApplyResult setFullscreenForTest(bool on);
     ApplyResult restoreForTest(bool minimize);
 
+    // 设置是独立顶层窗口，不进入主窗 QML 层，避免被主窗 Region 裁剪或被视频子窗压住。
+    void openSettingsWindow();
+    void closeSettingsWindow();
+    void repositionSettingsWindow();
+    SettingsWindow *settingsWindow() const { return m_settingsWindow; }
+
     qintptr overlayHandle() const;
     qintptr videoHandle() const;
     qint64 lastSyncMicros() const { return m_lastSyncMicros; }
@@ -144,6 +151,7 @@ private:
     ActionRegistry *m_actions = nullptr;
     VideoWindow *m_video = nullptr;
     OverlayWindow *m_overlay = nullptr;
+    SettingsWindow *m_settingsWindow = nullptr;
     bool m_ready = false;
     double m_pendingResume = -1.0;
     qint64 m_lastResumeSaveMs = 0;

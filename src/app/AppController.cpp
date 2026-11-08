@@ -17,6 +17,7 @@
 #include "ui/ActionRegistry.h"
 #include "update/UpdateService.h"
 #include "window/WindowController.h"
+#include "window/SettingsWindow.h"
 #include "window/OverlayWindow.h"
 #include "window/VideoWindow.h"
 
@@ -29,6 +30,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QGuiApplication>
+#include <QImage>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QKeyEvent>
@@ -175,6 +177,47 @@ void AppController::startNormal()
     QString path = m_options.openPath;
     if (!path.isEmpty())
         m_windows->openFile(QUrl::fromLocalFile(path));
+
+    // 真实窗口自动化：按主题/面板参数驱动已安装窗口，并抓取窗口自身的渲染结果。
+    // 这些开关只服务于实机截图与缺陷复核，不改变正常启动路径。
+    if (!m_options.uiTheme.isEmpty() || !m_options.uiPanel.isEmpty()
+        || !m_options.uiCapture.isEmpty() || !m_options.uiActions.isEmpty()) {
+        QTimer::singleShot(600, this, [this]() {
+            if (m_windows && !m_options.uiTheme.isEmpty())
+                m_windows->action(QStringLiteral("setTheme"), m_options.uiTheme);
+            if (!m_options.uiPanel.isEmpty())
+                m_windows->action(m_options.uiPanel == QLatin1String("library")
+                                      ? QStringLiteral("openLibrary")
+                                      : QStringLiteral("openSettings"));
+            const QStringList steps = m_options.uiActions.split(QLatin1Char(','),
+                                                               Qt::SkipEmptyParts);
+            int delay = 1800;
+            for (const QString &step : steps) {
+                const QString a = step.trimmed();
+                if (a.isEmpty())
+                    continue;
+                QTimer::singleShot(delay, this, [this, a]() {
+                    if (m_windows)
+                        m_windows->action(a);
+                });
+                delay += 1400;
+            }
+            if (!m_options.uiCapture.isEmpty())
+                QTimer::singleShot(delay, this, [this]() {
+                    if (!m_windows)
+                        return;
+                    QImage image;
+                    if (m_options.uiPanel == QLatin1String("settings")
+                        && m_windows->settingsWindow())
+                        image = m_windows->settingsWindow()->grabWindow();
+                    else if (m_windows->overlay())
+                        image = m_windows->overlay()->grabWindow();
+                    if (!image.isNull() && image.save(m_options.uiCapture))
+                        Log::info(QStringLiteral("真实窗口截图：%1 %2x%3")
+                                      .arg(m_options.uiCapture).arg(image.width()).arg(image.height()));
+                });
+        });
+    }
 
     if (m_options.resumeProbe) {
         QTimer::singleShot(300, this, [this, path]() {

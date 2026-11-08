@@ -2,6 +2,10 @@
 
 #include <QQuickView>
 
+#if defined(Q_OS_WIN)
+#include <windows.h>
+#endif
+
 namespace palune {
 
 // UI 覆盖窗口：应用窗口身份（任务栏、Alt-Tab、焦点），透明背景，
@@ -21,6 +25,12 @@ protected:
 
 private:
     void applyNativeStyles();
+
+#if defined(Q_OS_WIN)
+    static LRESULT CALLBACK nativeEventProc(HWND hwnd, UINT msg, WPARAM wParam,
+                                            LPARAM lParam, UINT_PTR id, DWORD_PTR ref);
+    bool m_subclassInstalled = false;
+#endif
 };
 
 } // namespace palune

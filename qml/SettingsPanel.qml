@@ -11,6 +11,9 @@ Item {
 
     property bool shotMode: false
     property int page: 0
+    // 独立顶层窗口模式：隐藏压暗层，卡片铺满自身窗口，圆角与原生 Region 共用 panelRadius。
+    property bool windowMode: false
+    property int panelRadius: 18
 
     readonly property string accent: "#e7b27c"
     readonly property string textColor: "#e8eaee"
@@ -26,22 +29,31 @@ Item {
     readonly property string layoutMode: typeof themeRegistry !== "undefined"
                                          ? themeRegistry.currentTheme : "A"
     readonly property bool capsulePopup: panelRoot.layoutMode === "C"
-    readonly property bool threeColumn: panelRoot.layoutMode === "B" && !panelRoot.narrow
-    readonly property int cardWidth: panelRoot.capsulePopup
-                                     ? Math.min(560, parent.width - 24)
-                                     : Math.min(panelRoot.layoutMode === "B" ? 1080 : 1020,
-                                                parent.width - (panelRoot.narrow ? 16 : 72))
-    readonly property int cardHeight: panelRoot.capsulePopup
-                                      ? Math.min(452, parent.height - 24)
-                                      : Math.min(660, parent.height - (panelRoot.narrow ? 16 : 72))
+    // 设计稿 a-settings / b-settings 均为「导航 + 表单 + 字幕预览」三栏；A 旧实现只有两栏，
+    // 右侧留出大片空白，与原型不一致。C 保持两栏弹出卡。
+    readonly property bool threeColumn: (panelRoot.layoutMode === "A"
+                                         || panelRoot.layoutMode === "B")
+                                        && !panelRoot.narrow
+    readonly property int cardWidth: panelRoot.windowMode
+                                     ? panelRoot.width
+                                     : (panelRoot.capsulePopup
+                                        ? Math.min(560, parent.width - 24)
+                                        : Math.min(panelRoot.layoutMode === "B" ? 1080 : 1020,
+                                                   parent.width - (panelRoot.narrow ? 16 : 72)))
+    readonly property int cardHeight: panelRoot.windowMode
+                                      ? panelRoot.height
+                                      : (panelRoot.capsulePopup
+                                         ? Math.min(452, parent.height - 24)
+                                         : Math.min(660, parent.height - (panelRoot.narrow ? 16 : 72)))
     // 窄/矮窗口（480×270 及紧凑断点附近）：页签改横向、内容区可滚动，
     // 避免设置卡片超出窗口造成截断（M2 缩放基线判据）。
-    readonly property bool narrow: panelRoot.width < 720 || panelRoot.height < 520
+    readonly property bool narrow: !panelRoot.windowMode && (panelRoot.width < 720 || panelRoot.height < 520)
 
     readonly property var pageTitles: [qsTr("通用"), qsTr("播放"), qsTr("字幕"), qsTr("音频"), qsTr("快捷键"), qsTr("关于")]
 
     Rectangle {
         anchors.fill: parent
+        visible: !panelRoot.windowMode
         color: panelRoot.shotMode ? "#0b0c10" : "#99000000"
     }
 
@@ -49,9 +61,11 @@ Item {
         id: card
         width: panelRoot.cardWidth
         height: panelRoot.cardHeight
-        x: panelRoot.capsulePopup ? parent.width - width - 16 : (parent.width - width) / 2
-        y: panelRoot.capsulePopup ? parent.height - height - 16 : (parent.height - height) / 2
-        radius: panelRoot.narrow ? 8 : 18
+        x: panelRoot.windowMode ? 0
+           : (panelRoot.capsulePopup ? parent.width - width - 16 : (parent.width - width) / 2)
+        y: panelRoot.windowMode ? 0
+           : (panelRoot.capsulePopup ? parent.height - height - 16 : (parent.height - height) / 2)
+        radius: panelRoot.windowMode ? panelRoot.panelRadius : (panelRoot.narrow ? 8 : 18)
         color: "#f20d0e11"
         border.width: 1
         border.color: panelRoot.lineColor
@@ -74,7 +88,7 @@ Item {
                     }
                     Text {
                         visible: !panelRoot.narrow || panelRoot.height >= 320
-                        text: "Palune " + panelRoot.appVersion + " · M3"
+                        text: "Palune " + panelRoot.appVersion
                         color: panelRoot.mutedColor
                         font.pixelSize: panelRoot.narrow ? 10 : 11
                     }

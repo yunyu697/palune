@@ -2,9 +2,43 @@
 
 > 自动推进的续跑点。每完成一个可验证节点更新本文件；撞到单轮上限时以本文件为准。
 
-更新时间：2026-11-07 23:30（Asia/Shanghai）
-当前里程碑：**M3 UI 设计稿偏差收口（alpha7）**
-版本：`1.0.0-alpha7`
+更新时间：2026-11-08（Asia/Shanghai）
+当前里程碑：**alpha8 实机 UI 缺陷清理（在 M4 之前）**
+版本：`1.0.0-alpha8`
+
+## alpha8：实机四条现象根因修复
+
+### 根因与修复
+
+| 现象 | 根因 | 修复 | 证据 |
+|---|---|---|---|
+| 画面内方框 | 覆盖窗 `WS_THICKFRAME` 触发 Windows 非客户区合成层 | `SetWindowSubclass`：`WM_NCCALCSIZE(TRUE)` 返回 0，`WM_NCACTIVATE/WM_NCPAINT` 返回 TRUE | `probe_square.py` 修复后 center_box=None；`UI-ALPHA8-COMPARISON.md` §1 |
+| 窗口边缘方框 | 同上，失焦时系统重画浅色 NC 边框 | 同上（保留 THICKFRAME，缩放/Snap 不受影响） | `probe_focus_border.py`：边缘由 (255,245) 变 (26,26) |
+| 最大化/全屏方框 | 同上，几何变化后 NC 重绘、Region 变 SIMPLE | 同上 | `state-max-A.png` / `state-full-A.png` 边缘为内容色 |
+| 设置被遮挡/裁剪 | 设置是主窗内弹层 | 新增顶层 `SettingsWindow`（Qt::Tool + 瞬态父窗 + 原生圆角 Region）；C 改为 show 后定位，贴右下 16px | `settings-{A,B,C}.png`；关闭后可见窗口只剩覆盖窗+视频窗 |
+
+同时：A 顶栏改为设计稿的透明悬浮条；B 检查器加 12px 外边距与 8 圆角；`Main.qml` 发丝描边降到 `#1affffff` 且最大化/全屏不绘制。
+
+### 验证
+
+| 项 | 结果 |
+|---|---|
+| 单元测试 | `ctest -C Release` **7/7 PASS** |
+| 实机逐屏 | 21 状态（main/empty/library/settings × A/B/C、max/restore/full/full-exit/move/resize、DPI 100/150/200），`docs/evidence/shots/alpha8-ui/` |
+| 方框体检 | 全部状态边缘无浅色框、无中心方框（`alpha8_edge_audit.py`） |
+| 设计稿核对 | `docs/evidence/UI-ALPHA8-COMPARISON.md`：PASS 项 + 5 条如实记录的剩余形态差异 |
+| 限制 | 会话锁屏，真实指针拖动/贴边/实时 DPI 无法注入；移动/缩放用 `SetWindowPos`、DPI 用 `QT_SCALE_FACTOR` 重启模拟 |
+| 本地安装包 | 见下方「alpha8 收口记录」 |
+
+### alpha8 收口记录
+
+| 项 | 值 |
+|---|---|
+| 安装包 | `dist/Palune-1.0.0-alpha8-win-x64.exe` |
+| 字节数 | 59,218,560 |
+| SHA-256 | `F763585FA65613728DD15A5F11D18AF1B9CAC2DCB4E0C8D77A1D9BC1BF349D67` |
+| 安装→启动→卸载 | `PASS`（`docs/evidence/install-verify-alpha8.json`、`install-launch-alpha8.json`；windowReadyMs 1466，alpha7 为 1481，无回归但未达 800ms 基线） |
+| MSI | 本机未安装 WiX（candle.exe），本轮跳过，仅出 NSIS；`package_windows.ps1` 已改为无 WiX 时告警跳过 |
 
 ## alpha7：M3 UI 结构收口（设计稿逐屏对齐）
 

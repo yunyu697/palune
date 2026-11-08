@@ -180,6 +180,10 @@ int main(int argc, char *argv[])
     options.resumeProbe = hasArg(argc, argv, "--resume-probe");
     options.shotMatrix = hasArg(argc, argv, "--shot-matrix");
     options.backdropPath = valueArg(argc, argv, "--shot-backdrop");
+    options.uiTheme = valueArg(argc, argv, "--ui-theme");
+    options.uiPanel = valueArg(argc, argv, "--ui-panel");
+    options.uiCapture = valueArg(argc, argv, "--ui-capture");
+    options.uiActions = valueArg(argc, argv, "--ui-actions");
     const QString shotSize = valueArg(argc, argv, "--shot-size");
     if (!shotSize.isEmpty()) {
         const QStringList parts = shotSize.split(QLatin1Char('x'));
@@ -202,7 +206,7 @@ int main(int argc, char *argv[])
                                 "--download-dir", "--e2e-mode", "--e2e-marker", "--open",
                                 "--media", "--switch-count", "--soak-minute",
                                 "--state-switch-count", "--shot-backdrop", "--shot-size",
-                                "--lang"};
+                                "--ui-theme", "--ui-panel", "--ui-capture", "--ui-actions", "--lang"};
     for (int i = 1; i < argc; ++i) {
         const QString arg = QString::fromLocal8Bit(argv[i]);
         bool isValueFlag = false;

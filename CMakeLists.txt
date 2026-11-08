@@ -83,6 +83,8 @@ qt_add_executable(Palune
     src/window/OverlayWindow.h
     src/window/WindowController.cpp
     src/window/WindowController.h
+    src/window/SettingsWindow.cpp
+    src/window/SettingsWindow.h
     src/m0/SelfTest.cpp
     src/m0/SelfTest.h
 )
@@ -92,6 +94,7 @@ qt_add_resources(Palune "app_resources"
     FILES
         qml/Main.qml
         qml/SettingsPanel.qml
+        qml/SettingsWindow.qml
         qml/UpdateSection.qml
         qml/LibraryPanel.qml
         qml/tokens/Tokens.qml

@@ -12,6 +12,7 @@
 #include "ui/CompactController.h"
 #include "ui/UiStateStore.h"
 #include "update/UpdateService.h"
+#include "window/SettingsWindow.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -116,6 +117,8 @@ void WindowController::saveResumePosition()
 
 WindowController::~WindowController()
 {
+    delete m_settingsWindow;
+    m_settingsWindow = nullptr;
     delete m_overlay;
     m_overlay = nullptr;
     delete m_video;
@@ -171,6 +174,18 @@ bool WindowController::start(int width, int height)
     m_overlay->requestActivate();
     applyGeometry(r);
     applyWindowRegion();
+
+    // 设置窗跟随主窗位置/尺寸，并在主题切换时换尺寸与圆角。
+    connect(m_overlay, &QWindow::xChanged, this, &WindowController::repositionSettingsWindow);
+    connect(m_overlay, &QWindow::yChanged, this, &WindowController::repositionSettingsWindow);
+    connect(m_overlay, &QWindow::widthChanged, this, &WindowController::repositionSettingsWindow);
+    connect(m_overlay, &QWindow::heightChanged, this, &WindowController::repositionSettingsWindow);
+    if (m_themeRegistry) {
+        connect(m_themeRegistry, &ThemeRegistry::currentThemeChanged, this, [this]() {
+            if (m_settingsWindow && m_settingsWindow->isOpen() && m_overlay)
+                m_settingsWindow->refreshForTheme(m_overlay->geometry());
+        });
+    }
 
     if (m_player && m_player->available())
         m_player->setVideoWindow(m_video->videoSurfaceHandle());
@@ -660,6 +675,7 @@ void WindowController::action(const QString &name, const QVariant &value)
         QStringLiteral("seekBack"), QStringLiteral("volumeSet"), QStringLiteral("volumeBy"),
         QStringLiteral("speedSet"), QStringLiteral("speedCycle"), QStringLiteral("audioSet"),
         QStringLiteral("subtitleSet"), QStringLiteral("setTheme"),
+        QStringLiteral("openSettings"), QStringLiteral("closeSettings"),
     };
     if (!m_actions->has(name) && !kLegacyIds.contains(name)) {
         emit uiActionRequested(name, value);
@@ -839,6 +855,10 @@ void WindowController::action(const QString &name, const QVariant &value)
     } else if (name == QLatin1String("setTheme")) {
         m_themeRegistry->switchTo(value.toString());
         CrashBreadcrumb::record(QStringLiteral("切换主题为 %1").arg(m_themeRegistry->currentTheme()));
+    } else if (name == QLatin1String("openSettings")) {
+        openSettingsWindow();
+    } else if (name == QLatin1String("closeSettings")) {
+        closeSettingsWindow();
     } else if (name == QLatin1String("openRecent")) {
         emit uiActionRequested(QStringLiteral("openLibrary"), QVariant());
     } else if (name == QLatin1String("exit")) {
@@ -847,6 +867,34 @@ void WindowController::action(const QString &name, const QVariant &value)
         // 其余 UI 动作（设置、媒体库）交给 QML shell。
         emit uiActionRequested(name, value);
     }
+}
+
+void WindowController::openSettingsWindow()
+{
+    if (!m_overlay)
+        return;
+    if (!m_settingsWindow) {
+        m_settingsWindow = new SettingsWindow(this, m_themeRegistry, m_player, m_updater,
+                                              m_settings, m_compactMode, m_overlay);
+        // 交给 QObject 树管理生命周期（窗口层级仍由 transient parent 决定，互不裁剪）。
+        static_cast<QObject *>(m_settingsWindow)->setParent(this);
+    }
+    m_settingsWindow->open(m_overlay->geometry());
+}
+
+void WindowController::closeSettingsWindow()
+{
+    if (!m_settingsWindow)
+        return;
+    m_settingsWindow->hide();
+    if (m_overlay)
+        m_overlay->requestActivate();
+}
+
+void WindowController::repositionSettingsWindow()
+{
+    if (m_settingsWindow && m_settingsWindow->isOpen() && m_overlay)
+        m_settingsWindow->reposition(m_overlay->geometry());
 }
 
 void WindowController::playSibling(int delta)

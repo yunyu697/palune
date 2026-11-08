@@ -1,0 +1,1070 @@
+[
+  {
+    "state": "main-A",
+    "theme": "A",
+    "scale_factor": "1(default)",
+    "windows": [
+      {
+        "title": "Palune — theme-1080p-30s.mp4",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      },
+      {
+        "title": "Palune Video Surface - Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      }
+    ],
+    "video_inset_right": 0,
+    "video_offset": [
+      0,
+      0
+    ],
+    "captured": "overlay+video"
+  },
+  {
+    "state": "main-B",
+    "theme": "B",
+    "scale_factor": "1(default)",
+    "windows": [
+      {
+        "title": "Palune — theme-1080p-30s.mp4",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      },
+      {
+        "title": "Palune Video Surface - Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 1696,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            1696,
+            1400
+          ]
+        }
+      }
+    ],
+    "video_inset_right": 664,
+    "video_offset": [
+      0,
+      0
+    ],
+    "captured": "overlay+video"
+  },
+  {
+    "state": "main-C",
+    "theme": "C",
+    "scale_factor": "1(default)",
+    "windows": [
+      {
+        "title": "Palune — theme-1080p-30s.mp4",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      },
+      {
+        "title": "Palune Video Surface - Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      }
+    ],
+    "video_inset_right": 0,
+    "video_offset": [
+      0,
+      0
+    ],
+    "captured": "overlay+video"
+  },
+  {
+    "state": "empty-A",
+    "theme": "A",
+    "scale_factor": "1(default)",
+    "windows": [
+      {
+        "title": "Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      },
+      {
+        "title": "Palune Video Surface - Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      }
+    ],
+    "video_inset_right": 0,
+    "video_offset": [
+      0,
+      0
+    ],
+    "captured": "overlay+video"
+  },
+  {
+    "state": "empty-B",
+    "theme": "B",
+    "scale_factor": "1(default)",
+    "windows": [
+      {
+        "title": "Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      },
+      {
+        "title": "Palune Video Surface - Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 1696,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            1696,
+            1400
+          ]
+        }
+      }
+    ],
+    "video_inset_right": 664,
+    "video_offset": [
+      0,
+      0
+    ],
+    "captured": "overlay+video"
+  },
+  {
+    "state": "empty-C",
+    "theme": "C",
+    "scale_factor": "1(default)",
+    "windows": [
+      {
+        "title": "Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      },
+      {
+        "title": "Palune Video Surface - Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      }
+    ],
+    "video_inset_right": 0,
+    "video_offset": [
+      0,
+      0
+    ],
+    "captured": "overlay+video"
+  },
+  {
+    "state": "library-A",
+    "theme": "A",
+    "scale_factor": "1(default)",
+    "windows": [
+      {
+        "title": "Palune — theme-1080p-30s.mp4",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      },
+      {
+        "title": "Palune Video Surface - Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      }
+    ],
+    "video_inset_right": 0,
+    "video_offset": [
+      0,
+      0
+    ],
+    "captured": "overlay+video"
+  },
+  {
+    "state": "library-B",
+    "theme": "B",
+    "scale_factor": "1(default)",
+    "windows": [
+      {
+        "title": "Palune — theme-1080p-30s.mp4",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      },
+      {
+        "title": "Palune Video Surface - Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 1696,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            1696,
+            1400
+          ]
+        }
+      }
+    ],
+    "video_inset_right": 664,
+    "video_offset": [
+      0,
+      0
+    ],
+    "captured": "overlay+video"
+  },
+  {
+    "state": "library-C",
+    "theme": "C",
+    "scale_factor": "1(default)",
+    "windows": [
+      {
+        "title": "Palune — theme-1080p-30s.mp4",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      },
+      {
+        "title": "Palune Video Surface - Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      }
+    ],
+    "video_inset_right": 0,
+    "video_offset": [
+      0,
+      0
+    ],
+    "captured": "overlay+video"
+  },
+  {
+    "state": "settings-A",
+    "theme": "A",
+    "scale_factor": "1(default)",
+    "windows": [
+      {
+        "title": "Palune 设置 - Palune",
+        "cls": "Qt683QWindowToolSaveBits",
+        "x": 898,
+        "y": 370,
+        "w": 2040,
+        "h": 1320,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2040,
+            1320
+          ]
+        }
+      },
+      {
+        "title": "Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      },
+      {
+        "title": "Palune Video Surface - Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      }
+    ],
+    "captured": "settings"
+  },
+  {
+    "state": "settings-B",
+    "theme": "B",
+    "scale_factor": "1(default)",
+    "windows": [
+      {
+        "title": "Palune 设置 - Palune",
+        "cls": "Qt683QWindowToolSaveBits",
+        "x": 838,
+        "y": 370,
+        "w": 2160,
+        "h": 1320,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2160,
+            1320
+          ]
+        }
+      },
+      {
+        "title": "Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      },
+      {
+        "title": "Palune Video Surface - Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 1696,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            1696,
+            1400
+          ]
+        }
+      }
+    ],
+    "captured": "settings"
+  },
+  {
+    "state": "settings-C",
+    "theme": "C",
+    "scale_factor": "1(default)",
+    "windows": [
+      {
+        "title": "Palune 设置 - Palune",
+        "cls": "Qt683QWindowToolSaveBits",
+        "x": 1946,
+        "y": 794,
+        "w": 1120,
+        "h": 904,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            1120,
+            904
+          ]
+        }
+      },
+      {
+        "title": "Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      },
+      {
+        "title": "Palune Video Surface - Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      }
+    ],
+    "captured": "settings"
+  },
+  {
+    "state": "state-max-A",
+    "theme": "A",
+    "scale_factor": "1(default)",
+    "windows": [
+      {
+        "title": "Palune — theme-1080p-30s.mp4",
+        "cls": "Qt683QWindowIcon",
+        "x": 0,
+        "y": 0,
+        "w": 3840,
+        "h": 2064,
+        "dpi": 192,
+        "region": {
+          "type": 2,
+          "box": [
+            0,
+            0,
+            3840,
+            2064
+          ]
+        }
+      },
+      {
+        "title": "Palune Video Surface - Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 0,
+        "y": 0,
+        "w": 3840,
+        "h": 2064,
+        "dpi": 192,
+        "region": {
+          "type": 2,
+          "box": [
+            0,
+            0,
+            3840,
+            2064
+          ]
+        }
+      }
+    ],
+    "video_inset_right": 0,
+    "video_offset": [
+      0,
+      0
+    ],
+    "captured": "overlay+video"
+  },
+  {
+    "state": "state-restore-A",
+    "theme": "A",
+    "scale_factor": "1(default)",
+    "windows": [
+      {
+        "title": "Palune — theme-1080p-30s.mp4",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      },
+      {
+        "title": "Palune Video Surface - Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      }
+    ],
+    "video_inset_right": 0,
+    "video_offset": [
+      0,
+      0
+    ],
+    "captured": "overlay+video"
+  },
+  {
+    "state": "state-full-A",
+    "theme": "A",
+    "scale_factor": "1(default)",
+    "windows": [
+      {
+        "title": "Palune — theme-1080p-30s.mp4",
+        "cls": "Qt683QWindowIcon",
+        "x": 0,
+        "y": 0,
+        "w": 3840,
+        "h": 2160,
+        "dpi": 192,
+        "region": {
+          "type": 2,
+          "box": [
+            0,
+            0,
+            3840,
+            2160
+          ]
+        }
+      },
+      {
+        "title": "Palune Video Surface - Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 0,
+        "y": 0,
+        "w": 3840,
+        "h": 2160,
+        "dpi": 192,
+        "region": {
+          "type": 2,
+          "box": [
+            0,
+            0,
+            3840,
+            2160
+          ]
+        }
+      }
+    ],
+    "video_inset_right": 0,
+    "video_offset": [
+      0,
+      0
+    ],
+    "captured": "overlay+video"
+  },
+  {
+    "state": "state-full-exit-A",
+    "theme": "A",
+    "scale_factor": "1(default)",
+    "windows": [
+      {
+        "title": "Palune — theme-1080p-30s.mp4",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      },
+      {
+        "title": "Palune Video Surface - Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      }
+    ],
+    "video_inset_right": 0,
+    "video_offset": [
+      0,
+      0
+    ],
+    "captured": "overlay+video"
+  },
+  {
+    "state": "state-move-A",
+    "theme": "A",
+    "scale_factor": "1(default)",
+    "windows": [
+      {
+        "title": "Palune — theme-1080p-30s.mp4",
+        "cls": "Qt683QWindowIcon",
+        "x": 100,
+        "y": 100,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      },
+      {
+        "title": "Palune Video Surface - Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 100,
+        "y": 100,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      }
+    ],
+    "video_inset_right": 0,
+    "video_offset": [
+      0,
+      0
+    ],
+    "captured": "overlay+video"
+  },
+  {
+    "state": "state-resize-A",
+    "theme": "A",
+    "scale_factor": "1(default)",
+    "windows": [
+      {
+        "title": "Palune — theme-1080p-30s.mp4",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 1600,
+        "h": 1000,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            1600,
+            1000
+          ]
+        }
+      },
+      {
+        "title": "Palune Video Surface - Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 1600,
+        "h": 1000,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            1600,
+            1000
+          ]
+        }
+      }
+    ],
+    "video_inset_right": 0,
+    "video_offset": [
+      0,
+      0
+    ],
+    "captured": "overlay+video"
+  },
+  {
+    "state": "dpi-100-A",
+    "theme": "A",
+    "scale_factor": "0.5",
+    "windows": [
+      {
+        "title": "Palune — theme-1080p-30s.mp4",
+        "cls": "Qt683QWindowIcon",
+        "x": 1329,
+        "y": 681,
+        "w": 1180,
+        "h": 700,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            1180,
+            700
+          ]
+        }
+      },
+      {
+        "title": "Palune Video Surface - Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 1329,
+        "y": 681,
+        "w": 1180,
+        "h": 700,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            1180,
+            700
+          ]
+        }
+      }
+    ],
+    "video_inset_right": 0,
+    "video_offset": [
+      0,
+      0
+    ],
+    "captured": "overlay+video"
+  },
+  {
+    "state": "dpi-150-A",
+    "theme": "A",
+    "scale_factor": "0.75",
+    "windows": [
+      {
+        "title": "Palune — theme-1080p-30s.mp4",
+        "cls": "Qt683QWindowIcon",
+        "x": 1034,
+        "y": 506,
+        "w": 1770,
+        "h": 1050,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            1770,
+            1050
+          ]
+        }
+      },
+      {
+        "title": "Palune Video Surface - Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 1034,
+        "y": 506,
+        "w": 1770,
+        "h": 1050,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            1770,
+            1050
+          ]
+        }
+      }
+    ],
+    "video_inset_right": 0,
+    "video_offset": [
+      0,
+      0
+    ],
+    "captured": "overlay+video"
+  },
+  {
+    "state": "dpi-200-A",
+    "theme": "A",
+    "scale_factor": "1.0",
+    "windows": [
+      {
+        "title": "Palune — theme-1080p-30s.mp4",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      },
+      {
+        "title": "Palune Video Surface - Palune",
+        "cls": "Qt683QWindowIcon",
+        "x": 738,
+        "y": 330,
+        "w": 2360,
+        "h": 1400,
+        "dpi": 192,
+        "region": {
+          "type": 3,
+          "box": [
+            0,
+            0,
+            2360,
+            1400
+          ]
+        }
+      }
+    ],
+    "video_inset_right": 0,
+    "video_offset": [
+      0,
+      0
+    ],
+    "captured": "overlay+video"
+  }
+]

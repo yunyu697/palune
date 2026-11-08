@@ -31,7 +31,7 @@ Item {
         compact: layoutA.compact
     }
 
-    // 顶部悬浮标题条
+    // 顶部悬浮标题条：设计稿 a-main 里没有实体底条，品牌/标题/窗控直接浮在画面上。
     Rectangle {
         id: topBar
         visible: uiState.chromeVisible && layoutA.hasFile
@@ -43,9 +43,8 @@ Item {
         }
         height: tokens.topBarHeight
         radius: 16
-        color: tokens.glass
-        border.width: 1
-        border.color: tokens.border
+        color: "transparent"
+        border.width: 0
 
         Text {
             id: brand

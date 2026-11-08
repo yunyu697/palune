@@ -55,6 +55,11 @@ public:
         int stateSwitchCount = 50;
         QSize shotSize;              // --shot-size：非迷你界面逻辑尺寸（默认 1440x900）
         QString backdropPath;        // --shot-backdrop：截图静态背景
+        // 真实窗口自动化（实机截图/缺陷复核用）：在正常启动后切换主题、打开面板并抓取真实窗口内容。
+        QString uiTheme;             // --ui-theme：A | B | C
+        QString uiPanel;             // --ui-panel：settings | library
+        QString uiCapture;           // --ui-capture：真实窗口 QQuickWindow::grabWindow 落盘路径
+        QString uiActions;           // --ui-actions：逗号分隔的窗口动作序列（toggleMaximize/toggleFullscreen 等）
     };
 
     AppController(const Options &options, Settings *settings, QObject *parent = nullptr);

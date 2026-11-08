@@ -136,13 +136,16 @@ Item {
     }
 
     // 窗口描边：与原生 Region 同一圆角，弥补 DWM 不会给无边框透明窗做圆角。
+    // 窗口发丝描边：设计稿 §1.3 hairline alpha 0.06–0.14；内缩 0.5px 避免被原生 Region 裁掉半边，
+    // 最大化/全屏时不画，避免与系统边框叠成「两道方框」。
     Rectangle {
         anchors.fill: parent
-        visible: !win.fullscreen
-        radius: win.windowRadius
+        anchors.margins: 0.5
+        visible: !win.fullscreen && !win.maximized
+        radius: win.windowRadius - 0.5
         color: "transparent"
         border.width: 1
-        border.color: "#33ffffff"
+        border.color: "#1affffff"
     }
 
     DropArea {

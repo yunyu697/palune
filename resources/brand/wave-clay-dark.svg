@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 100 100" role="img" aria-labelledby="t d">
+<title id="t">声浪 Wave · 三道 · 陶橙 Clay dark · 互补底</title>
+<desc id="d">原第 1 版 02 去掉左侧两条，三条由高到低的圆角条带整体水平居中，右倾 8 度不变。 底色改为陶橙 Clay的互补色系（青 195°），图形配色不变。</desc>
+<rect x="0.25" y="0.25" width="99.5" height="99.5" rx="22" fill="#0E1A1D" stroke="#284C58" stroke-width="0.5"/>
+<g transform="translate(7 0) skewX(-8)">
+<rect x="27.5" y="19" width="11" height="62" rx="5.5" fill="#FAC775"/>
+<rect x="44.5" y="27" width="11" height="46" rx="5.5" fill="#F0997B"/>
+<rect x="61.5" y="39" width="11" height="22" rx="5.5" fill="#D85A30"/>
+</g>
+</svg>

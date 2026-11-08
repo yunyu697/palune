@@ -119,6 +119,10 @@ if(WIN32)
     # 资源里的图标给 exe 用（任务栏/资源管理器），否则 Windows 显示默认空白图标。
     target_sources(Palune PRIVATE packaging/palune.rc)
 elseif(APPLE)
+    # 品牌图标：与 Windows 同一份 SVG 源导出的 .icns，装进 .app/Contents/Resources。
+    set_source_files_properties(resources/brand/palune.icns PROPERTIES
+        MACOSX_PACKAGE_LOCATION "Resources")
+    target_sources(Palune PRIVATE resources/brand/palune.icns)
     # 必须是 bundle，macdeployqt 才会部署 Qt 运行时（否则会跳过运行时部署）。
     # 自定义 Info.plist：冻结 bundle id 与 palune:// 协议注册（M1 判据 13）。
     configure_file(
@@ -130,6 +134,7 @@ elseif(APPLE)
         MACOSX_BUNDLE TRUE
         MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_BINARY_DIR}/Info.plist"
         MACOSX_BUNDLE_BUNDLE_NAME "Palune"
+        MACOSX_BUNDLE_ICON_FILE "palune.icns"
         MACOSX_BUNDLE_GUI_IDENTIFIER "app.palune.player"
         MACOSX_BUNDLE_BUNDLE_VERSION "${PALUNE_VERSION}"
         MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0.0"
@@ -290,6 +295,9 @@ if(WIN32)
     set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
     set(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\Palune.exe")
     set(CPACK_NSIS_MUI_FINISHPAGE_RUN "bin\\\\Palune.exe")
+    # 安装向导与卸载器图标用同一份品牌 ico（与 exe 图标同源，见 resources/brand）。
+    set(CPACK_NSIS_MUI_ICON "${CMAKE_CURRENT_SOURCE_DIR}/resources/brand/palune.ico")
+    set(CPACK_NSIS_MUI_UNIICON "${CMAKE_CURRENT_SOURCE_DIR}/resources/brand/palune.ico")
     # CPack 默认不为 bin 下的可执行文件建快捷方式，必须显式创建；
     # 开始菜单文件夹里同时放主程序和卸载项，桌面再放一份主程序。
     # NSIS 字符串用单引号，避免 CPackConfig.cmake 里双引号未转义导致语法错误。

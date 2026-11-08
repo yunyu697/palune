@@ -21,6 +21,7 @@
 #include "window/OverlayWindow.h"
 #include "window/VideoWindow.h"
 
+#include <QAction>
 #include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -35,8 +36,10 @@
 #include <QJsonDocument>
 #include <QKeyEvent>
 #include <QMutex>
+#include <QMenu>
 #include <QQmlContext>
 #include <QScreen>
+#include <QSystemTrayIcon>
 #include <QVector>
 #include <QQmlEngine>
 #include <QSysInfo>
@@ -177,6 +180,39 @@ void AppController::startNormal()
     QString path = m_options.openPath;
     if (!path.isEmpty())
         m_windows->openFile(QUrl::fromLocalFile(path));
+
+    // 通知区域图标：窗口被最小化或切走后仍能找到入口。图标与窗口/exe 共用同一份
+    // 品牌资源（qrc 里的 256 PNG），自动化截图场景不创建，避免遮挡与干扰。
+    const bool uiAutomation = !m_options.uiTheme.isEmpty() || !m_options.uiPanel.isEmpty()
+        || !m_options.uiCapture.isEmpty() || !m_options.uiActions.isEmpty();
+    if (!uiAutomation && QSystemTrayIcon::isSystemTrayAvailable()) {
+        m_tray = new QSystemTrayIcon(QIcon(QStringLiteral(":/packaging/palune-256.png")), this);
+        m_tray->setToolTip(QStringLiteral("Palune 媒体播放器"));
+        auto *menu = new QMenu();
+        connect(qApp, &QCoreApplication::aboutToQuit, menu, &QObject::deleteLater);
+        QAction *showAction = menu->addAction(QStringLiteral("显示主窗口"));
+        connect(showAction, &QAction::triggered, this, [this]() {
+            if (m_windows) {
+                m_windows->overlay()->showNormal();
+                m_windows->activate();
+            }
+        });
+        menu->addSeparator();
+        QAction *quitAction = menu->addAction(QStringLiteral("退出"));
+        connect(quitAction, &QAction::triggered, this, [this]() {
+            if (m_windows)
+                m_windows->close();
+        });
+        m_tray->setContextMenu(menu);
+        connect(m_tray, &QSystemTrayIcon::activated, this,
+                [this](QSystemTrayIcon::ActivationReason reason) {
+                    if (reason == QSystemTrayIcon::Trigger || reason == QSystemTrayIcon::DoubleClick) {
+                        if (m_windows)
+                            m_windows->activate();
+                    }
+                });
+        m_tray->show();
+    }
 
     // 真实窗口自动化：按主题/面板参数驱动已安装窗口，并抓取窗口自身的渲染结果。
     // 这些开关只服务于实机截图与缺陷复核，不改变正常启动路径。

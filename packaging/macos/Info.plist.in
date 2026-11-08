@@ -16,6 +16,8 @@
     <string>Palune</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
+    <key>CFBundleIconFile</key>
+    <string>palune.icns</string>
     <key>CFBundleShortVersionString</key>
     <string>@PALUNE_VERSION@</string>
     <key>CFBundleVersion</key>

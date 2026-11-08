@@ -8,6 +8,8 @@
 
 #include <functional>
 
+class QSystemTrayIcon;
+
 namespace palune {
 
 class Settings;
@@ -98,6 +100,7 @@ private:
     MpvClient *m_player = nullptr;
     UpdateService *m_updater = nullptr;
     WindowController *m_windows = nullptr;
+    QSystemTrayIcon *m_tray = nullptr;
     QJsonArray m_transitions;
     QString m_reportedState;
     bool m_reportWritten = false;

@@ -149,7 +149,7 @@
 
 **截图中的外部元素**：右下白色方框与左上角 FPS 文本是本机第三方远控叠加层（`GameViewerServer`），不在 QML 树、不在应用窗口枚举、`grabWindow` 矩阵中完全干净，与本应用缺陷无关。
 
-**应用图标（方向 A「折角 Fold」）**：`tools/release/gen_icon.py` 纯标准库生成 `packaging/palune-256.png` + `palune.ico`（16/24/32/48/64/256，32bpp DIB 条目）。缺角由透明改为设计稿同款深色底 `#0C0E11`；与设计成品 `a-512-win-dark.png` 512×512 像素比对差异 **0.54%**（仅折线边缘抗锯齿）。exe 资源图标已接入（`packaging/palune.rc` + `app.setWindowIcon`），`ExtractAssociatedIcon` 复核：底板 `#E7B27C`、缺角 `#0C0E11`、A=255，均为设计色。
+**应用图标（唯一源「声浪 Wave · 三道 · 陶橙 Clay dark」）**：源文件 `resources/brand/wave-clay-dark.svg`，形状与配色原样保留（SHA-256 `B23A761B…4E052F`）。导出链路 `tools/brand/svg_raster.cpp`（Qt Svg 栅格化）+ `tools/brand/build_icons.py`（Pillow 打包），产出 `resources/brand/png/palune-{16,24,32,48,64,128,256,512,1024}.png`、`palune.ico`（16/24/32/48/64/128/256，全部 32bpp DIB 条目，rc.exe 可接受）、`palune.icns`（16/32/128/256/512 的 1x 与 2x）。16/24/32 做最小补偿：外框描边正好 1 像素、条带上下边吸附像素栅格、条带宽度与间隙取整像素（整体仍居中），未改造型。接入点：exe 资源（`packaging/palune.rc`）、NSIS 安装器与卸载器（`CPACK_NSIS_MUI_ICON`/`MUI_UNIICON`）、开始菜单与桌面快捷方式（.lnk 继承目标 exe 图标）、窗口/任务栏（`app.setWindowIcon`）、托盘（`QSystemTrayIcon`）、关于页（qrc `:/packaging/palune-256.png`）、macOS `CFBundleIconFile`。
 
 ### 流程固化（长期）
 

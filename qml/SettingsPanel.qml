@@ -476,6 +476,14 @@ Item {
                         visible: panelRoot.page === 5
                         spacing: 12
 
+                        // 品牌图标与窗口/任务栏/exe 共用同一份源（resources/brand）。
+                        Image {
+                            source: "qrc:/packaging/palune-256.png"
+                            Layout.preferredWidth: 64
+                            Layout.preferredHeight: 64
+                            fillMode: Image.PreserveAspectFit
+                            smooth: true
+                        }
                         Text { text: "Palune " + panelRoot.appVersion; color: panelRoot.textColor; font.pixelSize: 16; font.weight: Font.DemiBold }
                         Text { text: "Qt " + Qt.application.version + qsTr(" · libmpv 动态链接 · 渲染路径：") + Qt.platform.os
                                color: panelRoot.mutedColor; font.pixelSize: 12

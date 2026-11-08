@@ -1,0 +1,146 @@
+{
+  "recordedAt": "2026-11-08T17:50:00+08:00",
+  "question": "更新清单是否仍单点依赖 releases/latest/download/latest.json；直连失败后能否按顺序切换镜像，且每个来源都通过 Ed25519 验签与哈希校验",
+  "verdict": "PASS（多源回退行为已由真实进程 + 真实 HTTP 请求验证）",
+  "implementation": {
+    "sourceOrder": [
+      "直连（官方源）：PALUNE_UPDATE_URL / 默认 https://github.com/yunyu697/palune-releases/releases/latest/download/latest.json",
+      "内置镜像：https://ghfast.top/ + 原始清单 URL（仅 GitHub 主链启用）",
+      "配置镜像：PALUNE_UPDATE_MANIFEST_MIRRORS（分号/逗号分隔的完整 URL；设置后替代内置镜像，用于测试与自建源）"
+    ],
+    "timeouts": {
+      "perSourceMs": 15000,
+      "wholeCheckMs": 45000,
+      "rationale": "ghfast.top 冷启动实测约 13 s，缓存命中约 1.5 s；单源 8 s 会把可用镜像误判为失败，故定为 15 s"
+    },
+    "validationPerSource": [
+      "HTTP 200 且响应体可解析为 schemaVersion=1 信封清单",
+      "用内置 resources/trust/update.pub 对 payload 做 Ed25519 验签；失败即丢弃该来源并立即换下一个",
+      "记录每个来源响应字节的 SHA-256（用于区分来源与取证）",
+      "安装包下载阶段仍强制 SHA-256 + 清单签名复核 + 产物 Ed25519 签名，任一失败删除整包并切换下载通道"
+    ],
+    "failureMapping": {
+      "signature-error": "UPD-004（全部来源均验签失败时）",
+      "parse-error": "UPD-003",
+      "http-status": "UPD-002",
+      "network-error/timeout": "UPD-001"
+    },
+    "code": [
+      "src/update/UpdateService.cpp: buildManifestSources / fetchManifest / handleManifestReply / tryNextManifestSource",
+      "src/update/UpdateService.h: ManifestSource 与 manifestSource/manifestAttempts 属性",
+      "src/app/AppController.cpp: update-check 报告写入 manifestSource、manifestSourceUrl、manifestAttempts"
+    ]
+  },
+  "mirrorMeasurements": {
+    "method": "curl -sSL --noproxy '*' --max-time 12..25，目标为 https://github.com/yunyu697/palune-releases/releases/latest/download/latest.json（镜像按“前缀 + 原始 URL”）",
+    "results": [
+      {"prefix": "https://ghfast.top/", "result": "HTTP 200，1120 B，冷启动 12.91 s / 缓存 1.49 s", "usable": true,
+       "signatureCheck": "PASS（payload 由 resources/trust/update.pub 验签，version=1.0.0-alpha6，keyId=palune-test）"},
+      {"prefix": "https://ghproxy.net/", "result": "HTTP 302 后跳到同一资产 URL，最终 504（12.75 s）", "usable": false},
+      {"prefix": "https://gh-proxy.com/", "result": "HTTP 504（13.87 s）", "usable": false},
+      {"prefix": "https://gh-proxy.net/", "result": "HTTP 200 但响应是 JS 跳转挑战页（195 B），native 客户端不可用", "usable": false},
+      {"prefix": "https://ghproxy.cc/", "result": "连接失败（000）", "usable": false},
+      {"prefix": "https://gh.llkk.cc/", "result": "超时（000，15 s）", "usable": false},
+      {"prefix": "https://github.moeyy.xyz/", "result": "连接失败（000）", "usable": false},
+      {"prefix": "https://gh.ddlc.top/", "result": "HTTP 429", "usable": false},
+      {"prefix": "https://ghproxy.1888866.xyz/", "result": "HTTP 525", "usable": false},
+      {"prefix": "https://gh-proxy.org/", "result": "超时（000）", "usable": false},
+      {"prefix": "https://ghproxy.088086.xyz/", "result": "超时（000）", "usable": false},
+      {"prefix": "https://cf.ghproxy.cc/", "result": "证书已过期（SEC_E_CERT_EXPIRED）", "usable": false},
+      {"prefix": "https://cdn.jsdelivr.net/gh/", "result": "HTTP 404（jsDelivr 不提供 Release 资产）", "usable": false}
+    ],
+    "selection": "仅纳入实测可用且能被 native 客户端读取的 ghfast.top；其余候选不写入内置列表，避免把已知失败源排进切换链"
+  },
+  "faultInjection": {
+    "setup": {
+      "direct": "http://127.0.0.1:65530/latest.json（注入失败：该端口无监听，Connection refused）",
+      "mirrorsEnv": "PALUNE_UPDATE_MANIFEST_MIRRORS=http://127.0.0.1:8788/bad.json;http://127.0.0.1:8788/good.json",
+      "mirrorServer": "python -m http.server 8788 --bind 127.0.0.1（真实本地 HTTP 服务）",
+      "badManifest": "tools/update/make_test_feed.py --variant bad-signature（Ed25519 签名置零）",
+      "goodManifest": "tools/update/make_test_feed.py（与客户端内置 update.pub 同对的测试密钥签名）",
+      "client": "build/Release/Palune.exe --update-check --update-url <direct> --report <path>"
+    },
+    "serverAccessLog": [
+      "127.0.0.1 - - [08/Nov/2026 17:49:20] \"GET /bad.json HTTP/1.1\" 200 -",
+      "127.0.0.1 - - [08/Nov/2026 17:49:20] \"GET /good.json HTTP/1.1\" 200 -"
+    ],
+    "clientReport": {
+      "actualSha256": "",
+      "availableVersion": "1.0.0-alpha7",
+      "currentVersion": "1.0.0",
+      "downloadDir": "",
+      "downloadedPath": "",
+      "errorCode": "",
+      "errorMessage": "",
+      "expectedSha256": "fef5bf9373eb8e7c900f9e98acb708e17f1110e5e2f04ac73afeaf57280b456f",
+      "feed": "http://127.0.0.1:65530/latest.json",
+      "generatedAt": "2026-11-08T17:49:20",
+      "manifestAttempts": [
+        {
+          "bytes": 0,
+          "detail": "Connection refused",
+          "elapsedMs": 4098,
+          "httpStatus": 0,
+          "index": 0,
+          "name": "直连（官方源）",
+          "outcome": "network-error",
+          "sha256": "",
+          "url": "http://127.0.0.1:65530/latest.json"
+        },
+        {
+          "bytes": 1287,
+          "detail": "Ed25519 签名校验未通过",
+          "elapsedMs": 15,
+          "httpStatus": 200,
+          "index": 1,
+          "name": "配置镜像 1",
+          "outcome": "signature-error",
+          "sha256": "8beba7990ce733591d7b6f757ddfb53f4221f8b88a939a9e35b34bd1847cc63f",
+          "url": "http://127.0.0.1:8788/bad.json"
+        },
+        {
+          "bytes": 1287,
+          "detail": "签名校验通过",
+          "elapsedMs": 15,
+          "httpStatus": 200,
+          "index": 2,
+          "name": "配置镜像 2",
+          "outcome": "ok",
+          "sha256": "f5b6fbdfbf6f78c219d935f0bfc48f4bfd272853a9d3ab7da174bd1a09564709",
+          "url": "http://127.0.0.1:8788/good.json"
+        }
+      ],
+      "manifestSource": "配置镜像 2",
+      "manifestSourceUrl": "http://127.0.0.1:8788/good.json",
+      "mode": "update-check-only",
+      "state": "uptodate"
+    },
+    "observedSequence": [
+      "第 1 来源直连：连接被拒绝 → 记录 network-error，切换",
+      "第 2 来源镜像 1：HTTP 200、1287 B、可解析，但 Ed25519 验签失败 → 丢弃，切换",
+      "第 3 来源镜像 2：HTTP 200、1287 B、验签通过 → 采用，state=uptodate"
+    ],
+    "conclusion": "直连注入失败后可切到镜像并成功解析清单；签名不符的镜像内容未被采用"
+  },
+  "productionCheck": {
+    "note": "同一二进制、默认 GitHub 直连、未设置 PALUNE_UPDATE_MANIFEST_MIRRORS，连续 4 次均为直连 200（3.7 s）并验签通过；说明直连可用时不会无故走镜像",
+    "runs": [
+      {"index": 1, "state": "uptodate", "manifestSource": "直连（官方源）", "availableVersion": "1.0.0-alpha6"},
+      {"index": 2, "state": "uptodate", "manifestSource": "直连（官方源）", "availableVersion": "1.0.0-alpha6"},
+      {"index": 3, "state": "uptodate", "manifestSource": "直连（官方源）", "availableVersion": "1.0.0-alpha6"},
+      {"index": 4, "state": "uptodate", "manifestSource": "直连（官方源）", "availableVersion": "1.0.0-alpha6"}
+    ],
+    "earlierIntermittentRun": {
+      "note": "同一网络在本轮早先出现直连 302 后无响应；8 s 单源超时时直连与 ghfast 均被判超时（ghfast 冷启动约 13 s）。据此把单源超时提高到 15 s、总超时 45 s",
+      "attempts": [
+        {"name": "直连（官方源）", "httpStatus": 302, "outcome": "timeout", "elapsedMs": 7988},
+        {"name": "ghfast.top 加速", "httpStatus": 302, "outcome": "timeout", "elapsedMs": 8006}
+      ]
+    }
+  },
+  "knownLimits": [
+    "ghfast.top 对 tag 定点路径（/releases/download/1.0.0-RC/latest.json）仍返回 504，镜像不能绕过所有边缘故障",
+    "第三方镜像可用性随网络与上游边缘变化；候选顺序由实测决定，未纳入已知失败源",
+    "清单来源的强弱仍由 Ed25519 签名保证；镜像篡改清单会在验签阶段被丢弃"
+  ]
+}

@@ -18,6 +18,7 @@
 #include <QStandardPaths>
 #include <QTimer>
 #include <QSysInfo>
+#include <QVariantMap>
 
 #if defined(Q_OS_WIN)
 #include <windows.h>
@@ -26,8 +27,29 @@
 namespace palune {
 
 namespace {
-constexpr int kCheckTimeoutMs = 20000;
+constexpr int kCheckTimeoutMs = 45000;          // 整轮检查（含多源切换）总超时
+// 单个清单来源超时：实测 ghfast.top 冷启动约 13 s（缓存命中约 1.5 s），
+// 低于 15 s 会把可用镜像误判为失败。
+constexpr int kManifestAttemptTimeoutMs = 15000;
 constexpr int kProgressIntervalMs = 250;
+
+// GitHub Releases 公开加速镜像：清单与安装包都可按“前缀 + 原始 GitHub URL”取。
+// 顺序来自 2026-11-08 实测（见 docs/evidence/release-1.0.0-rc/manifest-multisource-probe.json）：
+// ghfast.top 返回 200 且清单签名校验通过；ghproxy.net 在本机出口跳到同一 504，
+// 其余候选 404/429/证书过期/无法解析，未纳入。
+struct ProxyMirror {
+    const char *name;
+    const char *prefix;
+};
+const ProxyMirror kGithubProxyMirrors[] = {
+    {"ghfast.top 加速", "https://ghfast.top/"},
+};
+
+bool isGithubFeed(const QUrl &url)
+{
+    return url.host().compare(QLatin1String("github.com"), Qt::CaseInsensitive) == 0;
+}
+
 
 #if defined(Q_OS_WIN)
 // 用自带引号规则的命令行启动进程，避免 QProcess 对 cmd.exe 参数二次转义。
@@ -89,9 +111,20 @@ UpdateService::UpdateService(const QUrl &feedUrl, const QString &downloadDirOver
     m_timeoutTimer->setSingleShot(true);
     m_timeoutTimer->setInterval(kCheckTimeoutMs);
     connect(m_timeoutTimer, &QTimer::timeout, this, [this]() {
-        if (m_reply) {
+        // 总超时直接判定失败；abort 后 finished 处理里不会再尝试下一个来源。
+        fail(QStringLiteral("UPD-001"), QCoreApplication::translate("Palune", "检查更新超时"));
+        if (m_reply)
             m_reply->abort();
-        }
+    });
+
+    m_manifestAttemptTimer = new QTimer(this);
+    m_manifestAttemptTimer->setSingleShot(true);
+    m_manifestAttemptTimer->setInterval(kManifestAttemptTimeoutMs);
+    connect(m_manifestAttemptTimer, &QTimer::timeout, this, [this]() {
+        if (!m_reply)
+            return;
+        m_attemptTimedOut = true;
+        m_reply->abort();
     });
 
     m_progressTimer = new QTimer(this);
@@ -226,6 +259,39 @@ void UpdateService::fail(const QString &code, const QString &detail)
     Log::error(QStringLiteral("更新失败 %1: %2").arg(code, m_errorMessage));
 }
 
+QList<UpdateService::ManifestSource> UpdateService::buildManifestSources() const
+{
+    QList<ManifestSource> sources;
+    sources << ManifestSource{QCoreApplication::translate("Palune", "直连（官方源）"), m_feedUrl};
+
+    // 测试/自建镜像：完整清单 URL，分号或逗号分隔，设置后完全替代内置镜像列表。
+    const QString env = qEnvironmentVariable("PALUNE_UPDATE_MANIFEST_MIRRORS").trimmed();
+    if (!env.isEmpty()) {
+        QString normalized = env;
+        normalized.replace(QLatin1Char(','), QLatin1Char(';'));
+        int n = 0;
+        for (const QString &raw : normalized.split(QLatin1Char(';'), Qt::SkipEmptyParts)) {
+            const QUrl url(raw.trimmed());
+            if (url.isEmpty() || url.scheme().isEmpty() || !url.isValid()) {
+                Log::warn(QStringLiteral("忽略非法清单镜像：%1").arg(raw));
+                continue;
+            }
+            sources << ManifestSource{
+                QCoreApplication::translate("Palune", "配置镜像 %1").arg(++n), url};
+        }
+        return sources;
+    }
+
+    // 内置镜像只对 GitHub Releases 主链生效，第三方镜像只拿到“前缀 + 原始 URL”。
+    if (isGithubFeed(m_feedUrl)) {
+        for (const ProxyMirror &mirror : kGithubProxyMirrors) {
+            const QUrl url(QString::fromLatin1(mirror.prefix) + m_feedUrl.toString());
+            sources << ManifestSource{QString::fromUtf8(mirror.name), url};
+        }
+    }
+    return sources;
+}
+
 void UpdateService::checkForUpdates()
 {
     if (busy())
@@ -234,62 +300,172 @@ void UpdateService::checkForUpdates()
     m_errorCode.clear();
     m_errorMessage.clear();
     emit errorChanged();
+
+    m_manifest = UpdateManifest{};
+    m_manifestBytes.clear();
+    m_hasUpdate = false;
+    m_manifestSource.clear();
+    m_manifestSourceUrl.clear();
+    m_manifestAttempts.clear();
+    m_manifestSourceIndex = -1;
+    emit manifestChanged();
+    emit manifestSourceChanged();
+    emit manifestAttemptsChanged();
+
+    m_manifestSources = buildManifestSources();
+    QStringList plan;
+    for (const ManifestSource &source : m_manifestSources)
+        plan << source.name + QStringLiteral("=") + source.url.toString();
+    Log::info(QStringLiteral("清单来源顺序：%1").arg(plan.join(QStringLiteral(" -> "))));
+
     m_timeoutTimer->start();
     m_mirrorIndex = 0; // 每次检查都从官方直连开始，避免沿用上次失败换到的镜像
     setState(State::Checking);
-    fetchManifest();
+    fetchManifest(0);
 }
 
-void UpdateService::fetchManifest()
+void UpdateService::fetchManifest(int index)
 {
-    QNetworkRequest request(m_feedUrl);
+    if (index < 0 || index >= m_manifestSources.size()) {
+        fail(QStringLiteral("UPD-001"), QCoreApplication::translate("Palune", "没有可用的清单来源"));
+        return;
+    }
+    const ManifestSource source = m_manifestSources.at(index);
+    m_manifestSourceIndex = index;
+    m_attemptTimedOut = false;
+    m_attemptClock.start();
+    Log::info(QStringLiteral("清单来源尝试 %1/%2：%3（%4）")
+                  .arg(index + 1)
+                  .arg(m_manifestSources.size())
+                  .arg(source.name, source.url.toString()));
+
+    QNetworkRequest request(source.url);
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
     request.setRawHeader("User-Agent", "Palune-Updater/1.0");
     request.setRawHeader("Cache-Control", "no-cache");
 
+    m_manifestAttemptTimer->start();
     m_reply = m_nam.get(request);
-    connect(m_reply, &QNetworkReply::finished, this, [this]() {
-        m_timeoutTimer->stop();
+    connect(m_reply, &QNetworkReply::finished, this, [this, source]() {
+        m_manifestAttemptTimer->stop();
         QNetworkReply *reply = m_reply;
         m_reply = nullptr;
-        if (reply)
-            handleManifestReply(reply);
+        if (!reply)
+            return;
+        handleManifestReply(reply, source, m_attemptClock.elapsed());
     });
 }
 
-void UpdateService::handleManifestReply(QNetworkReply *reply)
+void UpdateService::recordManifestAttempt(const ManifestSource &source, const QString &outcome,
+                                          const QString &detail, qint64 elapsedMs,
+                                          int httpStatus, const QByteArray &bytes)
 {
-    Log::info(QStringLiteral("更新清单响应：error=%1 status=%2")
-                  .arg(int(reply->error()))
-                  .arg(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()));
-    reply->deleteLater();
-    if (reply->error() == QNetworkReply::OperationCanceledError
-        && m_state != State::Checking) {
+    QVariantMap item;
+    item.insert(QStringLiteral("index"), m_manifestSourceIndex);
+    item.insert(QStringLiteral("name"), source.name);
+    item.insert(QStringLiteral("url"), source.url.toString());
+    item.insert(QStringLiteral("outcome"), outcome);
+    item.insert(QStringLiteral("detail"), detail);
+    item.insert(QStringLiteral("elapsedMs"), double(elapsedMs));
+    item.insert(QStringLiteral("httpStatus"), httpStatus);
+    item.insert(QStringLiteral("bytes"), double(bytes.size()));
+    item.insert(QStringLiteral("sha256"),
+                bytes.isEmpty() ? QString()
+                                : QString::fromLatin1(QCryptographicHash::hash(
+                                      bytes, QCryptographicHash::Sha256).toHex()));
+    m_manifestAttempts.append(item);
+    emit manifestAttemptsChanged();
+    QString byteInfo;
+    if (!bytes.isEmpty()) {
+        byteInfo = QStringLiteral("，%1 B，sha256=%2")
+                       .arg(bytes.size())
+                       .arg(item.value(QStringLiteral("sha256")).toString().left(16));
+    }
+    Log::info(QStringLiteral("清单来源结果「%1」%2：%3%4")
+                  .arg(source.name, outcome, detail, byteInfo));
+}
+
+void UpdateService::tryNextManifestSource(const ManifestSource &source, const QString &outcome,
+                                          const QString &detail, qint64 elapsedMs,
+                                          int httpStatus, const QByteArray &bytes)
+{
+    recordManifestAttempt(source, outcome, detail, elapsedMs, httpStatus, bytes);
+    if (m_manifestSourceIndex + 1 < m_manifestSources.size()) {
+        const ManifestSource next = m_manifestSources.at(m_manifestSourceIndex + 1);
+        Log::warn(QStringLiteral("清单来源「%1」不可用（%2），切换到「%3」")
+                      .arg(source.name, detail, next.name));
+        fetchManifest(m_manifestSourceIndex + 1);
         return;
     }
-    if (reply->error() != QNetworkReply::NoError) {
-        fail(QStringLiteral("UPD-001"), reply->errorString());
-        return;
-    }
+    m_manifestAttemptTimer->stop();
+    m_timeoutTimer->stop();
+    QString code = QStringLiteral("UPD-001");
+    if (outcome == QLatin1String("signature-error"))
+        code = QStringLiteral("UPD-004");
+    else if (outcome == QLatin1String("parse-error"))
+        code = QStringLiteral("UPD-003");
+    else if (outcome == QLatin1String("http-status"))
+        code = QStringLiteral("UPD-002");
+    fail(code, QStringLiteral("%1：%2").arg(source.name, detail));
+}
+
+void UpdateService::handleManifestReply(QNetworkReply *reply, const ManifestSource &source,
+                                        qint64 elapsedMs)
+{
     const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    const QNetworkReply::NetworkError netError = reply->error();
+    Log::info(QStringLiteral("更新清单响应「%1」：error=%2 status=%3")
+                  .arg(source.name).arg(int(netError)).arg(status));
+
+    if (netError == QNetworkReply::OperationCanceledError) {
+        reply->deleteLater();
+        if (m_state != State::Checking)
+            return; // 总超时已把状态置为 Error
+        if (m_attemptTimedOut) {
+            tryNextManifestSource(source, QStringLiteral("timeout"),
+                                  QCoreApplication::translate("Palune", "单源超时 %1 ms")
+                                      .arg(kManifestAttemptTimeoutMs),
+                                  elapsedMs, status, {});
+        } else {
+            tryNextManifestSource(source, QStringLiteral("canceled"),
+                                  QCoreApplication::translate("Palune", "请求被取消"),
+                                  elapsedMs, status, {});
+        }
+        return;
+    }
+    if (netError != QNetworkReply::NoError) {
+        const QString detail = reply->errorString();
+        reply->deleteLater();
+        tryNextManifestSource(source, QStringLiteral("network-error"), detail, elapsedMs, status, {});
+        return;
+    }
     if (status != 200) {
-        fail(QStringLiteral("UPD-002"), QStringLiteral("HTTP %1").arg(status));
+        reply->deleteLater();
+        tryNextManifestSource(source, QStringLiteral("http-status"),
+                              QStringLiteral("HTTP %1").arg(status), elapsedMs, status, {});
         return;
     }
 
-    m_manifestBytes = reply->readAll();
-    Log::info(QStringLiteral("更新清单字节数：%1").arg(m_manifestBytes.size()));
+    const QByteArray bytes = reply->readAll();
+    reply->deleteLater();
+    m_manifestBytes = bytes;
+    Log::info(QStringLiteral("更新清单字节数：%1（%2）").arg(bytes.size()).arg(source.name));
+
     QString parseError;
-    m_manifest = UpdateManifest::parse(m_manifestBytes, m_feedUrl, &parseError);
+    // 相对产物 URL 按“实际提供清单的来源”解析；绝对 URL 不受影响。
+    m_manifest = UpdateManifest::parse(bytes, source.url, &parseError);
     Log::info(QStringLiteral("更新清单解析：valid=%1 error=%2").arg(m_manifest.valid).arg(parseError));
     if (!m_manifest.valid) {
-        fail(QStringLiteral("UPD-003"), parseError);
+        tryNextManifestSource(source, QStringLiteral("parse-error"), parseError,
+                              elapsedMs, status, bytes);
         return;
     }
 
+    // 验签对每个来源都独立执行：镜像返回被改动的清单直接丢弃并换下一个来源。
     QString sigError;
     if (!verifyManifestSignature(&sigError)) {
-        fail(QStringLiteral("UPD-004"), sigError);
+        tryNextManifestSource(source, QStringLiteral("signature-error"), sigError,
+                              elapsedMs, status, bytes);
         return;
     }
 
@@ -304,10 +480,26 @@ void UpdateService::handleManifestReply(QNetworkReply *reply)
     const QString arch = canonicalArch(m_manifest.arch);
     const QString currentArch = canonicalArch(QSysInfo::currentCpuArchitecture());
     if (!arch.isEmpty() && arch != currentArch) {
-        fail(QStringLiteral("UPD-005"), QCoreApplication::translate("Palune", "清单架构 %1 / 当前 %2").arg(arch, currentArch));
+        // 签名已通过说明清单真实，平台不匹配是确定结论，继续换镜像不会改变。
+        recordManifestAttempt(source, QStringLiteral("arch-mismatch"),
+                              QCoreApplication::translate("Palune", "清单架构 %1 / 当前 %2")
+                                  .arg(arch, currentArch),
+                              elapsedMs, status, bytes);
+        m_manifestAttemptTimer->stop();
+        m_timeoutTimer->stop();
+        fail(QStringLiteral("UPD-005"),
+             QCoreApplication::translate("Palune", "清单架构 %1 / 当前 %2").arg(arch, currentArch));
         return;
     }
 
+    recordManifestAttempt(source, QStringLiteral("ok"), QStringLiteral("签名校验通过"),
+                          elapsedMs, status, bytes);
+    m_manifestSource = source.name;
+    m_manifestSourceUrl = source.url.toString();
+    emit manifestSourceChanged();
+
+    m_manifestAttemptTimer->stop();
+    m_timeoutTimer->stop();
     const Version remote = Version::parse(m_manifest.version);
     const Version current = Version::parse(currentVersion());
     m_hasUpdate = remote > current;
@@ -315,8 +507,8 @@ void UpdateService::handleManifestReply(QNetworkReply *reply)
     rebuildMirrors();
     emit manifestChanged();
     setState(m_hasUpdate ? State::Available : State::UpToDate);
-    Log::info(QStringLiteral("更新检查完成：远端 %1，本地 %2，%3")
-                  .arg(m_manifest.version, currentVersion(),
+    Log::info(QStringLiteral("更新检查完成：来源 %1，远端 %2，本地 %3，%4")
+                  .arg(source.name, m_manifest.version, currentVersion(),
                        m_hasUpdate ? QStringLiteral("可更新") : QStringLiteral("已是最新")));
 }
 
@@ -359,6 +551,20 @@ void UpdateService::rebuildMirrors()
         item.insert(QStringLiteral("url"), m_manifest.artifactUrl(mirror.baseUrl).toString());
         item.insert(QStringLiteral("direct"), false);
         m_mirrors << item;
+    }
+    // 安装包下载也补上实测可用的 GitHub 加速通道：清单来自镜像时，
+    // 产物仍可能是绝对 github.com 地址，直连在该出口会 504。
+    if (isGithubFeed(m_feedUrl)) {
+        const QString direct = m_manifest.directUrl().toString();
+        if (!direct.isEmpty()) {
+            for (const ProxyMirror &mirror : kGithubProxyMirrors) {
+                QVariantMap item;
+                item.insert(QStringLiteral("name"), QString::fromUtf8(mirror.name));
+                item.insert(QStringLiteral("url"), QString::fromLatin1(mirror.prefix) + direct);
+                item.insert(QStringLiteral("direct"), false);
+                m_mirrors << item;
+            }
+        }
     }
     if (m_mirrorIndex >= m_mirrors.size())
         m_mirrorIndex = 0;

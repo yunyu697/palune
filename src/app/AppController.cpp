@@ -438,6 +438,10 @@ void AppController::runUpdateCheckOnly()
         report.insert(QStringLiteral("errorMessage"), service->errorMessage());
         report.insert(QStringLiteral("currentVersion"), service->currentVersion());
         report.insert(QStringLiteral("availableVersion"), service->availableVersion());
+        report.insert(QStringLiteral("manifestSource"), service->manifestSource());
+        report.insert(QStringLiteral("manifestSourceUrl"), service->manifestSourceUrl());
+        report.insert(QStringLiteral("manifestAttempts"),
+                      QJsonArray::fromVariantList(service->manifestAttempts()));
         report.insert(QStringLiteral("generatedAt"), QDateTime::currentDateTime().toString(Qt::ISODate));
         writeReport(report);
         finishWithCode(0);
@@ -2338,11 +2342,15 @@ void AppController::writeReport(const QJsonObject &extra)
     QJsonObject report = extra;
     if (!report.contains(QStringLiteral("mode")))
         report.insert(QStringLiteral("mode"), QStringLiteral("update-e2e:%1").arg(m_options.e2eMode));
-    report.insert(QStringLiteral("feed"), m_options.updateUrl);
+    report.insert(QStringLiteral("feed"), m_updater->feedUrl().toString());
     report.insert(QStringLiteral("downloadDir"), m_options.downloadDir);
     report.insert(QStringLiteral("currentVersion"), QStringLiteral(PALUNE_VERSION));
     report.insert(QStringLiteral("availableVersion"), m_updater->availableVersion());
     report.insert(QStringLiteral("state"), m_updater->state());
+    report.insert(QStringLiteral("manifestSource"), m_updater->manifestSource());
+    report.insert(QStringLiteral("manifestSourceUrl"), m_updater->manifestSourceUrl());
+    report.insert(QStringLiteral("manifestAttempts"),
+                  QJsonArray::fromVariantList(m_updater->manifestAttempts()));
     report.insert(QStringLiteral("mirror"), m_updater->mirrorName());
     report.insert(QStringLiteral("mirrorIndex"), m_updater->mirrorIndex());
     report.insert(QStringLiteral("downloadedPath"), m_updater->downloadedPath());

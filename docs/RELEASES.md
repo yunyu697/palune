@@ -71,17 +71,29 @@ gh secret set RELEASE_REPO_TOKEN -R yunyu697/palune
 
 触发：推送 tag（`refs/tags/*`）。`workflow_dispatch` 只构建与生成清单，不发布。
 
-## 4. 更新源与镜像
+## 4. 更新源、镜像与回退
 
-- **清单与签名始终走主链**：`latest.json` 只从发行仓库的 `releases/latest/download/` 取，镜像不参与。
-- **镜像只用于安装包下载**：`latest.json` 的 `mirrors[]`（可选，用 `gen_manifest.py --mirrors-file` 注入）给出安装包下载前缀。
-- **失败自动切换**：下载请求失败（网络错误/HTTP 错误）或内容校验不通过时，丢弃当前通道、自动切到下一条，顺序为 直连 → 镜像 1 → 镜像 2；全部失败才报 `UPD-006/007`。
-- **镜像内容双验证**：任何通道下载到的包都要通过
+### 4.1 清单（多源）
+
+1. **直连**：`releases/latest/download/latest.json`（beta 为 `latest-beta.json`）。
+2. **内置镜像**：`https://ghfast.top/` + 原始清单 URL（仅 GitHub 主链启用）。候选来自 2026-11-08 实测：ghfast.top 返回 200 且清单验签通过；ghproxy.net / gh-proxy.com 在该出口仍 504，gh-proxy.net 返回 JS 挑战页，其余候选 404/429/525/证书过期/不可达，均未纳入。
+3. **配置镜像**：环境变量 `PALUNE_UPDATE_MANIFEST_MIRRORS`，完整清单 URL，分号或逗号分隔；设置后**替代**内置镜像，供测试与自建源使用。
+
+- **超时**：单源 15 s（ghfast 冷启动实测约 13 s），整轮 45 s；单源超时即换下一个。
+- **逐源验签**：每个来源都必须用内置 `resources/trust/update.pub` 对 payload 做 Ed25519 验签；验签失败立即丢弃该来源并换下一个，全部失败才报 `UPD-004`。解析失败 `UPD-003`，HTTP 非 200 `UPD-002`，网络错误/超时 `UPD-001`。
+- 每次尝试记录来源名、URL、HTTP 状态、耗时、响应字节数与 SHA-256（`manifestAttempts`），随 update-check 报告落盘。
+- 取证：`docs/evidence/release-1.0.0-rc/manifest-multisource-probe.json`（直连注入失败 → 签名错误镜像被丢弃 → 下一镜像验签成功）。
+
+### 4.2 安装包
+
+- **下载通道顺序**：直连 → 清单 `mirrors[]`（可选，`gen_manifest.py --mirrors-file` 注入）→ 内置实测加速（同一代理前缀 + 原始资产 URL）。
+- **失败自动切换**：网络错误/HTTP 错误或内容校验不通过时，丢弃当前通道、自动切到下一条；全部失败才报 `UPD-006/007`。
+- **镜像内容三重验证**：任何通道下载到的包都要通过
   1) `SHA-256` 与清单一致；
   2) 清单 Ed25519 签名复核；
   3) 安装包条目自身的 Ed25519 签名。
   任一不通过即整包删除并切换通道，防止反代投毒。
-- 镜像未配置时不发出 `mirrors` 字段，客户端只有直连通道。
+- 镜像未配置且不适用内置加速时，客户端只有直连通道。
 
 ## 5. 发布失败的回退
 

@@ -24,7 +24,7 @@
 - 分级日志、崩溃面包屑（`crashes/breadcrumbs.txt` 与致命信号快照）、版本信息页
 - 更新清单升级为 payload + 分离签名信封，按 platform/arch 选择产物并校验产物签名
 - 命名与标识冻结：`app.palune.player`、`%APPDATA%\Palune`、日志前缀 `palune`、`Palune/crashes`、`palune://`
-- 更新源固定为公开发行仓库：`https://github.com/yunyu697/palune-releases/releases/latest/download/latest.json`（匿名可读，客户端不内嵌凭据）
+- 更新源为公开发行仓库，清单支持多源回退：直连 `https://github.com/yunyu697/palune-releases/releases/latest/download/latest.json` → 内置实测加速 `https://ghfast.top/` → 可选 `PALUNE_UPDATE_MANIFEST_MIRRORS`；匿名可读，客户端不内嵌凭据
 - CI：版本校验 → 分层静态检查 → 三平台构建 + 全部单测 + 20 样本 headless 冒烟
 
 ## M1 实测结论（本机 Windows 11，独立桌面运行）
@@ -124,7 +124,7 @@ macOS / Linux 依赖：`tools/ci/fetch_deps.sh`（brew / apt / dnf / pacman）�
 - 每次运行都上传 `latest.json` 与 `SHA256SUMS`
 - `latest.json` 按 `UPDATER_SPEC.md` 的 payload + 分离签名结构生成；`artifacts` 每平台一条（exe / dmg / AppImage），msi/deb/rpm 放在 `extraArtifacts`
 - 清单与产物必须已签名；`manifest` job 自带断言，`signature` 缺失直接失败
-- 跨仓库发布凭据：`RELEASE_REPO_TOKEN`（仅对 `palune-releases` 有 `contents:write`），存放在本仓库 Actions Secret；GitHub 自带的 `GITHUB_TOKEN` 无法跨仓库使用
+- 跨仓库发布凭据：`RELEASE_REPO_TOKEN` 已写入本仓库 Actions Secret（对 `palune-releases` 具备 contents 写权限）；当前值沿用本机 `gh` 登录凭据（scope 偏宽，含 `repo/workflow/gist/read:org`），后续应轮换为仅该仓库 `Contents: Read and write` 的细粒度 PAT。GitHub 自带的 `GITHUB_TOKEN` 无法跨仓库使用
 - 发布后 `assert-public-feed` job 会**不带凭据** GET `releases/latest/download/latest.json`，要求 200 且能取到 `version`；401/404 直接失败
 - 发行仓库的预发布（alpha / RC）以 **prerelease** 发布，**不接管** `releases/latest`；只有正式版才用普通 Release，否则会把候选版本推给所有客户端
 - 最新发布页：https://github.com/yunyu697/palune-releases/releases
@@ -136,7 +136,8 @@ macOS / Linux 依赖：`tools/ci/fetch_deps.sh`（brew / apt / dnf / pacman）�
 | Release | [1.0.0-RC](https://github.com/yunyu697/palune-releases/releases/tag/1.0.0-RC)，`prerelease=true` |
 | 资产 | `Palune-1.0.0-win-x64.exe`（59,649,289 B）、`latest.json`、`SHA256SUMS`、`windows-install-evidence.json`、`install-launch.json` |
 | 清单 | `--channel stable`、`version 1.0.0`、`keyId palune-test`；用 `resources/trust/update.pub` 独立验签 PASS（`docs/evidence/release-1.0.0-rc/manifest-verify.json`） |
-| 更新主链 | `releases/latest` 仍指向 `1.0.0-alpha6`，RC 未接管 |
+| 更新主链 | `releases/latest` 仍指向 `1.0.0-alpha6`，RC 与 alpha8/9/10 均未接管 |
+| 历史 tag 补发 | `1.0.0-alpha8/9/10` 已用本地产物手动补发 prerelease（含 SHA256SUMS，未经 CI）；`1.0.0` 仍只在本地 |
 | 未提供 | macOS/Linux 产物、MSI、生产签名（P1 未清） |
 | 审计 | `docs/evidence/release-1.0.0-rc/github-publish-audit.json` |
 
@@ -169,7 +170,9 @@ macOS / Linux 依赖：`tools/ci/fetch_deps.sh`（brew / apt / dnf / pacman）�
 - 状态机：`unchecked → checking → uptodate | available → downloading → downloaded → installing | error`
 - 仅 `available` 状态显示「更新」「仅下载」；`uptodate` 显示当前版本与上次检查时间
 - 「更新」：下载 → SHA-256 + Ed25519 校验 → 安装 → 自动重启；「仅下载」：下载到系统下载目录 → 按钮变「安装」
-- 镜像只是下载通道；完整性校验**不依赖镜像来源**，任一镜像下载的包都必须通过 SHA-256 与签名
+- **清单也走多源回退**（不再单点依赖 `releases/latest/download`）：顺序为 直连 → `ghfast.top` 实测加速 → `PALUNE_UPDATE_MANIFEST_MIRRORS`（完整 URL、分号/逗号分隔，设置后替代内置镜像）；单源 15 s、整轮 45 s
+- **每个清单来源独立验签**：镜像返回被改动的清单会在 Ed25519 校验阶段被丢弃并立即换下一个；全部来源失败才报 `UPD-001`…`UPD-004`
+- 安装包下载同样多通道（直连 → 清单 `mirrors[]` → 内置实测加速）；完整性校验**不依赖来源**，任一通道下载的包都必须通过 SHA-256 + 清单签名复核 + 产物签名
 - 错误码 `UPD-001`…`UPD-010`，可读文案 + 重试 / 换镜像
 - 本机无真实发布产物，用本地静态服务（`python -m http.server 8765`）+ 模拟安装器完成端到端验证
 
@@ -227,8 +230,8 @@ docs/evidence/  实测报告与截图
 - **平台**：macOS/Linux 只有 CI 构建与冒烟，未在真机安装运行；MSI 未产出（本机无 WiX）；生产签名未轮换（`update.pub` 与测试私钥同对）
 - **跨屏 DPI**：单显示器环境，跨屏拖动与运行时 DPI 切换只能模拟
 - **冷启动**：安装包实测 1878ms，高于 800ms 基线（P3，未修）
-- **更新链**：`releases/latest/download/latest.json` 在本机与独立出口均返回 GitHub 边缘 504（alpha6 历史资产同样如此）；资产经 API 签名直链可下载且哈希一致，属 GitHub 下载边缘问题
-- **源码仓 tag**：alpha1/4/5/7/8/9/10 已在远端；`1.0.0` 暂留本地，等 RC 收口后按正式通道处理（历史 tag 的提交带旧工作流，推送时须先停用 Release 工作流）
+- **更新链（504 出口限制）**：`releases/latest/download/*` 在本机与独立出口均返回 GitHub 边缘 504（alpha6 历史资产同样如此），**受影响出口上直连更新链不可用**。客户端已加清单与安装包多源回退（直连 → `ghfast.top`），镜像可用时可完成检查与下载；但该镜像对 tag 定点 RC 清单同样 504，且属第三方服务，镜像不可达时更新链仍不可用。是否全球影响 **NOT_VERIFIED**：GitHub 状态页显示 All Systems Operational 且无相关事故，未提供旁证（见 `docs/evidence/release-1.0.0-rc/feed-504-diagnosis.json`）
+- **源码仓 tag / 发行仓 Release**：源码仓 alpha1/4/5/7/8/9/10 已在远端；发行仓 alpha8/9/10 已手动补发 prerelease（不接管 `releases/latest`）；`1.0.0` 暂留本地，等 RC 收口后按正式通道处理（历史 tag 的提交带旧工作流，推送时须先停用 Release 工作流）
 
 ## 明确不做（M0 与文档排除项）
 

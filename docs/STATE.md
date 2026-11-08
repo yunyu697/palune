@@ -76,7 +76,8 @@
 | 清单验签 | `docs/evidence/release-1.0.0-rc/manifest-verify.json` PASS（信任公钥 `resources/trust/update.pub`，keyId `palune-test`） |
 | 匿名主链 | NOT_VERIFIED：本机与独立出口均 504；API 签名直链 200 且哈希一致。见 `feed-504-diagnosis.json` |
 | 工作流改动 | `publish` 按通道加 `--prerelease`；`assert-public-feed` 预发布改断 tag 定点 URL |
-| 未做 | `1.0.0` tag 推送、mac/Linux 产物、MSI、生产签名、alpha8/9/10 的 Release |
+| alpha8/9/10 补发 | 2026-11-08 手动 `gh release create --prerelease` 挂本地产物（不改旧提交、不跑 CI）；三者均不接管 `releases/latest`，见 `docs/evidence/release-1.0.0-rc/token-and-alpha-release-audit.json` |
+| 未做 | `1.0.0` tag 推送、mac/Linux 产物、MSI、生产签名 |
 
 ## alpha10：六项实机缺陷
 
@@ -241,8 +242,8 @@
 
 | 卡点 | 影响 | 解除方式 |
 |---|---|---|
-| `RELEASE_REPO_TOKEN` 未配置 | CI 的 `publish` 与 `assert-public-feed` job 无法执行；本次 alpha6 由本机用已授权的 `gh` 凭据一次性发布 | 用户签发**仅对 `yunyu697/palune-releases` 有 `Contents: Read and write`** 的细粒度 PAT（或 GitHub App token），执行 `gh secret set RELEASE_REPO_TOKEN -R yunyu697/palune`；随后推送 tag `1.0.0-alpha6` 重跑三平台构建与发布（CI 用 Qt 6.9.3，哈希会与本机不同，需重跑匿名断言） |
-| 未创建任何新 token | —— | 严格遵守「不自己造 token」，跨仓凭据只能由用户签发 |
+| ~~`RELEASE_REPO_TOKEN` 未配置~~（已解除） | 2026-11-08 已用本机 `gh` 凭据写入源码仓 Secret（scope 含 `repo`），并用同一凭据完成跨仓 pre-release 创建→上传→删除验证；见 `docs/evidence/release-1.0.0-rc/token-and-alpha-release-audit.json` | 遗留硬化项：当前为宽 scope 的用户级 OAuth 凭据，后续应轮换为仅 `palune-releases` 的 `Contents: Read and write` 细粒度 PAT |
+| 未创建新 token | —— | 未新造 token；沿用既有登录凭据 |
 
 补充：alpha6 仅发布 Windows 安装包；MSI 因本机无 WiX 未生成（CI 有 WiX），macOS/Linux 产物需 CI 补齐。
 
@@ -375,7 +376,7 @@
 
 ## 下一步（按顺序）
 
-1. **等用户配置 `RELEASE_REPO_TOKEN`** → 推送 tag `1.0.0-alpha6`，让 CI 在本机已发布的同一 tag 上重建三平台产物、发布到 `palune-releases`、跑匿名断言；下载复核哈希并重跑签名校验（CI Qt 6.9.3 与本机 Qt 6.8.3 字节不同）。
+1. ~~等用户配置 `RELEASE_REPO_TOKEN`~~：2026-11-08 已写入并完成跨仓能力验证；正式 CI 跨仓发布仍需一次 tag 触发才能端到端跑通（本轮用等价凭据手工验证，不重跑三平台构建）。
 2. 用 alpha6 安装包做一次真实安装 → 启动 → 逐屏截图复核（重点：拖拽、缩放、圆角、白块、按钮可点）。
 3. M3 首个 UI 任务：按 `UI-ALPHA5-COMPARISON.md` §3 的 7 项偏差逐个改（媒体库形态 → C 默认尺寸 → B 分栏/技术条 → 设置分区 → 空态隐藏）。
 4. M2 #8 剩余真机项：多屏移动、运行中 DPI（125/150/200%）切换需用户环境；自动化部分已完成。
@@ -383,6 +384,6 @@
 
 ## 阻塞 / 需用户
 
-- **`RELEASE_REPO_TOKEN` 未配置**：CI 跨仓库发布与匿名断言未在 CI 中真实执行；需用户签发仅含 `palune-releases` `contents:write` 的细粒度 PAT。
+- **`RELEASE_REPO_TOKEN` 已配置（非阻塞）**：本轮已写入并验证跨仓创建/上传/删除；CI 内的 `publish` 与 `assert-public-feed` 仍需一次 tag 触发才能端到端确认。建议将宽 scope 的用户级凭据轮换为仅 `palune-releases` `contents:write` 的细粒度 PAT。
 - M2 #1 36 界面评审签字需用户确认（截图位于 `docs/evidence/shots/m2-baseline`、`m2-scale`）。
 - 生产签名证书、域名、真机多屏/DPI 环境：alpha 阶段按测试密钥、NOT_VERIFIED 处理，不阻塞推进。

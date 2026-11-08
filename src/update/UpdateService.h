@@ -38,6 +38,8 @@ class UpdateService : public QObject
     Q_PROPERTY(int mirrorIndex READ mirrorIndex NOTIFY mirrorChanged)
     Q_PROPERTY(QString mirrorName READ mirrorName NOTIFY mirrorChanged)
     Q_PROPERTY(QString downloadedPath READ downloadedPath NOTIFY downloadedPathChanged)
+    Q_PROPERTY(QString manifestSource READ manifestSource NOTIFY manifestSourceChanged)
+    Q_PROPERTY(QVariantList manifestAttempts READ manifestAttempts NOTIFY manifestAttemptsChanged)
     Q_PROPERTY(bool updateAvailable READ updateAvailable NOTIFY manifestChanged)
     Q_PROPERTY(bool busy READ busy NOTIFY stateChanged)
     Q_PROPERTY(QString statusText READ statusText NOTIFY stateChanged)
@@ -64,6 +66,10 @@ public:
     int mirrorIndex() const { return m_mirrorIndex; }
     QString mirrorName() const;
     QString downloadedPath() const { return m_downloadedPath; }
+    // 清单多源回退：最终采用来源、该来源 URL、每次尝试的完整记录（用于故障取证）。
+    QString manifestSource() const { return m_manifestSource; }
+    QString manifestSourceUrl() const { return m_manifestSourceUrl; }
+    QVariantList manifestAttempts() const { return m_manifestAttempts; }
     QString expectedSha256() const { return m_manifest.sha256; }
     bool updateAvailable() const { return m_hasUpdate; }
     bool busy() const;
@@ -99,6 +105,8 @@ signals:
     void mirrorChanged();
     void downloadedPathChanged();
     void lastCheckedTextChanged();
+    void manifestSourceChanged();
+    void manifestAttemptsChanged();
     void finished(const QString &stateName);
 
 private:
@@ -108,8 +116,20 @@ private:
     void setState(State s);
     static QString stateName(State s);
     void fail(const QString &code, const QString &detail);
-    void fetchManifest();
-    void handleManifestReply(QNetworkReply *reply);
+    // 清单来源候选：直连优先，其后按实测可用性排序的镜像。
+    struct ManifestSource {
+        QString name;
+        QUrl url;
+    };
+    QList<ManifestSource> buildManifestSources() const;
+    void fetchManifest(int index);
+    void handleManifestReply(QNetworkReply *reply, const ManifestSource &source, qint64 elapsedMs);
+    void recordManifestAttempt(const ManifestSource &source, const QString &outcome,
+                               const QString &detail, qint64 elapsedMs,
+                               int httpStatus, const QByteArray &bytes);
+    void tryNextManifestSource(const ManifestSource &source, const QString &outcome,
+                               const QString &detail, qint64 elapsedMs,
+                               int httpStatus, const QByteArray &bytes);
     void startDownload(Action action);
     void handleDownloadProgress();
     void finishDownload();
@@ -129,7 +149,16 @@ private:
     QNetworkAccessManager m_nam;
     QNetworkReply *m_reply = nullptr;
     QTimer *m_timeoutTimer = nullptr;
+    QTimer *m_manifestAttemptTimer = nullptr;
     QTimer *m_progressTimer = nullptr;
+    QElapsedTimer m_attemptClock;
+    bool m_attemptTimedOut = false;
+
+    QList<ManifestSource> m_manifestSources;
+    int m_manifestSourceIndex = -1;
+    QString m_manifestSource;
+    QString m_manifestSourceUrl;
+    QVariantList m_manifestAttempts;
 
     QUrl m_feedUrl;
     QString m_downloadDirOverride;

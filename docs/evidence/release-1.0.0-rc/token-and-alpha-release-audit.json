@@ -1,0 +1,97 @@
+{
+  "recordedAt": "2026-11-08T17:57:00+08:00",
+  "scope": [
+    "RELEASE_REPO_TOKEN 写入源码仓 Secrets，并验证跨仓发布能力",
+    "alpha8/9/10 不经过 CI，直接用本地产物补发 prerelease"
+  ],
+  "releaseRepoToken": {
+    "repo": "yunyu697/palune",
+    "secret": "RELEASE_REPO_TOKEN",
+    "setAt": "2026-11-08T09:53:45Z",
+    "valueRecorded": false,
+    "credentialSource": "本机 gh 登录凭据（gh auth token）",
+    "identity": "yunyu697",
+    "scopes": ["gist", "read:org", "repo", "workflow"],
+    "sufficient": true,
+    "whySufficient": "跨仓发布需要对 yunyu697/palune-releases 的 contents:write；classic PAT 的 repo scope 覆盖公开仓库读写，实测可创建 Release 并上传资产",
+    "leastPrivilegeNote": "当前写入的是用户级 OAuth 凭据，scope 比所需更宽（还带 workflow/gist/read:org）。功能上足够，长期应收紧为 fine-grained PAT：仅 palune-releases、Contents: Read and write",
+    "missingScopeNeededFromUser": "无（本轮无需用户另行签发；仅建议后续轮换为最小权限 token）",
+    "crossRepoProbe": {
+      "tag": "token-probe-20261108",
+      "createCommand": "gh release create token-probe-20261108 --repo yunyu697/palune-releases --target main --prerelease --title ... --notes ... <file>",
+      "created": true,
+      "isPrerelease": true,
+      "isDraft": false,
+      "asset": {
+        "name": "feed-504-diagnosis.json",
+        "size": 5313,
+        "digest": "sha256:6fa13203cc4f811831cb4bda61c6feb1bd53089b3f9965fcb4519b638cb862ff",
+        "state": "uploaded"
+      },
+      "deleted": true,
+      "deleteVerified": "gh release view → release not found；git ref tags/token-probe-20261108 → HTTP 404（tag 已随 --cleanup-tag 删除）"
+    }
+  },
+  "alphaReleases": {
+    "decision": "发布（本地已有与 tag 版本一致的安装包，手动 --prerelease 挂载即可，无需改旧提交或恢复旧工作流）",
+    "constraintCheck": {
+      "doesNotTouchOldCommits": true,
+      "doesNotRunCi": true,
+      "doesNotTakeLatest": true,
+      "latestAfterPublish": "1.0.0-alpha6（prerelease=false）",
+      "prereleaseFlag": true
+    },
+    "sourceTags": [
+      {"tag": "1.0.0-alpha8", "remoteCommit": "7ef39aeae5697c1616f31c901598b8d8f9a0d195"},
+      {"tag": "1.0.0-alpha9", "remoteCommit": "5995ecb938a21c68d2019de532576046e4c9a676"},
+      {"tag": "1.0.0-alpha10", "remoteCommit": "7921f8aa176c16b2f976fda0160ab82c76377d40"}
+    ],
+    "releases": [
+      {
+        "tag": "1.0.0-alpha8",
+        "url": "https://github.com/yunyu697/palune-releases/releases/tag/1.0.0-alpha8",
+        "isPrerelease": true,
+        "isDraft": false,
+        "assets": [
+          {"name": "Palune-1.0.0-alpha8-win-x64.exe", "size": 59218560, "digest": "sha256:f763585fa65613728dd15a5f11d18af1b9cac2dcb4e0c8d77a1d9bc1bf349d67", "state": "uploaded"},
+          {"name": "SHA256SUMS-1.0.0-alpha8", "size": 98, "digest": "sha256:db58c0c2d5fdb312b1eb39b366b5d069f83621ca7c235887f05e8125f64649a6", "state": "uploaded"}
+        ]
+      },
+      {
+        "tag": "1.0.0-alpha9",
+        "url": "https://github.com/yunyu697/palune-releases/releases/tag/1.0.0-alpha9",
+        "isPrerelease": true,
+        "isDraft": false,
+        "assets": [
+          {"name": "Palune-1.0.0-alpha9-win-x64.exe", "size": 59601594, "digest": "sha256:6e68fbd4f883d98d20d99bc92c6bb2f2472811c6532d0807a06a61f2fc66ca6f", "state": "uploaded"},
+          {"name": "SHA256SUMS-1.0.0-alpha9", "size": 98, "digest": "sha256:3d05b44f3ee12209a683153da051a132e11ef2a4f44e0166a23b88df6af6c2c8", "state": "uploaded"}
+        ]
+      },
+      {
+        "tag": "1.0.0-alpha10",
+        "url": "https://github.com/yunyu697/palune-releases/releases/tag/1.0.0-alpha10",
+        "isPrerelease": true,
+        "isDraft": false,
+        "assets": [
+          {"name": "Palune-1.0.0-alpha10-win-x64.exe", "size": 59604798, "digest": "sha256:d7b64b8cd76bbadf6fa0e8f2720b686d593a8d41431863310d9621ec1d326465", "state": "uploaded"},
+          {"name": "SHA256SUMS-1.0.0-alpha10", "size": 99, "digest": "sha256:c043357385070db34fec515777dae26e686b651908957cf86a6236e03fa5a0b0", "state": "uploaded"}
+        ]
+      }
+    ],
+    "notesContent": "历史 alpha 构建，由本地产物直接补发，未经过 CI；功能已被 1.0.0-RC 取代，仅供归档；本 Release 为预发布，不接管 releases/latest",
+    "notProvided": [
+      "alpha8/9/10 的签名 latest.json（不为历史版本伪造更新清单）",
+      "macOS/Linux 历史产物（本地只有 Windows exe）"
+    ]
+  },
+  "releaseRepoStateAfter": {
+    "releases": [
+      {"tag": "1.0.0-RC", "prerelease": true},
+      {"tag": "1.0.0-alpha6", "prerelease": false, "latest": true},
+      {"tag": "1.0.0-alpha8", "prerelease": true},
+      {"tag": "1.0.0-alpha9", "prerelease": true},
+      {"tag": "1.0.0-alpha10", "prerelease": true}
+    ],
+    "latestFeed": "releases/latest 仍指向 1.0.0-alpha6，未被 alpha8/9/10 接管"
+  }
+}

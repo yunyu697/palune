@@ -56,6 +56,12 @@
       "command": "curl https://github.com/yunyu697/palune.git/info/refs?service=git-upload-pack（两次）",
       "result": "200；随后 Connection timed out after 12005 ms",
       "interpretation": "本机到 github.com 的链路本身也不稳定（推送 3 次才成功）"
+    },
+    {
+      "id": "github-status-page",
+      "command": "GET https://www.githubstatus.com/api/v2/status.json、components.json、incidents.json",
+      "result": "2026-11-08T09:04:42Z：indicator=none（All Systems Operational）；组件列表中没有 Releases/下载专项；11/06–11/08 无相关事故记录",
+      "interpretation": "官方状态页未记录该故障，不能作为「全球影响」的旁证；第三方监测也没有 releases/download 级别粒度。结论维持 NOT_VERIFIED，不据此升格或降级"
     }
   ],
   "factsEstablished": [
@@ -65,12 +71,12 @@
     "故障点是 github.com 的 /releases/download/ 边缘响应"
   ],
   "cannotEstablish": [
-    "是否全球所有用户都受影响（无法获取 GitHub 官方状态页或多地区探针）",
+    "是否全球所有用户都受影响（GitHub 状态页显示 All Systems Operational 且无相关事故，未提供旁证；无多地区探针）",
     "故障持续时间与恢复时间"
   ],
   "userImpact": {
-    "level": "更新链不可用（对经过相同边缘的用户）",
-    "detail": "客户端清单固定走 releases/latest/download/latest.json，镜像只用于安装包下载、不参与清单。因此该边缘返回 504 时，「检查更新」会直接失败；本地已安装用户仍可正常播放，不影响安装包分发以外的功能。",
-    "workaround": "可用 tag 定点直链（release-assets 签名 URL）或镜像托管清单作为临时绕行，但当前代码不支持清单走镜像。"
+    "level": "受影响出口上更新链不可用（现已加多源回退，镜像可用时可恢复）",
+    "detail": "该边缘返回 504 时，直连清单与安装包都取不到。客户端已实现清单多源回退（直连 → ghfast.top 实测加速 → 可选配置镜像），每个来源都必须通过 Ed25519 验签，签名不符即丢弃并换下一个；安装包同样逐通道做 SHA-256 + 签名校验。因此：镜像可用时检查与下载可以完成；镜像也返回 504 或不可达时，该出口上更新链仍不可用。已安装用户播放功能不受影响。",
+    "workaround": "1) 内置 ghfast.top 加速（仅对 GitHub 主链，tag 定点 RC 路径实测仍 504）；2) 通过 PALUNE_UPDATE_MANIFEST_MIRRORS 配置自建清单镜像；3) 使用 API 签名直链手动下载。"
   }
 }

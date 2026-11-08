@@ -1,0 +1,35 @@
+{
+    "actualSha256": "",
+    "availableVersion": "1.0.0",
+    "currentVersion": "1.0.0",
+    "downloadDir": "",
+    "downloadedPath": "",
+    "errorCode": "",
+    "errorMessage": "",
+    "expectedSha256": "4f1cb5cadf4aa304ab2c53c7404ec984b38cdc532d57af8c6a16bde43917b82c",
+    "feed": "https://github.com/yunyu697/palune/releases/download/1.0.0-RC/latest.json",
+    "generatedAt": "2026-11-08T21:01:28",
+    "logPath": "C:\\Users\\Tyler Zhang\\AppData\\Roaming\\Palune/logs/palune.log",
+    "manifestAttempts": [
+        {
+            "bytes": 1297,
+            "detail": "签名校验通过",
+            "elapsedMs": 2046,
+            "httpStatus": 200,
+            "index": 0,
+            "name": "直连（官方源）",
+            "outcome": "ok",
+            "sha256": "b2d33ee7e16602a1ca75ca4efaeae7125054eb1c6372904b2211ef9b61d538da",
+            "url": "https://github.com/yunyu697/palune/releases/download/1.0.0-RC/latest.json"
+        }
+    ],
+    "manifestSource": "直连（官方源）",
+    "manifestSourceUrl": "https://github.com/yunyu697/palune/releases/download/1.0.0-RC/latest.json",
+    "mirror": "直连",
+    "mirrorIndex": 0,
+    "mode": "update-check-only",
+    "restartMarker": "",
+    "state": "uptodate",
+    "transitions": [
+    ]
+}

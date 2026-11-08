@@ -24,7 +24,7 @@
 - 分级日志、崩溃面包屑（`crashes/breadcrumbs.txt` 与致命信号快照）、版本信息页
 - 更新清单升级为 payload + 分离签名信封，按 platform/arch 选择产物并校验产物签名
 - 命名与标识冻结：`app.palune.player`、`%APPDATA%\Palune`、日志前缀 `palune`、`Palune/crashes`、`palune://`
-- 更新源为公开发行仓库，清单支持多源回退：直连 `https://github.com/yunyu697/palune-releases/releases/latest/download/latest.json` → 内置实测加速 `https://ghfast.top/` → 可选 `PALUNE_UPDATE_MANIFEST_MIRRORS`；匿名可读，客户端不内嵌凭据
+- 更新源为本仓（源码仓已公开）的 Release 清单，支持多源回退：直连 `https://github.com/yunyu697/palune/releases/latest/download/latest.json` → 内置实测加速 `https://ghfast.top/` → 可选 `PALUNE_UPDATE_MANIFEST_MIRRORS`；匿名可读，客户端不内嵌凭据
 - CI：版本校验 → 分层静态检查 → 三平台构建 + 全部单测 + 20 样本 headless 冒烟
 
 ## M1 实测结论（本机 Windows 11，独立桌面运行）
@@ -110,7 +110,7 @@ macOS / Linux 依赖：`tools/ci/fetch_deps.sh`（brew / apt / dnf / pacman）�
 
 ## 发布（release）
 
-源码仓库**私有**；发行产物推送到**公开**仓库 `yunyu697/palune-releases`（只放安装包与更新清单，不含源码）。完整说明见 [docs/RELEASES.md](docs/RELEASES.md)。
+源码仓库 `yunyu697/palune` **已公开**，发行产物直接发布在**本仓**的 Release（不再有独立发行仓库）。自 2026-11-08 起更新清单只在 `https://github.com/yunyu697/palune/releases/...`；旧仓 `yunyu697/palune-releases` 已归档、停止发版。完整说明见 [docs/RELEASES.md](docs/RELEASES.md)。
 
 `.github/workflows/release.yml`：三平台各自打包，产出更新清单与校验值。
 
@@ -120,26 +120,26 @@ macOS / Linux 依赖：`tools/ci/fetch_deps.sh`（brew / apt / dnf / pacman）�
 | macOS | `Palune-<版本>-macos-arm64.dmg` |
 | Linux | `Palune-<版本>-linux-x86_64.AppImage`、`.deb`、`.rpm` |
 
-- 触发：打 tag 自动构建并发布到发行仓库，或手动 `workflow_dispatch`（只构建与生成清单，产物作为 artifact 上传）
+- 触发：打 tag 自动构建并发布到本仓 Release，或手动 `workflow_dispatch`（只构建与生成清单，产物作为 artifact 上传）
 - 每次运行都上传 `latest.json` 与 `SHA256SUMS`
 - `latest.json` 按 `UPDATER_SPEC.md` 的 payload + 分离签名结构生成；`artifacts` 每平台一条（exe / dmg / AppImage），msi/deb/rpm 放在 `extraArtifacts`
 - 清单与产物必须已签名；`manifest` job 自带断言，`signature` 缺失直接失败
-- 跨仓库发布凭据：`RELEASE_REPO_TOKEN` 已写入本仓库 Actions Secret（对 `palune-releases` 具备 contents 写权限）；当前值沿用本机 `gh` 登录凭据（scope 偏宽，含 `repo/workflow/gist/read:org`），后续应轮换为仅该仓库 `Contents: Read and write` 的细粒度 PAT。GitHub 自带的 `GITHUB_TOKEN` 无法跨仓库使用
-- 发布后 `assert-public-feed` job 会**不带凭据** GET `releases/latest/download/latest.json`，要求 200 且能取到 `version`；401/404 直接失败
-- 发行仓库的预发布（alpha / RC）以 **prerelease** 发布，**不接管** `releases/latest`；只有正式版才用普通 Release，否则会把候选版本推给所有客户端
-- 最新发布页：https://github.com/yunyu697/palune-releases/releases
+- 发布凭据：只用 GitHub 自带 `GITHUB_TOKEN`（`permissions: contents: write`，作用域仅本仓）；不再需要 `RELEASE_REPO_TOKEN` 或任何跨仓 PAT
+- 发布后 `assert-public-feed` job 会**不带凭据** GET 本仓 `releases/latest/download/latest.json`，要求 200 且能取到 `version`；401/404 直接失败
+- 预发布（alpha / beta / RC）按 **tag 后缀** 判定：一律 `prerelease=true`，**不接管** `releases/latest`；只有正式版 tag（如 `1.0.0`）才发普通 Release
+- 最新发布页：https://github.com/yunyu697/palune/releases
 
 ### 1.0.0-RC 当前发布状态（2026-11-08）
 
 | 项 | 值 |
 | --- | --- |
-| Release | [1.0.0-RC](https://github.com/yunyu697/palune-releases/releases/tag/1.0.0-RC)，`prerelease=true` |
-| 资产 | `Palune-1.0.0-win-x64.exe`（59,649,289 B）、`latest.json`、`SHA256SUMS`、`windows-install-evidence.json`、`install-launch.json` |
+| Release | [1.0.0-RC](https://github.com/yunyu697/palune/releases/tag/1.0.0-RC)，`prerelease=true`（2026-11-08 由旧仓原样迁入本仓） |
+| 资产 | `Palune-1.0.0-win-x64.exe`（59,649,289 B，SHA-256 `4f1cb5ca…b82c`）、`latest.json`、`SHA256SUMS`、`windows-install-evidence.json`、`install-launch.json` |
 | 清单 | `--channel stable`、`version 1.0.0`、`keyId palune-test`；用 `resources/trust/update.pub` 独立验签 PASS（`docs/evidence/release-1.0.0-rc/manifest-verify.json`） |
-| 更新主链 | `releases/latest` 仍指向 `1.0.0-alpha6`，RC 与 alpha8/9/10 均未接管 |
-| 历史 tag 补发 | `1.0.0-alpha8/9/10` 已用本地产物手动补发 prerelease（含 SHA256SUMS，未经 CI）；`1.0.0` 仍只在本地 |
+| 更新主链 | 本仓 `releases/latest` 当前 **404**（本仓全部 Release 均为 prerelease，尚无正式版；alpha6 的 Latest 标记留在已归档旧仓，不参与本仓主链） |
+| 历史 tag 补发 | `1.0.0-alpha8/9/10` 已按原资产、原哈希迁入本仓，均为 prerelease；`1.0.0` 仍只在本地 |
 | 未提供 | macOS/Linux 产物、MSI、生产签名（P1 未清） |
-| 审计 | `docs/evidence/release-1.0.0-rc/github-publish-audit.json` |
+| 审计 | `docs/evidence/release-1.0.0-rc/github-publish-audit.json`（旧仓发布记录）、`docs/evidence/release-migration-20261108.json`（迁移核对） |
 
 ## 版本号规则（硬约束）
 

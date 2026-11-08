@@ -1,0 +1,125 @@
+{
+  "task": "源码仓公开后撤销独立发行仓，发布链并回 yunyu697/palune",
+  "generatedAt": "2026-11-08",
+  "transitionManifest": {
+    "implemented": false,
+    "reason": "用户明确取消过渡：旧仓不放指向新地址的签名清单、不做兼容跳转；老客户端按重装一次处理。"
+  },
+  "sourceRepo": {
+    "name": "yunyu697/palune",
+    "private": false,
+    "visibility": "public",
+    "anonymousApiCheck": {
+      "url": "https://api.github.com/repos/yunyu697/palune",
+      "httpStatus": 200,
+      "note": "curl 未携带 Authorization 头"
+    },
+    "anonymousAssetCheck": {
+      "url": "https://github.com/yunyu697/palune/releases/download/1.0.0-alpha5/SHA256SUMS",
+      "httpStatus": 200,
+      "bytes": 794
+    }
+  },
+  "oldRepo": {
+    "name": "yunyu697/palune-releases",
+    "action": "archive",
+    "archived": true,
+    "note": "不删除，作为发布历史取证保留；不再作为发布源。",
+    "anonymousChecksAfterArchive": [
+      {
+        "url": "https://api.github.com/repos/yunyu697/palune-releases",
+        "httpStatus": 200,
+        "detail": "仓库仍可读取，只读"
+      },
+      {
+        "url": "https://github.com/yunyu697/palune-releases/releases/latest/download/latest.json",
+        "httpStatus": 200,
+        "bytes": 1120,
+        "payloadVersion": "1.0.0-alpha6",
+        "detail": "停在归档时点，不再更新"
+      },
+      {
+        "url": "https://github.com/yunyu697/palune-releases/releases/download/1.0.0-RC/latest.json",
+        "httpStatus": 200,
+        "bytes": 1297
+      },
+      {
+        "url": "https://github.com/yunyu697/palune-releases/releases/download/1.0.0-RC/Palune-1.0.0-win-x64.exe",
+        "method": "HEAD",
+        "httpStatus": 200
+      }
+    ]
+  },
+  "workflow": {
+    "file": ".github/workflows/release.yml",
+    "publishTarget": "github.repository (yunyu697/palune)",
+    "credentials": "GITHUB_TOKEN (contents: write)",
+    "removed": ["publish 跨仓阶段", "RELEASE_REPO_TOKEN 依赖与检查步骤", "跨仓 PAT 说明"],
+    "prereleaseRule": "tag 后缀 -alpha / -beta / -RC 判定 prerelease=true；不再只看 VERSION",
+    "migrationSafety": "迁移期间 gh workflow disable Release → 创建 Release → 核对无新 run → gh workflow enable Release",
+    "runsTriggeredByMigration": 0
+  },
+  "migrations": [
+    {
+      "tag": "1.0.0-RC",
+      "prerelease": true,
+      "source": "旧仓 1.0.0-RC 原资产（安装包为本地产物原件）",
+      "assets": [
+        {"name": "Palune-1.0.0-win-x64.exe", "size": 59649289, "sha256": "4f1cb5cadf4aa304ab2c53c7404ec984b38cdc532d57af8c6a16bde43917b82c", "githubDigestMatchesOldRepo": true},
+        {"name": "latest.json", "size": 1297, "sha256": "b2d33ee7e16602a1ca75ca4efaeae7125054eb1c6372904b2211ef9b61d538da", "githubDigestMatchesOldRepo": true},
+        {"name": "SHA256SUMS", "size": 92, "sha256": "8ca3753cf388c7969c078a5201b2f44a97b464a807fe650993396f35dc9aaa7b", "githubDigestMatchesOldRepo": true},
+        {"name": "windows-install-evidence.json", "size": 1991, "sha256": "2d255fd39e1ec6cc1333d9814e28c315b66d069c6a087e1dc19eba0ea111541f", "githubDigestMatchesOldRepo": true},
+        {"name": "install-launch.json", "size": 424, "sha256": "1a6de6ff731abe7692ca6ea63187fdfbf7f163903115636253dc7233936ff340", "githubDigestMatchesOldRepo": true}
+      ]
+    },
+    {
+      "tag": "1.0.0-alpha8",
+      "prerelease": true,
+      "assets": [
+        {"name": "Palune-1.0.0-alpha8-win-x64.exe", "size": 59218560, "sha256": "f763585fa65613728dd15a5f11d18af1b9cac2dcb4e0c8d77a1d9bc1bf349d67", "githubDigestMatchesOldRepo": true},
+        {"name": "SHA256SUMS-1.0.0-alpha8", "size": 98, "sha256": "db58c0c2d5fdb312b1eb39b366b5d069f83621ca7c235887f05e8125f64649a6", "githubDigestMatchesOldRepo": true}
+      ]
+    },
+    {
+      "tag": "1.0.0-alpha9",
+      "prerelease": true,
+      "assets": [
+        {"name": "Palune-1.0.0-alpha9-win-x64.exe", "size": 59601594, "sha256": "6e68fbd4f883d98d20d99bc92c6bb2f2472811c6532d0807a06a61f2fc66ca6f", "githubDigestMatchesOldRepo": true},
+        {"name": "SHA256SUMS-1.0.0-alpha9", "size": 98, "sha256": "3d05b44f3ee12209a683153da051a132e11ef2a4f44e0166a23b88df6af6c2c8", "githubDigestMatchesOldRepo": true}
+      ]
+    },
+    {
+      "tag": "1.0.0-alpha10",
+      "prerelease": true,
+      "assets": [
+        {"name": "Palune-1.0.0-alpha10-win-x64.exe", "size": 59604798, "sha256": "d7b64b8cd76bbadf6fa0e8f2720b686d593a8d41431863310d9621ec1d326465", "githubDigestMatchesOldRepo": true},
+        {"name": "SHA256SUMS-1.0.0-alpha10", "size": 99, "sha256": "c043357385070db34fec515777dae26e686b651908957cf86a6236e03fa5a0b0", "githubDigestMatchesOldRepo": true}
+      ]
+    }
+  ],
+  "feedState": {
+    "latestChain": {
+      "url": "https://github.com/yunyu697/palune/releases/latest/download/latest.json",
+      "httpStatus": 404,
+      "note": "本仓全部 Release 均为 prerelease，首个正式版发布前无 latest 主链"
+    },
+    "prereleaseTagFeed": {
+      "url": "https://github.com/yunyu697/palune/releases/download/1.0.0-RC/latest.json",
+      "httpStatus": 200,
+      "bytes": 1297
+    }
+  },
+  "clientVerification": {
+    "binary": "build/Release/Palune.exe（1.0.0，未重新编译）",
+    "command": "--update-check --update-url https://github.com/yunyu697/palune/releases/download/1.0.0-RC/latest.json --report <evidence file>",
+    "report": "docs/evidence/release-migration-20261108-client-update-check.json",
+    "manifestHttpStatus": 200,
+    "manifestBytes": 1297,
+    "manifestSha256": "b2d33ee7e16602a1ca75ca4efaeae7125054eb1c6372904b2211ef9b61d538da",
+    "signatureVerified": true,
+    "state": "uptodate",
+    "availableVersion": "1.0.0",
+    "currentVersion": "1.0.0",
+    "note": "客户端经直连源成功拉取新仓清单并验签；因本地版本同为 1.0.0，状态为已是最新。默认主链仍是 latest URL，RC 为预发布，故用 tag 定点 URL 验证清单可用性。"
+  }
+}

@@ -95,7 +95,7 @@ def main() -> int:
     ap.add_argument("--key-id", default=os.environ.get("PALUNE_UPDATE_KEY_ID", "palune-update-2026"))
     ap.add_argument("--mirrors-file", default="",
                     help="可选 JSON 文件：[{\"name\":\"...\",\"url\":\"...\"}]。"
-                         "镜像只用于安装包下载，清单与签名主链始终走发行仓库直连。")
+                         "镜像只用于安装包下载，清单与签名主链始终走发布仓（源码仓自身）直连。")
     args = ap.parse_args()
 
     dist = Path(args.dist).resolve()

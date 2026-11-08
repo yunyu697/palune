@@ -13,7 +13,24 @@
 3. 每个里程碑收口前必须做**真实窗口逐屏核对**；自渲染矩阵只作辅助。设计稿/DESIGN.md 缺失时，相关结论只能写 NOT_VERIFIED，不得写"已对齐"。
 4. 收口证据固定落盘：`docs/GAP-AUDIT.md`（里程碑复审）、`docs/SETTINGS-GAP.md`（设置核对）、`docs/evidence/UI-<版本>-COMPARISON.md`（逐屏对照）。
 5. 每条缺陷修复必须写清**根因（哪个对象、哪一层、什么机制）**与修复方式，不得只调参数遮现象。
-6. 版本以 `VERSION` 为唯一来源：预发布段最多到 `alpha10`，之后转正式 `1.0.0`；本地打包、本地打 tag。**发行仓只发预发布**（`--prerelease`，不接管 `releases/latest`）；源码仓 tag 推送仍需单独放行，因为 `release.yml` 会按 `VERSION` 推出 `stable` 并创建正式 Release（2026-11-08 已改工作流按通道处理，补推前仍需核对）。
+6. 版本以 `VERSION` 为唯一来源：预发布段最多到 `alpha10`，之后转正式 `1.0.0`；本地打包、本地打 tag。**发布只在本仓**；预发布按 **tag 后缀**（`-alpha` / `-beta` / `-RC`）判定 `--prerelease`，不接管 `releases/latest`；只有正式 tag（如 `1.0.0`）才创建普通 Release。
+
+## 单仓发布迁移（2026-11-08）
+
+用户要求源码仓公开后撤销独立发行仓，发布链并回源码仓，且**不做过渡清单**，老客户端按"重装一次"处理。
+
+| 项 | 结果 |
+|---|---|
+| 前置核实 | `gh api repos/yunyu697/palune` → `private=false, visibility=public`；匿名 `curl` GET 仓库 API 与 Release 资产均 200（不带任何凭据） |
+| 发布目标 | `.github/workflows/release.yml` 的 `publish` 改为写本仓 Release；去掉跨仓 `RELEASE_REPO_TOKEN` 与凭据检查步骤，只用 `GITHUB_TOKEN`（`contents: write`） |
+| 清单基址 | `gen_manifest.py --base-url` 改为 `https://github.com/${github.repository}/releases/download/<tag>`；`assert-public-feed` 断言本仓 |
+| 预发布口径 | `version` job 新增按 tag 后缀输出 `prerelease`；`1.0.0-RC` 不再因 `VERSION=1.0.0` 被误判为正式版 |
+| 客户端默认清单 | `UpdateService` 默认地址与通道改写基址切到 `https://github.com/yunyu697/palune/releases/latest/download/` |
+| 存量迁移 | `1.0.0-RC`、`1.0.0-alpha8/9/10` 在本仓按原资产、原哈希、`prerelease=true` 重建；GitHub `digest` 与旧仓逐字节一致 |
+| 旧仓处置 | `yunyu697/palune-releases` 置 `archived=true`（不删除，取证保留）；归档后历史资产仍匿名可下载，但不再产生新版本；旧清单停在 `1.0.0-alpha6` |
+| 过渡 | **取消**：旧仓不放签名过渡清单、不做跳转；老客户端需重装一次 |
+| 当前主链 | 本仓 `releases/latest` 为 **404**（全部 Release 均为 prerelease，首个正式版前无主链）；预发布走 tag 定点 URL |
+| 证据 | `docs/evidence/release-migration-20261108.json`；文档同步 `docs/RELEASES.md`、`README.md`、`ARCHITECTURE.md` §5.10 |
 
 ## 设置整组补齐（S1–S6）
 
@@ -193,6 +210,8 @@
 
 ## alpha6：私有源码 + 公开发行仓库（更新链路重构）
 
+> 历史记录。2026-11-08 源码仓公开后，旧发行仓已归档，发布链并回源码仓；本节描述的两仓结构与 `RELEASE_REPO_TOKEN` 均已作废，见「单仓发布迁移」。
+
 用户要求解决「私有仓库 Release 资产无法匿名下载 → 检查更新 401/404、镜像方案失效」的结构性问题。
 
 ### 事实核查（先纠正三个前提）
@@ -242,7 +261,7 @@
 
 | 卡点 | 影响 | 解除方式 |
 |---|---|---|
-| ~~`RELEASE_REPO_TOKEN` 未配置~~（已解除） | 2026-11-08 已用本机 `gh` 凭据写入源码仓 Secret（scope 含 `repo`），并用同一凭据完成跨仓 pre-release 创建→上传→删除验证；见 `docs/evidence/release-1.0.0-rc/token-and-alpha-release-audit.json` | 遗留硬化项：当前为宽 scope 的用户级 OAuth 凭据，后续应轮换为仅 `palune-releases` 的 `Contents: Read and write` 细粒度 PAT |
+| ~~`RELEASE_REPO_TOKEN` 未配置~~（已解除） | 2026-11-08 已用本机 `gh` 凭据写入源码仓 Secret（scope 含 `repo`），并用同一凭据完成跨仓 pre-release 创建→上传→删除验证；见 `docs/evidence/release-1.0.0-rc/token-and-alpha-release-audit.json` | 遗留硬化项：当前为宽 scope 的用户级 OAuth 凭据，后续应轮换为仅 `palune-releases` 的 `Contents: Read and write` 细粒度 PAT（2026-11-08 作废：发布链已并回源码仓，本仓只用 `GITHUB_TOKEN`） |
 | 未创建新 token | —— | 未新造 token；沿用既有登录凭据 |
 
 补充：alpha6 仅发布 Windows 安装包；MSI 因本机无 WiX 未生成（CI 有 WiX），macOS/Linux 产物需 CI 补齐。
@@ -376,15 +395,15 @@
 
 ## 下一步（按顺序）
 
-1. ~~等用户配置 `RELEASE_REPO_TOKEN`~~：2026-11-08 已写入并完成跨仓能力验证；正式 CI 跨仓发布仍需一次 tag 触发才能端到端跑通（本轮用等价凭据手工验证，不重跑三平台构建）。**CI 内 `publish` 尚无真实 tag 触发记录，等 `1.0.0` 正式通道开启时一并验证。**
+1. ~~等用户配置 `RELEASE_REPO_TOKEN`~~：已完成；2026-11-08 发布链并回源码仓后该凭据不再需要。**本仓 `publish` / `assert-public-feed` 仍无真实 tag 触发的端到端记录，等 `1.0.0` 正式通道开启时一并验证。**
 2. 用 alpha6 安装包做一次真实安装 → 启动 → 逐屏截图复核（重点：拖拽、缩放、圆角、白块、按钮可点）。
 3. M3 首个 UI 任务：按 `UI-ALPHA5-COMPARISON.md` §3 的 7 项偏差逐个改（媒体库形态 → C 默认尺寸 → B 分栏/技术条 → 设置分区 → 空态隐藏）。
 4. M2 #8 剩余真机项：多屏移动、运行中 DPI（125/150/200%）切换需用户环境；自动化部分已完成。
 5. stable 前：轮换离线生产签名密钥并替换 `resources/trust/update.pub`。
-6. stable 前：把 `RELEASE_REPO_TOKEN` 轮换为细粒度 PAT，仅对 `palune-releases` 授予 `Contents: Read and write`，替换当前宽 scope 的用户级凭据。
+6. ~~stable 前把 `RELEASE_REPO_TOKEN` 轮换为细粒度 PAT~~：**作废**——跨仓发布已移除，本仓发布只用 `GITHUB_TOKEN`；旧 Secret 可删除。
 
 ## 阻塞 / 需用户
 
-- **`RELEASE_REPO_TOKEN` 已配置（非阻塞）**：本轮已写入并验证跨仓创建/上传/删除；CI 内的 `publish` 与 `assert-public-feed` 仍需一次 tag 触发才能端到端确认。建议将宽 scope 的用户级凭据轮换为仅 `palune-releases` `contents:write` 的细粒度 PAT。
+- **跨仓凭据 `RELEASE_REPO_TOKEN` 已废弃（非阻塞）**：发布链已并回源码仓，publish 只用 `GITHUB_TOKEN`；该 Secret 无引用点，可删除。CI 内的 `publish` 与 `assert-public-feed` 仍需一次真实 tag 触发才能端到端确认。
 - M2 #1 36 界面评审签字需用户确认（截图位于 `docs/evidence/shots/m2-baseline`、`m2-scale`）。
 - 生产签名证书、域名、真机多屏/DPI 环境：alpha 阶段按测试密钥、NOT_VERIFIED 处理，不阻塞推进。

@@ -102,9 +102,9 @@ UpdateService::UpdateService(const QUrl &feedUrl, const QString &downloadDirOver
 {
     if (m_feedUrl.isEmpty()) {
         const QString env = qEnvironmentVariable("PALUNE_UPDATE_URL");
-        // 发行仓库公开，匿名可读；源码仓库私有，客户端不内嵌任何凭据。
+        // 源码仓即发布仓且已公开，客户端匿名读取，不内嵌任何凭据。
         m_feedUrl = env.isEmpty()
-            ? QUrl(QStringLiteral("https://github.com/yunyu697/palune-releases/releases/latest/download/latest.json"))
+            ? QUrl(QStringLiteral("https://github.com/yunyu697/palune/releases/latest/download/latest.json"))
             : QUrl(env);
     }
     m_timeoutTimer = new QTimer(this);
@@ -138,7 +138,7 @@ void UpdateService::setChannel(const QString &channel)
 {
     m_channel = channel == QLatin1String("beta") ? QStringLiteral("beta")
                                                   : QStringLiteral("stable");
-    const QString base = QStringLiteral("https://github.com/yunyu697/palune-releases/releases/latest/download/");
+    const QString base = QStringLiteral("https://github.com/yunyu697/palune/releases/latest/download/");
     const QString current = m_feedUrl.toString();
     if (!current.startsWith(base))
         return; // 测试或自定义 feed 不按通道改写

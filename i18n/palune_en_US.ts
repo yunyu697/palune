@@ -4,6 +4,10 @@
 <context>
     <name>EmptyState</name>
     <message>
+        <source>媒体库</source>
+        <translation>Library</translation>
+    </message>
+    <message>
         <source>将视频拖到这里，或点击下方按钮</source>
         <translation>Drop a video here, or use the button below</translation>
     </message>
@@ -11,20 +15,16 @@
         <source>打开文件</source>
         <translation>Open file</translation>
     </message>
+    <message>
+        <source>设置</source>
+        <translation>Settings</translation>
+    </message>
 </context>
 <context>
     <name>LayoutA</name>
     <message>
         <source>全屏</source>
         <translation>Fullscreen</translation>
-    </message>
-    <message>
-        <source>关闭</source>
-        <translation>Close</translation>
-    </message>
-    <message>
-        <source>切换布局</source>
-        <translation>Switch layout</translation>
     </message>
     <message>
         <source>取消静音</source>
@@ -39,20 +39,8 @@
         <translation>Subtitles </translation>
     </message>
     <message>
-        <source>已静音</source>
-        <translation>Muted</translation>
-    </message>
-    <message>
-        <source>打开</source>
-        <translation>Open</translation>
-    </message>
-    <message>
         <source>播放</source>
         <translation>Play</translation>
-    </message>
-    <message>
-        <source>文件夹</source>
-        <translation>Folder</translation>
     </message>
     <message>
         <source>暂停</source>
@@ -78,10 +66,6 @@
         <source>音轨 </source>
         <translation>Audio </translation>
     </message>
-    <message>
-        <source>音量</source>
-        <translation>Volume</translation>
-    </message>
 </context>
 <context>
     <name>LayoutB</name>
@@ -90,40 +74,56 @@
         <translation> · subtitles </translation>
     </message>
     <message>
-        <source>PALUNE · 工作台</source>
-        <translation>PALUNE · Workbench</translation>
+        <source>HDR </source>
+        <translation>HDR </translation>
     </message>
     <message>
         <source>全屏</source>
         <translation>Fullscreen</translation>
     </message>
     <message>
-        <source>关闭</source>
-        <translation>Close</translation>
-    </message>
-    <message>
         <source>切换布局</source>
         <translation>Switch layout</translation>
+    </message>
+    <message>
+        <source>媒体</source>
+        <translation>Media</translation>
+    </message>
+    <message>
+        <source>媒体信息</source>
+        <translation>Media info</translation>
+    </message>
+    <message>
+        <source>媒体库</source>
+        <translation>Library</translation>
     </message>
     <message>
         <source>字幕</source>
         <translation>Subtitles</translation>
     </message>
     <message>
-        <source>打开</source>
-        <translation>Open</translation>
+        <source>字幕 </source>
+        <translation>Subtitles </translation>
+    </message>
+    <message>
+        <source>工作台</source>
+        <translation>Workbench</translation>
+    </message>
+    <message>
+        <source>当前文件没有章节信息</source>
+        <translation>No chapter information for this file</translation>
     </message>
     <message>
         <source>播放</source>
         <translation>Play</translation>
     </message>
     <message>
-        <source>播放中</source>
-        <translation>Playing</translation>
+        <source>时长 </source>
+        <translation>Duration </translation>
     </message>
     <message>
-        <source>文件夹</source>
-        <translation>Folder</translation>
+        <source>时长 —</source>
+        <translation>Duration —</translation>
     </message>
     <message>
         <source>暂停</source>
@@ -138,12 +138,40 @@
         <translation>No file</translation>
     </message>
     <message>
+        <source>硬解 </source>
+        <translation>HW decode </translation>
+    </message>
+    <message>
+        <source>章节</source>
+        <translation>Chapters</translation>
+    </message>
+    <message>
+        <source>解码 </source>
+        <translation>Decode </translation>
+    </message>
+    <message>
+        <source>解码 —</source>
+        <translation>Decode —</translation>
+    </message>
+    <message>
         <source>设置</source>
         <translation>Settings</translation>
     </message>
     <message>
         <source>退出全屏</source>
         <translation>Exit fullscreen</translation>
+    </message>
+    <message>
+        <source>速度 </source>
+        <translation>Speed </translation>
+    </message>
+    <message>
+        <source>速度 —</source>
+        <translation>Speed —</translation>
+    </message>
+    <message>
+        <source>队列</source>
+        <translation>Queue</translation>
     </message>
     <message>
         <source>音轨</source>
@@ -153,6 +181,10 @@
         <source>音轨 </source>
         <translation>Audio </translation>
     </message>
+    <message>
+        <source>音轨 — · 字幕 —</source>
+        <translation>Audio — · subtitles —</translation>
+    </message>
 </context>
 <context>
     <name>LayoutC</name>
@@ -161,20 +193,12 @@
         <translation>Fullscreen</translation>
     </message>
     <message>
-        <source>关闭</source>
-        <translation>Close</translation>
-    </message>
-    <message>
-        <source>切换布局</source>
-        <translation>Switch layout</translation>
+        <source>媒体库</source>
+        <translation>Library</translation>
     </message>
     <message>
         <source>字幕</source>
         <translation>Subtitles</translation>
-    </message>
-    <message>
-        <source>打开</source>
-        <translation>Open</translation>
     </message>
     <message>
         <source>播放</source>
@@ -183,10 +207,6 @@
     <message>
         <source>暂停</source>
         <translation>Pause</translation>
-    </message>
-    <message>
-        <source>窗口</source>
-        <translation>Window</translation>
     </message>
     <message>
         <source>设置</source>
@@ -204,19 +224,83 @@
 <context>
     <name>LibraryPanel</name>
     <message>
+        <source>修改日期</source>
+        <translation>Modified</translation>
+    </message>
+    <message>
         <source>关闭</source>
         <translation>Close</translation>
+    </message>
+    <message>
+        <source>列表</source>
+        <translation>List</translation>
+    </message>
+    <message>
+        <source>名称</source>
+        <translation>Name</translation>
+    </message>
+    <message>
+        <source>大小</source>
+        <translation>Size</translation>
     </message>
     <message>
         <source>媒体库</source>
         <translation>Library</translation>
     </message>
+    <message>
+        <source>扫描中…</source>
+        <translation>Scanning…</translation>
+    </message>
+    <message>
+        <source>格式</source>
+        <translation>Format</translation>
+    </message>
+    <message>
+        <source>正在扫描</source>
+        <translation>Scanning</translation>
+    </message>
+    <message>
+        <source>海报</source>
+        <translation>Poster</translation>
+    </message>
+    <message>
+        <source>添加目录</source>
+        <translation>Add folder</translation>
+    </message>
+    <message>
+        <source>目录</source>
+        <translation>Folder</translation>
+    </message>
+    <message>
+        <source>重新扫描</source>
+        <translation>Rescan</translation>
+    </message>
+    <message>
+        <source>预览</source>
+        <translation>Preview</translation>
+    </message>
 </context>
 <context>
     <name>Main</name>
     <message>
+        <source>全屏 / 还原</source>
+        <translation>Fullscreen / Restore</translation>
+    </message>
+    <message>
+        <source>媒体库</source>
+        <translation>Library</translation>
+    </message>
+    <message>
         <source>打开其他文件</source>
         <translation>Open another file</translation>
+    </message>
+    <message>
+        <source>打开文件…</source>
+        <translation>Open file…</translation>
+    </message>
+    <message>
+        <source>播放 / 暂停</source>
+        <translation>Play / Pause</translation>
     </message>
     <message>
         <source>播放失败</source>
@@ -226,20 +310,28 @@
         <source>知道了</source>
         <translation>Got it</translation>
     </message>
+    <message>
+        <source>设置</source>
+        <translation>Settings</translation>
+    </message>
+    <message>
+        <source>退出</source>
+        <translation>Exit</translation>
+    </message>
 </context>
 <context>
     <name>MediaLibraryEmpty</name>
     <message>
-        <source> · 可用库：</source>
-        <translation> · available libraries: </translation>
+        <source>媒体库还是空的</source>
+        <translation>Your library is empty</translation>
     </message>
     <message>
-        <source>刷新</source>
-        <translation>Refresh</translation>
+        <source>添加目录</source>
+        <translation>Add folder</translation>
     </message>
     <message>
-        <source>已注册内容源：</source>
-        <translation>Registered sources: </translation>
+        <source>重新扫描</source>
+        <translation>Rescan</translation>
     </message>
 </context>
 <context>
@@ -572,20 +664,148 @@
 <context>
     <name>SettingsPanel</name>
     <message>
+        <source> / </source>
+        <translation> / </translation>
+    </message>
+    <message>
         <source> · libmpv 动态链接 · 渲染路径：</source>
         <translation> · libmpv dynamic linking · render path: </translation>
+    </message>
+    <message>
+        <source> · 切换语言需重启 Palune</source>
+        <translation> · Restart Palune to apply</translation>
+    </message>
+    <message>
+        <source> · 滞回 ±</source>
+        <translation> · hysteresis ±</translation>
     </message>
     <message>
         <source> 原生窗口</source>
         <translation> native window</translation>
     </message>
     <message>
-        <source>40 个 P0 动作的绑定表、启动冲突检测与解绑界面尚未完成（M2 待办）。当前 10 项为主窗口直接接线。</source>
-        <translation>Binding table, launch conflict detection, and unbind UI for the 40 P0 actions are not finished yet (M2 todo). The 10 wired actions below are direct connections in the main window.</translation>
+        <source> 处键位冲突（同作用域内相同组合键）</source>
+        <translation> shortcut conflicts (same combo in the same scope)</translation>
     </message>
     <message>
-        <source>Tab 在可操作控件间移动焦点</source>
-        <translation>Tab moves focus between actionable controls</translation>
+        <source> 项）</source>
+        <translation> items)</translation>
+    </message>
+    <message>
+        <source>30 秒</source>
+        <translation>30 s</translation>
+    </message>
+    <message>
+        <source>60 秒</source>
+        <translation>60 s</translation>
+    </message>
+    <message>
+        <source>BT.2390 色调映射</source>
+        <translation>BT.2390 tone mapping</translation>
+    </message>
+    <message>
+        <source>HDR 色调映射（BT.2390）</source>
+        <translation>HDR tone mapping (BT.2390)</translation>
+    </message>
+    <message>
+        <source>[audio] channels = auto / stereo / 5.1，即时生效</source>
+        <translation>[audio] channels = auto / stereo / 5.1; applies immediately</translation>
+    </message>
+    <message>
+        <source>[audio] delay，默认 0.0s；音画不同步时微调，即时生效</source>
+        <translation>[audio] delay, default 0.0s; fine-tune when audio and video are out of sync; applies immediately</translation>
+    </message>
+    <message>
+        <source>[audio] device，默认跟随系统；列表由 mpv 的 audio-device-list 提供，即时生效</source>
+        <translation>[audio] device, follows the system by default; the list comes from the player audio-device-list and applies immediately</translation>
+    </message>
+    <message>
+        <source>[playback] autoNext，默认关；播完当前文件后顺序播放下一个同目录文件</source>
+        <translation>[playback] autoNext, off by default; plays the next file in the same folder after the current one ends</translation>
+    </message>
+    <message>
+        <source>[playback] cacheSeconds = 0/30/60；0 表示 mpv 默认，下次打开文件生效</source>
+        <translation>[playback] cacheSeconds = 0/30/60; 0 uses the player default and applies the next time a file is opened</translation>
+    </message>
+    <message>
+        <source>[playback] deinterlace = auto / on / off，即时生效</source>
+        <translation>[playback] deinterlace = auto / on / off; applies immediately</translation>
+    </message>
+    <message>
+        <source>[playback] hwdec = auto / hardware / off，即时生效（切文件后重新初始化解码器）</source>
+        <translation>[playback] hwdec = auto / hardware / off; applies immediately (reinitializes the decoder after switching files)</translation>
+    </message>
+    <message>
+        <source>[playback] resume，默认开；关闭后不再自动跳回上次位置</source>
+        <translation>[playback] resume, on by default; when off, playback no longer jumps back to the previous position</translation>
+    </message>
+    <message>
+        <source>[playback] targetPeakNits，默认 1000 nits，即时生效</source>
+        <translation>[playback] targetPeakNits, default 1000 nits; applies immediately</translation>
+    </message>
+    <message>
+        <source>[playback] toneMapping，默认开；关闭时交给 mpv 选映射算法</source>
+        <translation>[playback] toneMapping, on by default; when off, the player chooses the mapping algorithm</translation>
+    </message>
+    <message>
+        <source>[sub] autoLoad，默认开（模糊匹配同名字幕）</source>
+        <translation>[sub] autoLoad, on by default (fuzzy-matches subtitles with the same name)</translation>
+    </message>
+    <message>
+        <source>[sub] color，默认白，即时生效</source>
+        <translation>[sub] color, white by default; applies immediately</translation>
+    </message>
+    <message>
+        <source>[sub] delay，默认 0.0s（正值为字幕推迟），即时生效</source>
+        <translation>[sub] delay, default 0.0s (positive values delay subtitles); applies immediately</translation>
+    </message>
+    <message>
+        <source>[sub] encoding，默认自动检测；乱码时手动指定</source>
+        <translation>[sub] encoding, auto-detected by default; set manually if text is garbled</translation>
+    </message>
+    <message>
+        <source>[sub] fontSize，默认 15，即时生效</source>
+        <translation>[sub] fontSize, default 15; applies immediately</translation>
+    </message>
+    <message>
+        <source>[sub] outline，默认 1.0px，即时生效</source>
+        <translation>[sub] outline, default 1.0px; applies immediately</translation>
+    </message>
+    <message>
+        <source>[sub] position，默认贴底 8%，即时生效</source>
+        <translation>[sub] position, default 8% from the bottom; applies immediately</translation>
+    </message>
+    <message>
+        <source>[ui] autoPlay，默认开</source>
+        <translation>[ui] autoPlay, on by default</translation>
+    </message>
+    <message>
+        <source>[ui] closeToTray，默认关；托盘菜单「退出」始终真正退出</source>
+        <translation>[ui] closeToTray, off by default; the tray menu "Exit" always quits</translation>
+    </message>
+    <message>
+        <source>[ui] confirmExit，默认关</source>
+        <translation>[ui] confirmExit, off by default</translation>
+    </message>
+    <message>
+        <source>[ui] minimizeToTray，默认关</source>
+        <translation>[ui] minimizeToTray, off by default</translation>
+    </message>
+    <message>
+        <source>[ui] startMaximized，默认关（下次启动生效）</source>
+        <translation>[ui] startMaximized, off by default (applies on next launch)</translation>
+    </message>
+    <message>
+        <source>[update] autoCheck，默认开；启动 3 秒后静默检查，只提示下载，不自动安装</source>
+        <translation>[update] autoCheck, on by default; checks silently 3 seconds after launch, only prompts to download, never auto-installs</translation>
+    </message>
+    <message>
+        <source>[update] channel = stable / beta；beta 读取 latest-beta.json，需发行仓库发布该清单后才有内容</source>
+        <translation>[update] channel = stable / beta; beta reads latest-beta.json and has no content until the release repository publishes it</translation>
+    </message>
+    <message>
+        <source>[update] proxy，默认跟随系统；即时应用，下次启动仍读取该值</source>
+        <translation>[update] proxy, follows the system by default; applies immediately and is read again on next launch</translation>
     </message>
     <message>
         <source>
@@ -598,25 +818,32 @@
         <translation>\nLog: </translation>
     </message>
     <message>
-        <source>px · 当前：</source>
-        <translation>px · current: </translation>
-    </message>
-    <message>
-        <source>px · 滞回 ±</source>
-        <translation>px · hysteresis ±</translation>
+        <source>px</source>
+        <translation>px</translation>
     </message>
     <message>
         <source>s · 速度：</source>
         <translation>s · speed: </translation>
     </message>
     <message>
-        <source>← / → 后退/前进 10 秒 · ↑ / ↓ 音量 ±5 · Enter 激活焦点控件
-</source>
-        <translation>← / → seek back/forward 10s · ↑ / ↓ volume ±5 · Enter activates the focused control\n</translation>
+        <source>下载目录</source>
+        <translation>Download folder</translation>
+    </message>
+    <message>
+        <source>不使用代理</source>
+        <translation>No proxy</translation>
     </message>
     <message>
         <source>主题</source>
         <translation>Theme</translation>
+    </message>
+    <message>
+        <source>信息</source>
+        <translation>Info</translation>
+    </message>
+    <message>
+        <source>全部恢复默认</source>
+        <translation>Restore all defaults</translation>
     </message>
     <message>
         <source>关于</source>
@@ -627,6 +854,54 @@
         <translation>Close</translation>
     </message>
     <message>
+        <source>关闭字幕</source>
+        <translation>Subtitles off</translation>
+    </message>
+    <message>
+        <source>关闭窗口时留在托盘</source>
+        <translation>Keep running in the tray when the window closes</translation>
+    </message>
+    <message>
+        <source>关闭（软解）</source>
+        <translation>Off (software decoding)</translation>
+    </message>
+    <message>
+        <source>写入 [diag] logLevel，即时生效；debug 仅用于排查，会产生大量日志</source>
+        <translation>Writes [diag] logLevel; applies immediately. Use debug only for troubleshooting; it produces a lot of logs</translation>
+    </message>
+    <message>
+        <source>写入 [library] viewMode = poster / list，即时生效，重启后保持</source>
+        <translation>Writes [library] viewMode = poster / list; applies immediately and persists across restarts</translation>
+    </message>
+    <message>
+        <source>写入 [storage] logRetentionDays，默认 14 天；修改后立即清理一次，启动时再清理</source>
+        <translation>Writes [storage] logRetentionDays, default 14 days; cleans up immediately after a change and again at startup</translation>
+    </message>
+    <message>
+        <source>写入 [storage] thumbCacheLimitMb，默认 2000 MB；下次扫描结束时按最旧优先淘汰</source>
+        <translation>Writes [storage] thumbCacheLimitMb, default 2000 MB; evicts oldest thumbnails at the end of the next scan</translation>
+    </message>
+    <message>
+        <source>写入 [ui] language：system / zh_CN / en_US，默认跟随系统，重启后生效</source>
+        <translation>Writes [ui] language: system / zh_CN / en_US; follows the system by default and applies after a restart</translation>
+    </message>
+    <message>
+        <source>列表</source>
+        <translation>List</translation>
+    </message>
+    <message>
+        <source>加载外挂字幕…</source>
+        <translation>Load external subtitles…</translation>
+    </message>
+    <message>
+        <source>去隔行</source>
+        <translation>Deinterlace</translation>
+    </message>
+    <message>
+        <source>取消改键</source>
+        <translation>Cancel rebinding</translation>
+    </message>
+    <message>
         <source>取消静音</source>
         <translation>Unmute</translation>
     </message>
@@ -635,24 +910,88 @@
         <translation>Only layouts A / B / C are provided; no skin or theme package entry points.</translation>
     </message>
     <message>
+        <source>启动与关闭</source>
+        <translation>Startup &amp; shutdown</translation>
+    </message>
+    <message>
+        <source>启动时最大化</source>
+        <translation>Start maximized</translation>
+    </message>
+    <message>
+        <source>启动时自动打开最近播放的文件（[ui] restoreLastSession，默认关）</source>
+        <translation>Open the most recently played file at startup ([ui] restoreLastSession, off by default)</translation>
+    </message>
+    <message>
+        <source>启动时自动检查更新</source>
+        <translation>Check for updates at startup</translation>
+    </message>
+    <message>
+        <source>声道</source>
+        <translation>Channels</translation>
+    </message>
+    <message>
         <source>外观</source>
         <translation>Appearance</translation>
     </message>
     <message>
-        <source>字号 / 延迟 / 外挂字幕在 M3 接入；本页为轨道状态展示。</source>
-        <translation>Font size / delay / external subtitles arrive in M3; this page shows track status.</translation>
+        <source>天</source>
+        <translation>days</translation>
+    </message>
+    <message>
+        <source>媒体库</source>
+        <translation>Library</translation>
+    </message>
+    <message>
+        <source>媒体库：</source>
+        <translation>Library: </translation>
+    </message>
+    <message>
+        <source>字号</source>
+        <translation>Font size</translation>
+    </message>
+    <message>
+        <source>字号 %1 · 描边 %2px · 底部安全距 %3%</source>
+        <translation>Font size %1 · outline %2px · bottom safe distance %3%</translation>
     </message>
     <message>
         <source>字幕</source>
         <translation>Subtitles</translation>
     </message>
     <message>
+        <source>字幕样式</source>
+        <translation>Subtitle style</translation>
+    </message>
+    <message>
+        <source>字幕编码</source>
+        <translation>Subtitle encoding</translation>
+    </message>
+    <message>
         <source>字幕轨道</source>
         <translation>Subtitle tracks</translation>
     </message>
     <message>
-        <source>已接线快捷键</source>
-        <translation>Wired shortcuts</translation>
+        <source>字幕预览</source>
+        <translation>Subtitle preview</translation>
+    </message>
+    <message>
+        <source>字幕预览：字号、颜色、描边、位置按左侧设置实时变化</source>
+        <translation>Subtitle preview: font size, color, outline, and position follow the settings on the left in real time</translation>
+    </message>
+    <message>
+        <source>存储</source>
+        <translation>Storage</translation>
+    </message>
+    <message>
+        <source>导入配置（重启生效）…</source>
+        <translation>Import settings (restart required)…</translation>
+    </message>
+    <message>
+        <source>导出配置…</source>
+        <translation>Export settings…</translation>
+    </message>
+    <message>
+        <source>就绪</source>
+        <translation>Ready</translation>
     </message>
     <message>
         <source>布局 </source>
@@ -661,6 +1000,22 @@
     <message>
         <source>常规</source>
         <translation>General</translation>
+    </message>
+    <message>
+        <source>底部位置</source>
+        <translation>Bottom position</translation>
+    </message>
+    <message>
+        <source>延迟</source>
+        <translation>Delay</translation>
+    </message>
+    <message>
+        <source>开启</source>
+        <translation>On</translation>
+    </message>
+    <message>
+        <source>强制硬解</source>
+        <translation>Force hardware decoding</translation>
     </message>
     <message>
         <source>当前播放</source>
@@ -675,12 +1030,60 @@
         <translation>This file has no audio tracks.</translation>
     </message>
     <message>
+        <source>当前生效：</source>
+        <translation>Currently active: </translation>
+    </message>
+    <message>
+        <source>当前：</source>
+        <translation>Current: </translation>
+    </message>
+    <message>
         <source>快捷键</source>
         <translation>Shortcuts</translation>
     </message>
     <message>
-        <source>快捷键系统进度</source>
-        <translation>Shortcut system progress</translation>
+        <source>快捷键（共 </source>
+        <translation>Shortcuts (</translation>
+    </message>
+    <message>
+        <source>恢复上次会话</source>
+        <translation>Restore last session</translation>
+    </message>
+    <message>
+        <source>打开媒体库</source>
+        <translation>Open library</translation>
+    </message>
+    <message>
+        <source>打开崩溃目录</source>
+        <translation>Open crash folder</translation>
+    </message>
+    <message>
+        <source>打开文件后自动播放</source>
+        <translation>Autoplay after opening a file</translation>
+    </message>
+    <message>
+        <source>打开索引目录</source>
+        <translation>Open index folder</translation>
+    </message>
+    <message>
+        <source>打开配置目录</source>
+        <translation>Open config folder</translation>
+    </message>
+    <message>
+        <source>按上限立即清理</source>
+        <translation>Clean up to the limit now</translation>
+    </message>
+    <message>
+        <source>按键中…</source>
+        <translation>Press keys…</translation>
+    </message>
+    <message>
+        <source>描边</source>
+        <translation>Outline</translation>
+    </message>
+    <message>
+        <source>提示：目标峰值来自播放页的「目标峰值」，修改后立即作用于 mpv。</source>
+        <translation>Note: the target peak comes from "Target peak" on the playback page and takes effect immediately in the player.</translation>
     </message>
     <message>
         <source>播放</source>
@@ -691,81 +1094,309 @@
         <translation>Playing</translation>
     </message>
     <message>
+        <source>播放行为</source>
+        <translation>Playback behavior</translation>
+    </message>
+    <message>
+        <source>播放速度在退出时写入 [playback] speed，下次启动恢复。</source>
+        <translation>Playback speed is written to [playback] speed on exit and restored on next launch.</translation>
+    </message>
+    <message>
+        <source>改键</source>
+        <translation>Rebind</translation>
+    </message>
+    <message>
         <source>文件：</source>
         <translation>File: </translation>
     </message>
     <message>
-        <source>断点在 settings.toml 的 [ui.layout.&lt;主题&gt;] compactBelow 中配置，非法值回退 560。</source>
-        <translation>The breakpoint is configured as compactBelow under [ui.layout.&lt;theme&gt;] in settings.toml; invalid values fall back to 560.</translation>
+        <source>断点续播</source>
+        <translation>Resume playback</translation>
     </message>
     <message>
-        <source>断点：</source>
-        <translation>Breakpoint: </translation>
+        <source>日志保留天数</source>
+        <translation>Log retention days</translation>
+    </message>
+    <message>
+        <source>日志级别</source>
+        <translation>Log level</translation>
     </message>
     <message>
         <source>时长：</source>
         <translation>Duration: </translation>
     </message>
     <message>
+        <source>映射目标峰值</source>
+        <translation>Mapping target peak</translation>
+    </message>
+    <message>
         <source>暂停</source>
         <translation>Pause</translation>
+    </message>
+    <message>
+        <source>曲线预览不可用
+缺少真实 BT.2390 数据源，1.0 不提供图形曲线（非占位图）</source>
+        <translation>Curve preview unavailable\nNo real BT.2390 data source; 1.0 does not ship a graphical curve (not a placeholder).</translation>
     </message>
     <message>
         <source>更新</source>
         <translation>Update</translation>
     </message>
     <message>
+        <source>更新通道</source>
+        <translation>Update channel</translation>
+    </message>
+    <message>
+        <source>最小化时隐藏到托盘</source>
+        <translation>Hide to tray when minimized</translation>
+    </message>
+    <message>
         <source>未打开</source>
         <translation>Not opened</translation>
+    </message>
+    <message>
+        <source>本地模式：不提供账户、登录与云端同步。账户体系无后端支撑，1.1 之后显式延后，不计入 1.0.0 范围。</source>
+        <translation>Local mode: no accounts, sign-in, or cloud sync. The account system has no backend and is explicitly deferred beyond 1.1; it is out of scope for 1.0.0.</translation>
+    </message>
+    <message>
+        <source>条目 %1 · 根目录 %2 · 状态：%3</source>
+        <translation>Entry %1 · root %2 · status: %3</translation>
+    </message>
+    <message>
+        <source>查看许可与开源声明</source>
+        <translation>View licenses and open-source notices</translation>
     </message>
     <message>
         <source>标题：</source>
         <translation>Title: </translation>
     </message>
     <message>
+        <source>检测到 </source>
+        <translation>Detected </translation>
+    </message>
+    <message>
+        <source>正在等待新快捷键…按 Esc 取消</source>
+        <translation>Waiting for a new shortcut… press Esc to cancel</translation>
+    </message>
+    <message>
+        <source>正式版</source>
+        <translation>Stable</translation>
+    </message>
+    <message>
+        <source>测试版</source>
+        <translation>Beta</translation>
+    </message>
+    <message>
+        <source>海报墙</source>
+        <translation>Poster wall</translation>
+    </message>
+    <message>
+        <source>添加目录…</source>
+        <translation>Add folder…</translation>
+    </message>
+    <message>
+        <source>清理缩略图缓存</source>
+        <translation>Clean thumbnail cache</translation>
+    </message>
+    <message>
         <source>渲染：libmpv（动态加载）· 输出：</source>
         <translation>Rendering: libmpv (dynamic) · output: </translation>
+    </message>
+    <message>
+        <source>点击「改键」后直接按下新组合键；「解绑」置为空；「默认」删除自定义项。写入 [keys] &lt;动作ID&gt;，即时生效并重启保持。</source>
+        <translation>Click "Rebind" and press the new combination; "Unbind" clears it; "Default" removes the custom entry. Writes [keys] &lt;action ID&gt;; applies immediately and persists across restarts.</translation>
     </message>
     <message>
         <source>状态：</source>
         <translation>Status: </translation>
     </message>
     <message>
-        <source>硬件解码、缓冲与 HDR 状态在 M3/M4 接入。</source>
-        <translation>Hardware decoding, buffering, and HDR status arrive in M3/M4.</translation>
+        <source>界面语言</source>
+        <translation>Interface language</translation>
     </message>
     <message>
-        <source>空格 播放/暂停 · F11 全屏 · Esc 退出面板/全屏 · O 打开文件
-</source>
-        <translation>Space play/pause · F11 fullscreen · Esc exits panel/fullscreen · O opens a file\n</translation>
+        <source>白色</source>
+        <translation>White</translation>
+    </message>
+    <message>
+        <source>目标峰值 %1 nits（playback.targetPeakNits，即时生效）</source>
+        <translation>Target peak %1 nits (playback.targetPeakNits, applies immediately)</translation>
+    </message>
+    <message>
+        <source>硬件解码</source>
+        <translation>Hardware decoding</translation>
+    </message>
+    <message>
+        <source>移除</source>
+        <translation>Remove</translation>
+    </message>
+    <message>
+        <source>窗口宽度低于该值切到紧凑布局，写入 [ui.layout.&lt;主题&gt;] compactBelow，即时生效（360–1600）</source>
+        <translation>Below this window width the compact layout is used; writes [ui.layout.&lt;theme&gt;] compactBelow; applies immediately (360–1600)</translation>
+    </message>
+    <message>
+        <source>立体声</source>
+        <translation>Stereo</translation>
+    </message>
+    <message>
+        <source>简体中文</source>
+        <translation>Simplified Chinese</translation>
+    </message>
+    <message>
+        <source>索引文件：</source>
+        <translation>Index file: </translation>
     </message>
     <message>
         <source>紧凑</source>
         <translation>Compact</translation>
     </message>
     <message>
+        <source>紧凑断点</source>
+        <translation>Compact breakpoint</translation>
+    </message>
+    <message>
         <source>紧凑模式</source>
         <translation>Compact mode</translation>
+    </message>
+    <message>
+        <source>绿色</source>
+        <translation>Green</translation>
+    </message>
+    <message>
+        <source>缓存与索引占用</source>
+        <translation>Cache and index usage</translation>
+    </message>
+    <message>
+        <source>缓存时长</source>
+        <translation>Cache duration</translation>
+    </message>
+    <message>
+        <source>缩略图 %1 · 索引 %2 · 日志 %3 · 配置 %4 · 合计 %5</source>
+        <translation>Thumbnails %1 · index %2 · logs %3 · config %4 · total %5</translation>
+    </message>
+    <message>
+        <source>缩略图缓存上限</source>
+        <translation>Thumbnail cache limit</translation>
+    </message>
+    <message>
+        <source>网络代理</source>
+        <translation>Network proxy</translation>
+    </message>
+    <message>
+        <source>自动</source>
+        <translation>Auto</translation>
+    </message>
+    <message>
+        <source>自动加载外挂字幕</source>
+        <translation>Load external subtitles automatically</translation>
+    </message>
+    <message>
+        <source>自动播放下一集</source>
+        <translation>Autoplay next episode</translation>
+    </message>
+    <message>
+        <source>自动（原样）</source>
+        <translation>Auto (as-is)</translation>
+    </message>
+    <message>
+        <source>自动（系统默认）</source>
+        <translation>Auto (system default)</translation>
     </message>
     <message>
         <source>解码与渲染</source>
         <translation>Decoding &amp; rendering</translation>
     </message>
     <message>
+        <source>解绑</source>
+        <translation>Unbind</translation>
+    </message>
+    <message>
+        <source>警告</source>
+        <translation>Warning</translation>
+    </message>
+    <message>
+        <source>许可与诊断</source>
+        <translation>Licenses &amp; diagnostics</translation>
+    </message>
+    <message>
         <source>设置</source>
         <translation>Settings</translation>
+    </message>
+    <message>
+        <source>诊断</source>
+        <translation>Diagnostics</translation>
+    </message>
+    <message>
+        <source>调试</source>
+        <translation>Debug</translation>
+    </message>
+    <message>
+        <source>账户</source>
+        <translation>Account</translation>
+    </message>
+    <message>
+        <source>跟随系统</source>
+        <translation>Follow system</translation>
+    </message>
+    <message>
+        <source>跟随系统（当前界面文案）</source>
+        <translation>Follow system (current UI language)</translation>
     </message>
     <message>
         <source>轨道 </source>
         <translation>Track </translation>
     </message>
     <message>
+        <source>输出</source>
+        <translation>Output</translation>
+    </message>
+    <message>
+        <source>输出设备</source>
+        <translation>Output device</translation>
+    </message>
+    <message>
+        <source>还没有添加视频目录。点击「添加目录…」后会扫描并生成缩略图。</source>
+        <translation>No video folders yet. Click "Add folder…" to scan and generate thumbnails.</translation>
+    </message>
+    <message>
+        <source>这是一行用于校准字号与描边的字幕预览</source>
+        <translation>This is a subtitle preview for calibrating font size and outline</translation>
+    </message>
+    <message>
+        <source>退出前确认</source>
+        <translation>Confirm before exit</translation>
+    </message>
+    <message>
+        <source>选择…</source>
+        <translation>Choose…</translation>
+    </message>
+    <message>
         <source>通用</source>
         <translation>General</translation>
     </message>
     <message>
+        <source>配置目录：</source>
+        <translation>Config folder: </translation>
+    </message>
+    <message>
         <source>配置：</source>
         <translation>Config: </translation>
+    </message>
+    <message>
+        <source>重建媒体库索引</source>
+        <translation>Rebuild library index</translation>
+    </message>
+    <message>
+        <source>重新扫描</source>
+        <translation>Rescan</translation>
+    </message>
+    <message>
+        <source>错误</source>
+        <translation>Error</translation>
+    </message>
+    <message>
+        <source>青色</source>
+        <translation>Cyan</translation>
     </message>
     <message>
         <source>静音</source>
@@ -776,16 +1407,56 @@
         <translation>Volume</translation>
     </message>
     <message>
+        <source>音量与静音状态在退出时写入 [audio] volume / muted，下次启动恢复。</source>
+        <translation>Volume and mute state are written to [audio] volume / muted on exit and restored on next launch.</translation>
+    </message>
+    <message>
         <source>音频</source>
         <translation>Audio</translation>
+    </message>
+    <message>
+        <source>音频延迟</source>
+        <translation>Audio delay</translation>
     </message>
     <message>
         <source>音频轨道</source>
         <translation>Audio tracks</translation>
     </message>
     <message>
+        <source>颜色</source>
+        <translation>Color</translation>
+    </message>
+    <message>
+        <source>黄色</source>
+        <translation>Yellow</translation>
+    </message>
+    <message>
+        <source>默认</source>
+        <translation>Default</translation>
+    </message>
+    <message>
+        <source>默认视图</source>
+        <translation>Default view</translation>
+    </message>
+    <message>
+        <source>（</source>
+        <translation>(</translation>
+    </message>
+    <message>
+        <source>（尚未生成）</source>
+        <translation> (not generated yet)</translation>
+    </message>
+    <message>
+        <source>（未绑定）</source>
+        <translation> (unbound)</translation>
+    </message>
+    <message>
         <source>（静音）</source>
         <translation> (muted)</translation>
+    </message>
+    <message>
+        <source>）：</source>
+        <translation>): </translation>
     </message>
 </context>
 <context>

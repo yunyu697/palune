@@ -327,7 +327,7 @@ Item {
         }
     }
 
-    // 底部技术信息条（设计稿 §4：字段映射 mpv 属性；空态隐藏）
+    // 底部技术信息条（设计稿 §4：字段来自播放器门面 player 暴露的技术属性；空态隐藏）
     Rectangle {
         id: techBar
         visible: uiState.chromeVisible && !layoutB.compact && layoutB.hasFile
@@ -469,7 +469,7 @@ Item {
         return value && value !== "" ? value : "—"
     }
 
-    // mpv 的 video-codec 会给出完整描述（H.264 / AVC / MPEG-4 AVC / ...），
+    // player.videoCodec 会给出完整描述（H.264 / AVC / MPEG-4 AVC / ...），
     // 技术条只显示第一段，避免把其余字段挤出可视区。
     function codecShort(value) {
         if (!value || value === "")

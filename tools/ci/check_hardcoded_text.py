@@ -17,7 +17,13 @@ VISIBLE = re.compile(
 )
 
 # 品牌名与纯数字/符号标签不参与翻译。
-WHITELIST = {"PALUNE", "Palune ", "Qt ", "-10s", "+10s", "-10", "+10", "x", "%", ""}
+# 另含：非文本符号（窗口按钮、占位破折号、加减号、乘号、分隔点）；
+# nits 为 HDR 亮度单位；UTF-8 / GB18030 是编码名；English 是语言名（惯例不译）。
+WHITELIST = {
+    "PALUNE", "Palune ", "Qt ", "-10s", "+10s", "-10", "+10", "x", "%", "",
+    "—", "−", "\\u2014", "\\u2715", "×", "  · ",
+    "600 nits", "800 nits", "1000 nits", "UTF-8", "GB18030", "English",
+}
 NEUTRAL = re.compile(r"^[0-9+\-.,:%/ ]*$")
 COLOR = re.compile(r"^#[0-9a-fA-F]{3,8}$")
 

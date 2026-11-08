@@ -26,6 +26,10 @@ BANNED = [
 PATTERN = re.compile("|".join(re.escape(word) for word in BANNED), re.IGNORECASE)
 
 SKIP_DIRS = {".git", "build", "build-cov", "node_modules", "__pycache__"}
+# qa/runtime 是本地生成目录（已在 .gitignore 中忽略），存放冒烟报告、临时配置
+# 与第三方应用设置样本（例如编辑器 globalStorage 副本）。它不是仓库内容，
+# 不参与品牌扫描，也避免把样本数据里的键名误判成竞品表述。
+SKIP_PATHS = {(ROOT / "qa" / "runtime").resolve()}
 SKIP_EXT = {
     ".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico", ".icns",
     ".dll", ".so", ".dylib", ".a", ".lib", ".exe", ".pdb", ".obj",
@@ -40,6 +44,7 @@ def text_files() -> list[Path]:
         dirnames[:] = [
             name for name in dirnames
             if name not in SKIP_DIRS and not name.startswith("build-")
+            and (Path(dirpath) / name).resolve() not in SKIP_PATHS
         ]
         for name in filenames:
             path = Path(dirpath) / name

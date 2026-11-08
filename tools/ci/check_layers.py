@@ -5,6 +5,8 @@
 - qml/components/ 不得 import qml/layouts/（L1 组件不能依赖 L2 布局）
 - qml/tokens/     不得 import components/ 或 layouts/（L0 令牌零依赖）
 - qml/layouts/    不得出现播放器调用（player.xxx(...)）、mpv 或 VideoHost
+- qml/            全量不得直接调用播放器后端（player.xxx(...)）或引用 mpv API（mpv.* / MpvClient），
+                  一律经 PlayerFacade 读属性、经 win.action 下发动作
 - src/media/      不得 include mpv/ 或任何 Qt Quick/QML 头文件（内容源抽象与 UI/内核解耦）
 
 违规即退出码 1，供 CI 直接判红。
@@ -23,6 +25,9 @@ SRC = ROOT / "src"
 IMPORT_RE = re.compile(r"^\s*import\s+(.+)$", re.MULTILINE)
 PLAYER_CALL_RE = re.compile(r"\bplayer\.\w+\s*\(")
 MPV_RE = re.compile(r"\bmpv\b|MpvClient", re.IGNORECASE)
+# 只匹配真正的后端 API 引用（mpv.xxx / MpvClient），避免把「libmpv 动态链接」这类
+# 用户可见文案算作越层；文案里的品牌披露由 check_brand_terms 与文档规范约束。
+MPV_API_RE = re.compile(r"\bmpv\.\w+|MpvClient")
 VIDEO_HOST_RE = re.compile(r"VideoHost")
 CINCLUDE_RE = re.compile(r'^\s*#\s*include\s*[<"]([^>"]+)[>"]', re.MULTILINE)
 
@@ -59,6 +64,22 @@ def main() -> int:
         if VIDEO_HOST_RE.search(text):
             failures.append(f"{path.relative_to(ROOT)}：VideoHost 必须在布局树外")
 
+    # 布局之外的全量 QML 再扫一遍，防止同类越层在面板/组件里重新冒出来：
+    # 读播放器状态只能读 PlayerFacade 属性，动作只能经 win.action 下发。
+    all_qml = qml_files(QML)
+    for path in all_qml:
+        if path.is_relative_to(QML / "layouts"):
+            continue
+        text = path.read_text(encoding="utf-8")
+        if PLAYER_CALL_RE.search(text):
+            failures.append(
+                f"{path.relative_to(ROOT)}：QML 直接调用播放器后端方法（改走 win.action）"
+            )
+        if MPV_API_RE.search(text):
+            failures.append(
+                f"{path.relative_to(ROOT)}：QML 直接引用 mpv 后端 API（应经 PlayerFacade/VideoHost）"
+            )
+
     media_sources = sorted((SRC / "media").rglob("*")) if (SRC / "media").is_dir() else []
     for path in media_sources:
         if not path.is_file() or path.suffix.lower() not in {".h", ".hpp", ".cpp", ".cc"}:
@@ -77,7 +98,7 @@ def main() -> int:
             print(f"  - {item}")
         return 1
     print(f"[OK] 分层约束通过：tokens={len(tokens)} components={len(components)} "
-          f"layouts={len(layouts)} media 源文件已检查")
+          f"layouts={len(layouts)} qml={len(all_qml)} media 源文件已检查")
     return 0
 
 

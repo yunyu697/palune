@@ -122,6 +122,235 @@ TRANSLATIONS = {
     "音频": "Audio",
     "音频轨道": "Audio tracks",
     "（静音）": " (muted)",
+    # P0 界面语言、存储、媒体库与 B 布局新增文案
+    " / ": " / ",
+    " · 切换语言需重启 Palune": " · Restart Palune to apply",
+    " · 滞回 ±": " · hysteresis ±",
+    " 处键位冲突（同作用域内相同组合键）": " shortcut conflicts (same combo in the same scope)",
+    " 项）": " items)",
+    "30 秒": "30 s",
+    "60 秒": "60 s",
+    "BT.2390 色调映射": "BT.2390 tone mapping",
+    "HDR ": "HDR ",
+    "HDR 色调映射（BT.2390）": "HDR tone mapping (BT.2390)",
+    "[audio] channels = auto / stereo / 5.1，即时生效":
+        "[audio] channels = auto / stereo / 5.1; applies immediately",
+    "[audio] delay，默认 0.0s；音画不同步时微调，即时生效":
+        "[audio] delay, default 0.0s; fine-tune when audio and video are out of sync; applies immediately",
+    "[audio] device，默认跟随系统；列表由 mpv 的 audio-device-list 提供，即时生效":
+        "[audio] device, follows the system by default; the list comes from the player audio-device-list and applies immediately",
+    "[playback] autoNext，默认关；播完当前文件后顺序播放下一个同目录文件":
+        "[playback] autoNext, off by default; plays the next file in the same folder after the current one ends",
+    "[playback] cacheSeconds = 0/30/60；0 表示 mpv 默认，下次打开文件生效":
+        "[playback] cacheSeconds = 0/30/60; 0 uses the player default and applies the next time a file is opened",
+    "[playback] deinterlace = auto / on / off，即时生效":
+        "[playback] deinterlace = auto / on / off; applies immediately",
+    "[playback] hwdec = auto / hardware / off，即时生效（切文件后重新初始化解码器）":
+        "[playback] hwdec = auto / hardware / off; applies immediately (reinitializes the decoder after switching files)",
+    "[playback] resume，默认开；关闭后不再自动跳回上次位置":
+        "[playback] resume, on by default; when off, playback no longer jumps back to the previous position",
+    "[playback] targetPeakNits，默认 1000 nits，即时生效":
+        "[playback] targetPeakNits, default 1000 nits; applies immediately",
+    "[playback] toneMapping，默认开；关闭时交给 mpv 选映射算法":
+        "[playback] toneMapping, on by default; when off, the player chooses the mapping algorithm",
+    "[sub] autoLoad，默认开（模糊匹配同名字幕）":
+        "[sub] autoLoad, on by default (fuzzy-matches subtitles with the same name)",
+    "[sub] color，默认白，即时生效":
+        "[sub] color, white by default; applies immediately",
+    "[sub] delay，默认 0.0s（正值为字幕推迟），即时生效":
+        "[sub] delay, default 0.0s (positive values delay subtitles); applies immediately",
+    "[sub] encoding，默认自动检测；乱码时手动指定":
+        "[sub] encoding, auto-detected by default; set manually if text is garbled",
+    "[sub] fontSize，默认 15，即时生效":
+        "[sub] fontSize, default 15; applies immediately",
+    "[sub] outline，默认 1.0px，即时生效":
+        "[sub] outline, default 1.0px; applies immediately",
+    "[sub] position，默认贴底 8%，即时生效":
+        "[sub] position, default 8% from the bottom; applies immediately",
+    "[ui] autoPlay，默认开": "[ui] autoPlay, on by default",
+    "[ui] closeToTray，默认关；托盘菜单「退出」始终真正退出":
+        "[ui] closeToTray, off by default; the tray menu \"Exit\" always quits",
+    "[ui] confirmExit，默认关": "[ui] confirmExit, off by default",
+    "[ui] minimizeToTray，默认关": "[ui] minimizeToTray, off by default",
+    "[ui] startMaximized，默认关（下次启动生效）":
+        "[ui] startMaximized, off by default (applies on next launch)",
+    "[update] autoCheck，默认开；启动 3 秒后静默检查，只提示下载，不自动安装":
+        "[update] autoCheck, on by default; checks silently 3 seconds after launch, only prompts to download, never auto-installs",
+    "[update] channel = stable / beta；beta 读取 latest-beta.json，需发行仓库发布该清单后才有内容":
+        "[update] channel = stable / beta; beta reads latest-beta.json and has no content until the release repository publishes it",
+    "[update] proxy，默认跟随系统；即时应用，下次启动仍读取该值":
+        "[update] proxy, follows the system by default; applies immediately and is read again on next launch",
+    "px": "px",
+    "下载目录": "Download folder",
+    "不使用代理": "No proxy",
+    "信息": "Info",
+    "修改日期": "Modified",
+    "全屏 / 还原": "Fullscreen / Restore",
+    "全部恢复默认": "Restore all defaults",
+    "关闭字幕": "Subtitles off",
+    "关闭窗口时留在托盘": "Keep running in the tray when the window closes",
+    "关闭（软解）": "Off (software decoding)",
+    "写入 [diag] logLevel，即时生效；debug 仅用于排查，会产生大量日志":
+        "Writes [diag] logLevel; applies immediately. Use debug only for troubleshooting; it produces a lot of logs",
+    "写入 [library] viewMode = poster / list，即时生效，重启后保持":
+        "Writes [library] viewMode = poster / list; applies immediately and persists across restarts",
+    "写入 [storage] logRetentionDays，默认 14 天；修改后立即清理一次，启动时再清理":
+        "Writes [storage] logRetentionDays, default 14 days; cleans up immediately after a change and again at startup",
+    "写入 [storage] thumbCacheLimitMb，默认 2000 MB；下次扫描结束时按最旧优先淘汰":
+        "Writes [storage] thumbCacheLimitMb, default 2000 MB; evicts oldest thumbnails at the end of the next scan",
+    "写入 [ui] language：system / zh_CN / en_US，默认跟随系统，重启后生效":
+        "Writes [ui] language: system / zh_CN / en_US; follows the system by default and applies after a restart",
+    "列表": "List",
+    "加载外挂字幕…": "Load external subtitles…",
+    "去隔行": "Deinterlace",
+    "取消改键": "Cancel rebinding",
+    "名称": "Name",
+    "启动与关闭": "Startup & shutdown",
+    "启动时最大化": "Start maximized",
+    "启动时自动打开最近播放的文件（[ui] restoreLastSession，默认关）":
+        "Open the most recently played file at startup ([ui] restoreLastSession, off by default)",
+    "启动时自动检查更新": "Check for updates at startup",
+    "声道": "Channels",
+    "大小": "Size",
+    "天": "days",
+    "媒体": "Media",
+    "媒体信息": "Media info",
+    "媒体库还是空的": "Your library is empty",
+    "媒体库：": "Library: ",
+    "字号": "Font size",
+    "字号 %1 · 描边 %2px · 底部安全距 %3%":
+        "Font size %1 · outline %2px · bottom safe distance %3%",
+    "字幕样式": "Subtitle style",
+    "字幕编码": "Subtitle encoding",
+    "字幕预览": "Subtitle preview",
+    "字幕预览：字号、颜色、描边、位置按左侧设置实时变化":
+        "Subtitle preview: font size, color, outline, and position follow the settings on the left in real time",
+    "存储": "Storage",
+    "导入配置（重启生效）…": "Import settings (restart required)…",
+    "导出配置…": "Export settings…",
+    "就绪": "Ready",
+    "工作台": "Workbench",
+    "底部位置": "Bottom position",
+    "延迟": "Delay",
+    "开启": "On",
+    "强制硬解": "Force hardware decoding",
+    "当前文件没有章节信息": "No chapter information for this file",
+    "当前生效：": "Currently active: ",
+    "当前：": "Current: ",
+    "快捷键（共 ": "Shortcuts (",
+    "恢复上次会话": "Restore last session",
+    "打开媒体库": "Open library",
+    "打开崩溃目录": "Open crash folder",
+    "打开文件…": "Open file…",
+    "打开文件后自动播放": "Autoplay after opening a file",
+    "打开索引目录": "Open index folder",
+    "打开配置目录": "Open config folder",
+    "扫描中…": "Scanning…",
+    "按上限立即清理": "Clean up to the limit now",
+    "按键中…": "Press keys…",
+    "描边": "Outline",
+    "提示：目标峰值来自播放页的「目标峰值」，修改后立即作用于 mpv。":
+        "Note: the target peak comes from \"Target peak\" on the playback page and takes effect immediately in the player.",
+    "播放 / 暂停": "Play / Pause",
+    "播放行为": "Playback behavior",
+    "播放速度在退出时写入 [playback] speed，下次启动恢复。":
+        "Playback speed is written to [playback] speed on exit and restored on next launch.",
+    "改键": "Rebind",
+    "断点续播": "Resume playback",
+    "日志保留天数": "Log retention days",
+    "日志级别": "Log level",
+    "时长 ": "Duration ",
+    "时长 —": "Duration —",
+    "映射目标峰值": "Mapping target peak",
+    "曲线预览不可用": "Curve preview unavailable",
+    "曲线预览不可用\\n缺少真实 BT.2390 数据源，1.0 不提供图形曲线（非占位图）":
+        "Curve preview unavailable\\nNo real BT.2390 data source; 1.0 does not ship a graphical curve (not a placeholder).",
+    "更新通道": "Update channel",
+    "最小化时隐藏到托盘": "Hide to tray when minimized",
+    "本地模式：不提供账户、登录与云端同步。账户体系无后端支撑，1.1 之后显式延后，不计入 1.0.0 范围。":
+        "Local mode: no accounts, sign-in, or cloud sync. The account system has no backend and is explicitly deferred beyond 1.1; it is out of scope for 1.0.0.",
+    "条目 %1 · 根目录 %2 · 状态：%3": "Entry %1 · root %2 · status: %3",
+    "查看许可与开源声明": "View licenses and open-source notices",
+    "格式": "Format",
+    "检测到 ": "Detected ",
+    "正在扫描": "Scanning",
+    "正在等待新快捷键…按 Esc 取消": "Waiting for a new shortcut… press Esc to cancel",
+    "正式版": "Stable",
+    "测试版": "Beta",
+    "海报": "Poster",
+    "海报墙": "Poster wall",
+    "添加目录": "Add folder",
+    "添加目录…": "Add folder…",
+    "清理缩略图缓存": "Clean thumbnail cache",
+    "点击「改键」后直接按下新组合键；「解绑」置为空；「默认」删除自定义项。写入 [keys] <动作ID>，即时生效并重启保持。":
+        "Click \"Rebind\" and press the new combination; \"Unbind\" clears it; \"Default\" removes the custom entry. Writes [keys] <action ID>; applies immediately and persists across restarts.",
+    "界面语言": "Interface language",
+    "白色": "White",
+    "目录": "Folder",
+    "目标峰值 %1 nits（playback.targetPeakNits，即时生效）":
+        "Target peak %1 nits (playback.targetPeakNits, applies immediately)",
+    "硬件解码": "Hardware decoding",
+    "硬解 ": "HW decode ",
+    "移除": "Remove",
+    "窗口宽度低于该值切到紧凑布局，写入 [ui.layout.<主题>] compactBelow，即时生效（360–1600）":
+        "Below this window width the compact layout is used; writes [ui.layout.<theme>] compactBelow; applies immediately (360–1600)",
+    "立体声": "Stereo",
+    "章节": "Chapters",
+    "简体中文": "Simplified Chinese",
+    "索引文件：": "Index file: ",
+    "紧凑断点": "Compact breakpoint",
+    "绿色": "Green",
+    "缓存与索引占用": "Cache and index usage",
+    "缓存时长": "Cache duration",
+    "缩略图 %1 · 索引 %2 · 日志 %3 · 配置 %4 · 合计 %5":
+        "Thumbnails %1 · index %2 · logs %3 · config %4 · total %5",
+    "缩略图缓存上限": "Thumbnail cache limit",
+    "网络代理": "Network proxy",
+    "自动": "Auto",
+    "自动加载外挂字幕": "Load external subtitles automatically",
+    "自动播放下一集": "Autoplay next episode",
+    "自动（原样）": "Auto (as-is)",
+    "自动（系统默认）": "Auto (system default)",
+    "解码 ": "Decode ",
+    "解码 —": "Decode —",
+    "解绑": "Unbind",
+    "警告": "Warning",
+    "许可与诊断": "Licenses & diagnostics",
+    "诊断": "Diagnostics",
+    "调试": "Debug",
+    "账户": "Account",
+    "跟随系统": "Follow system",
+    "跟随系统（当前界面文案）": "Follow system (current UI language)",
+    "输出": "Output",
+    "输出设备": "Output device",
+    "还没有添加视频目录。点击「添加目录…」后会扫描并生成缩略图。":
+        "No video folders yet. Click \"Add folder…\" to scan and generate thumbnails.",
+    "这是一行用于校准字号与描边的字幕预览":
+        "This is a subtitle preview for calibrating font size and outline",
+    "退出": "Exit",
+    "退出前确认": "Confirm before exit",
+    "选择…": "Choose…",
+    "速度 ": "Speed ",
+    "速度 —": "Speed —",
+    "配置目录：": "Config folder: ",
+    "重建媒体库索引": "Rebuild library index",
+    "重新扫描": "Rescan",
+    "错误": "Error",
+    "队列": "Queue",
+    "青色": "Cyan",
+    "音轨 — · 字幕 —": "Audio — · subtitles —",
+    "音量与静音状态在退出时写入 [audio] volume / muted，下次启动恢复。":
+        "Volume and mute state are written to [audio] volume / muted on exit and restored on next launch.",
+    "音频延迟": "Audio delay",
+    "预览": "Preview",
+    "颜色": "Color",
+    "黄色": "Yellow",
+    "默认": "Default",
+    "默认视图": "Default view",
+    "（": "(",
+    "（尚未生成）": " (not generated yet)",
+    "（未绑定）": " (unbound)",
+    "）：": "): ",
 }
 
 # C++ 侧用户可见文案（状态、错误、示例数据），统一用 "Palune" 上下文。
@@ -264,10 +493,12 @@ def wrap_file(path: Path) -> tuple[str, list[str]]:
         changed = False
         for match in LITERAL.finditer(line):
             literal = match.group(0)
-            if not CJK.search(literal):
-                continue
+            # 已包在 qsTr() 里的字面量一律登记（含非 CJK 的标点/单位片段），
+            # 否则 check_i18n 会判为缺翻译；未包裹的只需处理含 CJK 的文案。
             if line[:match.start()].rstrip().endswith("qsTr("):
                 sources.append(literal[1:-1])
+                continue
+            if not CJK.search(literal):
                 continue
             sources.append(literal[1:-1])
             result += line[last:match.start()] + "qsTr(" + literal + ")"

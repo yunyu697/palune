@@ -641,7 +641,7 @@ Item {
                                     MouseArea {
                                         anchors.fill: parent
                                         cursorShape: Qt.PointingHandCursor
-                                        onClicked: player.setSubtitleTrack(modelData.id)
+                                        onClicked: win.action("subtitleSet", modelData.id)
                                     }
                                 }
                             }
@@ -655,7 +655,7 @@ Item {
                         PillButton {
                             visible: player.subtitleTracks.length > 0
                             label: qsTr("关闭字幕")
-                            onClicked: player.setSubtitleTrack(-1)
+                            onClicked: win.action("subtitleSet", -1)
                         }
 
                         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
@@ -833,7 +833,7 @@ Item {
                                     MouseArea {
                                         anchors.fill: parent
                                         cursorShape: Qt.PointingHandCursor
-                                        onClicked: player.setAudioTrack(modelData.id)
+                                        onClicked: win.action("audioSet", modelData.id)
                                     }
                                 }
                             }

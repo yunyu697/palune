@@ -257,7 +257,7 @@ Item {
         onTriggered: root.toastText = ""
     }
 
-    // 播放错误页：真实绑定 MpvClient.errorMessage，不让失败静默。
+    // 播放错误页：真实绑定 player.errorMessage（播放器门面），不让失败静默。
     Rectangle {
         id: errorCard
         visible: root.errorMessage !== "" && !root.errorDismissed

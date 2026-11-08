@@ -35,6 +35,11 @@ sha256 `f1b56eb5…`），来源未固定、且不在 1.0.22 上游归档中。�
 | MSVC 运行库（vcruntime140 / msvcp140 等） | 构建机 VC Redist 目录（`VCINSTALLDIR/Redist/MSVC/*/x64/Microsoft.VC*.CRT`） | 14.51.36247.0（VS 18 Community）；`vcruntime140.dll` sha256 `d1f4225d…` | runner 自带 VS 的 Redist，版本随镜像滚动 | **不保证一致**，也不钉版本；ABI 兼容，属于“机器相关”输入 |
 | NSIS / CPack | CMake 自带 CPack + 本机 NSIS | 只影响安装器封装字节，不影响运行文件 | runner 自带 | 不比较 |
 
+`windeployqt` 还会从 Qt 安装目录额外带入 `D3Dcompiler_47.dll`（4,173,928 B）与
+`opengl32sw.dll`（20,639,888 B），用于 ANGLE / 软件 OpenGL 回退；二者同属上表
+Qt 行，随 Qt 版本与安装器变化，不在逐字节可复现范围。安装树其余 DLL 均已归入
+表中某一行（本项目不额外分发 ffmpeg 等二进制）。
+
 ## 复核方式
 
 构建后可直接比对（安装树里的值应与上表一致）：

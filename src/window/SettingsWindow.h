@@ -44,7 +44,7 @@ public:
     bool isOpen() const { return isVisible(); }
 
     Q_INVOKABLE void requestClose() { closeSelf(); }
-    // 自动化/截图：切到指定设置页（0 通用 / 1 播放 / 2 字幕 / 3 音频 / 4 快捷键 / 5 关于）。
+    // 自动化/截图：切到指定设置页（0 通用 / 1 播放 / 2 字幕 / 3 音频 / 4 快捷键 / 5 媒体库 / 6 存储 / 7 关于）。
     Q_INVOKABLE void setPage(int page);
     // 无边框设置窗没有系统标题栏，拖动必须由标题区域主动发起系统移动循环。
     Q_INVOKABLE void startMove() { startSystemMove(); }

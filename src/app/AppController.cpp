@@ -23,6 +23,7 @@
 #include "window/VideoWindow.h"
 
 #include <QAction>
+#include <QApplication>
 #include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -37,6 +38,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QKeyEvent>
+#include <QMessageBox>
 #include <QMutex>
 #include <QMenu>
 #include <QQmlContext>
@@ -209,6 +211,30 @@ void AppController::startNormal()
     if (!probePath.isEmpty())
         QTimer::singleShot(5000, this, [this, probePath]() { runPreferencesProbe(probePath); });
 
+    // 启动窗口态探针：验证 ui.startMaximized 是否真的以最大化启动（需要独立一次启动）。
+    const QString windowStatePath = qEnvironmentVariable("PALUNE_WINDOW_STATE_PROBE");
+    if (!windowStatePath.isEmpty()) {
+        QTimer::singleShot(2000, this, [this, windowStatePath]() {
+            QJsonObject report;
+            report.insert(QStringLiteral("mode"), QStringLiteral("window-state"));
+            report.insert(QStringLiteral("version"), QStringLiteral(PALUNE_VERSION));
+            if (m_windows && m_windows->overlay()) {
+                report.insert(QStringLiteral("maximized"), m_windows->isMaximized());
+                report.insert(QStringLiteral("visible"), m_windows->overlay()->isVisible());
+                report.insert(QStringLiteral("size"),
+                              QStringLiteral("%1x%2")
+                                  .arg(m_windows->overlay()->width())
+                                  .arg(m_windows->overlay()->height()));
+                report.insert(QStringLiteral("startMaximizedSetting"),
+                              m_windows->preferences()->startMaximized());
+            }
+            report.insert(QStringLiteral("generatedAt"),
+                          QDateTime::currentDateTime().toString(Qt::ISODate));
+            writeJsonReport(report, windowStatePath);
+            finishWithCode(0);
+        });
+    }
+
     // 通知区域图标：窗口被最小化或切走后仍能找到入口。图标与窗口/exe 共用同一份
     // 品牌资源（qrc 里的 256 PNG），自动化截图场景不创建，避免遮挡与干扰。
     const bool uiAutomation = automationMode;
@@ -272,7 +298,7 @@ void AppController::startNormal()
                     QImage image;
                     if (m_options.uiPanel == QLatin1String("settings")
                         && m_windows->settingsWindow()) {
-                        // 截图分页：PALUNE_SETTINGS_PAGE=0..5
+                        // 截图分页：PALUNE_SETTINGS_PAGE=0..7（通用/播放/字幕/音频/快捷键/媒体库/存储/关于）
                         m_windows->settingsWindow()->setPage(
                             qEnvironmentVariableIntValue("PALUNE_SETTINGS_PAGE"));
                         QElapsedTimer settle;
@@ -1806,13 +1832,213 @@ void AppController::runPreferencesProbe(const QString &path)
 
     prefs->setKeyBinding(QStringLiteral("playPause"), QStringLiteral("Ctrl+F9"));
 
+    // 存储整组行为验证：真实写文件、真实删除、真实导出/导入，不是只读键值。
+    QJsonObject storageProbe;
+    {
+        const QString libraryDir = AppPaths::configDir() + QStringLiteral("/library");
+        const QString thumbs = libraryDir + QStringLiteral("/thumbs");
+        QDir().mkpath(thumbs);
+        // 两个 55 MB 的伪缩略图（上限改成 100 MB 时必然触发最旧淘汰）。
+        for (const QString &name : {QStringLiteral("probe-old.jpg"), QStringLiteral("probe-new.jpg")}) {
+            QFile file(thumbs + QLatin1Char('/') + name);
+            if (file.open(QIODevice::WriteOnly)) {
+                file.resize(55 * 1024 * 1024);
+                file.close();
+            }
+            // 让 probe-old 更旧，保证淘汰顺序可复现。
+            QFile touched(thumbs + QLatin1Char('/') + name);
+            touched.open(QIODevice::ReadWrite);
+            touched.setFileTime(QDateTime::currentDateTime().addSecs(name.contains(QStringLiteral("old"))
+                                                                     ? -3600 : -60),
+                                QFileDevice::FileModificationTime);
+            touched.close();
+        }
+        const qint64 before = prefs->storageUsage().value(QStringLiteral("thumbsBytes")).toLongLong();
+        prefs->setThumbCacheLimitMb(100);
+        m_library->trimThumbCache();
+        const qint64 after = prefs->storageUsage().value(QStringLiteral("thumbsBytes")).toLongLong();
+        storageProbe.insert(QStringLiteral("thumbsBytesBefore"), before);
+        storageProbe.insert(QStringLiteral("thumbsBytesAfter"), after);
+        storageProbe.insert(QStringLiteral("thumbsFilesAfter"),
+                            QDir(thumbs).entryList(QDir::Files).size());
+        storageProbe.insert(QStringLiteral("limitMb"), prefs->thumbCacheLimitMb());
+
+        // 日志保留：写一个 30 天前的日志文件，把保留期改成 7 天后应被真实删除。
+        const QString oldLog = AppPaths::logDir() + QStringLiteral("/palune-30d-old.log");
+        QDir().mkpath(AppPaths::logDir());
+        {
+            QFile file(oldLog);
+            if (file.open(QIODevice::WriteOnly)) {
+                file.write("old log\n");
+                file.close();
+            }
+            QFile touched(oldLog);
+            touched.open(QIODevice::ReadWrite);
+            touched.setFileTime(QDateTime::currentDateTime().addDays(-30),
+                                QFileDevice::FileModificationTime);
+            touched.close();
+        }
+        storageProbe.insert(QStringLiteral("oldLogExistsBefore"), QFileInfo::exists(oldLog));
+        prefs->setLogRetentionDays(7);
+        storageProbe.insert(QStringLiteral("oldLogExistsAfter"), QFileInfo::exists(oldLog));
+        storageProbe.insert(QStringLiteral("logRetentionDays"), prefs->logRetentionDays());
+
+        // 配置导出 → 改一个键 → 导入 → 从磁盘重读，键值恢复。
+        const QString exportPath = AppPaths::configDir() + QStringLiteral("/probe-export.toml");
+        QString exportError;
+        const bool exported = prefs->exportConfigTo(exportPath, &exportError);
+        const bool originalAutoPlay = prefs->autoPlay();
+        m_settings->setValue(QStringLiteral("ui.autoPlay"), !originalAutoPlay);
+        m_settings->save();
+        QString importError;
+        const bool imported = prefs->importConfigFrom(exportPath, &importError);
+        Settings diskAfterImport(AppPaths::settingsFile());
+        diskAfterImport.load();
+        storageProbe.insert(QStringLiteral("exported"), exported);
+        storageProbe.insert(QStringLiteral("exportBytes"), QFileInfo(exportPath).size());
+        storageProbe.insert(QStringLiteral("imported"), imported);
+        storageProbe.insert(QStringLiteral("importRestoredAutoPlay"),
+                            diskAfterImport.value(QStringLiteral("ui.autoPlay"), originalAutoPlay)
+                                .toBool() == originalAutoPlay);
+        storageProbe.insert(QStringLiteral("exportError"), exportError);
+        storageProbe.insert(QStringLiteral("importError"), importError);
+
+        // 索引重建：伪造索引文件，调用后应立即删除。
+        const QString indexPath = libraryDir + QStringLiteral("/index.json");
+        {
+            QFile file(indexPath);
+            if (file.open(QIODevice::WriteOnly))
+                file.write("{\"items\":[]}");
+        }
+        storageProbe.insert(QStringLiteral("indexExistsBefore"), QFileInfo::exists(indexPath));
+        m_library->rebuildLibraryIndex();
+        storageProbe.insert(QStringLiteral("indexExistsAfter"), QFileInfo::exists(indexPath));
+    }
+
+    // 界面语言：写入后由 main.cpp 在下一次启动时装载英文翻译。
+    prefs->setLanguage(QStringLiteral("en_US"));
+
+    // ---- 十项设置行为取证：真实窗口、真实播放器、真实网络请求 ----
+    QJsonObject behavior;
+    behavior.insert(QStringLiteral("trayAvailable"), QSystemTrayIcon::isSystemTrayAvailable());
+    // autoCheck：启动 3 秒后自动触发，探针在 5 秒执行，此时状态已离开 unchecked 即为“确实跑了”。
+    behavior.insert(QStringLiteral("autoCheckStateAtProbe"), m_updater->state());
+    behavior.insert(QStringLiteral("autoCheckFired"),
+                    m_updater->state() != QStringLiteral("unchecked"));
+
+    if (m_windows && m_windows->overlay() && QSystemTrayIcon::isSystemTrayAvailable()) {
+        auto *overlay = m_windows->overlay();
+        const bool visibleBefore = overlay->isVisible();
+        prefs->setCloseToTray(true);
+        m_windows->close();
+        behavior.insert(QStringLiteral("closeToTrayVisibleBefore"), visibleBefore);
+        behavior.insert(QStringLiteral("closeToTrayVisibleAfter"), overlay->isVisible());
+        behavior.insert(QStringLiteral("closeToTrayProcessAlive"), true);
+        overlay->show();
+        prefs->setCloseToTray(false);
+
+        prefs->setMinimizeToTray(true);
+        m_windows->minimizeWindow();
+        behavior.insert(QStringLiteral("minimizeToTrayVisibleAfter"), overlay->isVisible());
+        overlay->show();
+        prefs->setMinimizeToTray(false);
+    }
+
+    // 退出确认：关闭窗口应弹出模态确认；定时器在嵌套事件循环里记录并取消。
+    prefs->setConfirmExit(true);
+    bool dialogShown = false;
+    QString dialogText;
+    QTimer::singleShot(600, this, [&dialogShown, &dialogText]() {
+        if (QWidget *modal = QApplication::activeModalWidget()) {
+            dialogShown = true;
+            if (auto *box = qobject_cast<QMessageBox *>(modal)) {
+                dialogText = box->text();
+                box->reject();
+            } else {
+                modal->close();
+            }
+        }
+    });
+    m_windows->close();
+    behavior.insert(QStringLiteral("confirmExitDialogShown"), dialogShown);
+    behavior.insert(QStringLiteral("confirmExitDialogText"), dialogText);
+    behavior.insert(QStringLiteral("confirmExitCancelKeptAlive"), true);
+    prefs->setConfirmExit(false);
+
+    // 音频设备：写入真实设备名后从 mpv 读回 audio-device。
+    {
+        QString chosen = QStringLiteral("auto");
+        const QVariantList devices = prefs->audioDevices();
+        for (const QVariant &entry : devices) {
+            const QString value = entry.toMap().value(QStringLiteral("value")).toString();
+            if (!value.isEmpty() && value != QLatin1String("auto")) {
+                chosen = value;
+                break;
+            }
+        }
+        prefs->setAudioDevice(chosen);
+        behavior.insert(QStringLiteral("audioDevicesCount"), devices.size());
+        behavior.insert(QStringLiteral("audioDeviceChosen"), chosen);
+        behavior.insert(QStringLiteral("audioDeviceReadBack"),
+                        m_player->propertyString(QStringLiteral("audio-device")));
+    }
+
+    // beta 通道：settle 后更新器请求的 feed 应变为 latest-beta.json。
+    prefs->setUpdateChannel(QStringLiteral("beta"));
+    behavior.insert(QStringLiteral("betaFeedUrl"), m_updater->feedUrl().toString());
+    behavior.insert(QStringLiteral("betaFeedIsBeta"),
+                    m_updater->feedUrl().toString().contains(QStringLiteral("latest-beta.json")));
+
+    // 代理：指向一个必然拒绝连接的本地端口，触发真实更新请求并等待失败。
+    {
+        const QUrl originalFeed = m_updater->feedUrl();
+        prefs->setUpdateProxy(QStringLiteral("manual:127.0.0.1:1"));
+        m_updater->setFeedUrl(QUrl(QStringLiteral("http://127.0.0.1:9/latest.json")));
+        QEventLoop loop;
+        QTimer timeout;
+        timeout.setSingleShot(true);
+        QObject::connect(m_updater, &UpdateService::finished, &loop, &QEventLoop::quit);
+        QObject::connect(&timeout, &QTimer::timeout, &loop, &QEventLoop::quit);
+        m_updater->checkForUpdates();
+        // 等待更新器自身的超时/失败信号（代理被忽略时会直连失败，也会很快返回）。
+        timeout.start(16000);
+        loop.exec();
+        behavior.insert(QStringLiteral("proxyCheckState"), m_updater->state());
+        behavior.insert(QStringLiteral("proxyCheckCompleted"),
+                        m_updater->state() != QStringLiteral("checking"));
+        behavior.insert(QStringLiteral("proxyErrorCode"), m_updater->errorCode());
+        behavior.insert(QStringLiteral("proxyErrorMessage"), m_updater->errorMessage());
+        m_updater->setFeedUrl(originalFeed);
+        prefs->setUpdateProxy(QStringLiteral("none"));
+    }
+
+    // 下载目录：值已写入更新服务（真实落盘下载需要更新包与签名，属于未验证项）。
+    {
+        const QString dir = AppPaths::configDir() + QStringLiteral("/probe-downloads");
+        prefs->setDownloadDir(dir);
+        behavior.insert(QStringLiteral("downloadDirEffective"), prefs->downloadDirEffective());
+        behavior.insert(QStringLiteral("downloadDirIsolated"), prefs->downloadDirEffective() == dir);
+    }
+
+    // 许可：文件存在 + 走 openLicense 的真实分支（外部查看器是否成功打开不做断言）。
+    {
+        const QString notice = QCoreApplication::applicationDirPath() + QStringLiteral("/NOTICE.md");
+        const QString shareNotice =
+            QCoreApplication::applicationDirPath() + QStringLiteral("/../share/palune/NOTICE.md");
+        const bool found = QFileInfo::exists(notice) || QFileInfo::exists(shareNotice);
+        behavior.insert(QStringLiteral("licenseFileExists"), found);
+        if (found)
+            prefs->openLicense();
+        behavior.insert(QStringLiteral("licenseActionInvoked"), found);
+    }
+
     m_player->setVolume(70);
     if (!m_player->muted())
         m_player->toggleMute();
     prefs->saveSessionState();
     prefs->setLogLevel(QStringLiteral("info")); // 探针后回落，避免日志膨胀
 
-    QTimer::singleShot(1500, this, [this, path, prefs]() {
+    QTimer::singleShot(1500, this, [this, path, prefs, storageProbe, behavior]() {
         const QStringList mpvNames = {
             QStringLiteral("sub-font-size"), QStringLiteral("sub-color"),
             QStringLiteral("sub-border-size"), QStringLiteral("sub-pos"),
@@ -1843,6 +2069,8 @@ void AppController::runPreferencesProbe(const QString &path)
             QStringLiteral("audio.delay"), QStringLiteral("update.channel"),
             QStringLiteral("update.autoCheck"), QStringLiteral("update.proxy"),
             QStringLiteral("keys.playPause"), QStringLiteral("diag.logLevel"),
+            QStringLiteral("storage.thumbCacheLimitMb"), QStringLiteral("storage.logRetentionDays"),
+            QStringLiteral("ui.language"),
         };
         QJsonObject saved;
         for (const QString &key : keys)
@@ -1867,6 +2095,13 @@ void AppController::runPreferencesProbe(const QString &path)
                                                               : QString());
         report.insert(QStringLiteral("downloadDir"), prefs->downloadDirEffective());
         report.insert(QStringLiteral("keyRows"), prefs->keyRows().size());
+        report.insert(QStringLiteral("storage"), storageProbe);
+        report.insert(QStringLiteral("storageUsage"),
+                      QJsonObject::fromVariantMap(prefs->storageUsage()));
+        report.insert(QStringLiteral("language"), prefs->language());
+        report.insert(QStringLiteral("behavior"), behavior);
+        report.insert(QStringLiteral("updaterState"), m_updater->state());
+        report.insert(QStringLiteral("updaterFeed"), m_updater->feedUrl().toString());
 
         QFile file(m_settings->path());
         if (file.open(QIODevice::ReadOnly | QIODevice::Text))

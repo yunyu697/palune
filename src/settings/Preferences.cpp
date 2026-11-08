@@ -9,8 +9,10 @@
 #include "core/AppPaths.h"
 
 #include <QCoreApplication>
+#include <QDateTime>
 #include <QDesktopServices>
 #include <QDir>
+#include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QNetworkProxy>
@@ -56,6 +58,40 @@ const QString kUpdateChannel = QStringLiteral("update.channel");
 const QString kAutoCheck = QStringLiteral("update.autoCheck");
 const QString kUpdateProxy = QStringLiteral("update.proxy");
 const QString kDownloadDir = QStringLiteral("update.downloadDir");
+
+const QString kThumbCacheLimit = QStringLiteral("storage.thumbCacheLimitMb");
+const QString kLogRetention = QStringLiteral("storage.logRetentionDays");
+const QString kLanguage = QStringLiteral("ui.language");
+
+// 递归统计目录字节数（只用于展示占用，忽略符号链接与错误）。
+qint64 dirBytes(const QString &path)
+{
+    qint64 total = 0;
+    QDir dir(path);
+    if (!dir.exists())
+        return 0;
+    const QFileInfoList entries = dir.entryInfoList(
+        QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot | QDir::Hidden);
+    for (const QFileInfo &info : entries) {
+        if (info.isDir())
+            total += dirBytes(info.absoluteFilePath());
+        else
+            total += info.size();
+    }
+    return total;
+}
+
+QString humanBytes(qint64 bytes)
+{
+    const double kb = 1024.0;
+    if (bytes < kb)
+        return QStringLiteral("%1 B").arg(bytes);
+    if (bytes < kb * kb)
+        return QStringLiteral("%1 KB").arg(QString::number(bytes / kb, 'f', 1));
+    if (bytes < kb * kb * kb)
+        return QStringLiteral("%1 MB").arg(QString::number(bytes / (kb * kb), 'f', 1));
+    return QStringLiteral("%1 GB").arg(QString::number(bytes / (kb * kb * kb), 'f', 2));
+}
 } // namespace
 
 Preferences::Preferences(Settings *settings, MpvClient *player, UpdateService *updater,
@@ -154,6 +190,12 @@ void Preferences::reload()
     m_autoCheckUpdates = boolValue(kAutoCheck, true);
     m_updateProxy = stringValue(kUpdateProxy, QStringLiteral("system"));
     m_downloadDir = stringValue(kDownloadDir, QString());
+
+    m_thumbCacheLimitMb = intValue(kThumbCacheLimit, 2000);
+    m_logRetentionDays = intValue(kLogRetention, 14);
+    m_language = stringValue(kLanguage, QStringLiteral("system"));
+    if (m_language != QLatin1String("zh_CN") && m_language != QLatin1String("en_US"))
+        m_language = QStringLiteral("system");
 }
 
 // ---------------------------------------------------------------------------
@@ -438,6 +480,38 @@ void Preferences::setDownloadDir(const QString &value)
     emit preferencesChanged();
 }
 
+void Preferences::setThumbCacheLimitMb(int value)
+{
+    value = qBound(100, value, 20000);
+    if (value == m_thumbCacheLimitMb) return;
+    m_thumbCacheLimitMb = value;
+    store(kThumbCacheLimit, value);
+    emit preferencesChanged();
+}
+
+void Preferences::setLogRetentionDays(int value)
+{
+    value = qBound(1, value, 365);
+    if (value == m_logRetentionDays) return;
+    m_logRetentionDays = value;
+    store(kLogRetention, value);
+    // 修改后立即清理一次，启动时还会再按当前值清理。
+    purgeOldLogs();
+    emit preferencesChanged();
+}
+
+void Preferences::setLanguage(const QString &value)
+{
+    QString normalized = value;
+    if (normalized != QLatin1String("zh_CN") && normalized != QLatin1String("en_US"))
+        normalized = QStringLiteral("system");
+    if (normalized == m_language) return;
+    m_language = normalized;
+    store(kLanguage, normalized);
+    // 翻译在 QApplication 启动时装载，切换后需重启才生效。
+    emit preferencesChanged();
+}
+
 // ---------------------------------------------------------------------------
 // 作用到播放器 / 更新模块
 // ---------------------------------------------------------------------------
@@ -494,6 +568,9 @@ void Preferences::applyUpdates()
 
 void Preferences::applyAll()
 {
+    // 启动时按 storage.logRetentionDays 清理超期日志（默认 14 天）。
+    purgeOldLogs();
+
     applyPlayback();
     applySubtitles();
     applyAudio();
@@ -648,6 +725,7 @@ void Preferences::openLicense()
     };
     for (const QString &path : candidates) {
         if (QFileInfo::exists(path)) {
+            Log::info(QStringLiteral("打开许可文件：%1").arg(path));
             QDesktopServices::openUrl(QUrl::fromLocalFile(path));
             return;
         }
@@ -663,6 +741,148 @@ void Preferences::openConfigDir()
 void Preferences::openCrashDir()
 {
     QDesktopServices::openUrl(QUrl::fromLocalFile(AppPaths::crashDir()));
+}
+
+void Preferences::purgeOldLogs()
+{
+    QDir dir(AppPaths::logDir());
+    if (!dir.exists())
+        return;
+    const QDateTime cutoff = QDateTime::currentDateTime().addDays(-m_logRetentionDays);
+    const QString active = QFileInfo(Log::filePath()).absoluteFilePath();
+    int removed = 0;
+    const QFileInfoList entries = dir.entryInfoList(QDir::Files | QDir::Hidden);
+    for (const QFileInfo &info : entries) {
+        // 当前正在写入的日志不能删（Windows 上也会失败）。
+        if (info.absoluteFilePath() == active)
+            continue;
+        if (info.lastModified() < cutoff && QFile::remove(info.absoluteFilePath()))
+            ++removed;
+    }
+    if (removed > 0)
+        Log::info(QStringLiteral("日志保留 %1 天：已清理 %2 个超期文件")
+                      .arg(m_logRetentionDays).arg(removed));
+}
+
+QVariantMap Preferences::storageUsage() const
+{
+    const QString libraryDir = AppPaths::configDir() + QStringLiteral("/library");
+    const qint64 thumbs = dirBytes(libraryDir + QStringLiteral("/thumbs"));
+    const qint64 index = QFileInfo(libraryDir + QStringLiteral("/index.json")).size();
+    const qint64 logs = dirBytes(AppPaths::logDir());
+    const qint64 config = QFileInfo(AppPaths::settingsFile()).size();
+
+    QVariantMap out;
+    out.insert(QStringLiteral("thumbsBytes"), thumbs);
+    out.insert(QStringLiteral("thumbsText"), humanBytes(thumbs));
+    out.insert(QStringLiteral("indexBytes"), index);
+    out.insert(QStringLiteral("indexText"), humanBytes(index));
+    out.insert(QStringLiteral("logsBytes"), logs);
+    out.insert(QStringLiteral("logsText"), humanBytes(logs));
+    out.insert(QStringLiteral("configBytes"), config);
+    out.insert(QStringLiteral("configText"), humanBytes(config));
+    out.insert(QStringLiteral("totalBytes"), thumbs + index + logs + config);
+    out.insert(QStringLiteral("totalText"), humanBytes(thumbs + index + logs + config));
+    out.insert(QStringLiteral("configDir"), AppPaths::configDir());
+    return out;
+}
+
+bool Preferences::exportConfigTo(const QString &path, QString *error)
+{
+    if (path.isEmpty()) {
+        if (error)
+            *error = QStringLiteral("导出路径为空");
+        return false;
+    }
+    const QString source = AppPaths::settingsFile();
+    if (!QFileInfo::exists(source) && m_settings) {
+        QString saveError;
+        m_settings->save(&saveError);
+    }
+    const QString dest = QFileInfo(path).absoluteFilePath();
+    QDir().mkpath(QFileInfo(dest).absolutePath());
+    // QFile::copy 不覆盖已有文件，导出到同名路径时先移除。
+    if (QFileInfo::exists(dest) && !QFile::remove(dest)) {
+        if (error)
+            *error = QStringLiteral("无法覆盖已有文件：%1").arg(dest);
+        return false;
+    }
+    if (!QFile::copy(source, dest)) {
+        if (error)
+            *error = QStringLiteral("复制配置失败：%1 → %2").arg(source, dest);
+        return false;
+    }
+    m_storageNotice = QStringLiteral("已导出配置：%1").arg(QDir::toNativeSeparators(dest));
+    Log::info(QStringLiteral("配置已导出：%1").arg(dest));
+    emit preferencesChanged();
+    return true;
+}
+
+bool Preferences::importConfigFrom(const QString &path, QString *error)
+{
+    if (!QFileInfo::exists(path)) {
+        if (error)
+            *error = QStringLiteral("文件不存在：%1").arg(path);
+        return false;
+    }
+    // 先用 Settings 读取一次，TOML 解析失败时拒绝导入，避免把启动配置写坏。
+    Settings probe(path);
+    QString probeError;
+    probe.load(&probeError);
+    if (probe.parseFailed()) {
+        if (error)
+            *error = QStringLiteral("配置格式无效：%1").arg(probeError);
+        return false;
+    }
+    const QString target = AppPaths::settingsFile();
+    const QString backup = target + QStringLiteral(".import-backup");
+    if (QFileInfo::exists(target)) {
+        QFile::remove(backup);
+        QFile::copy(target, backup);
+    }
+    QFile::remove(target);
+    if (!QFile::copy(path, target)) {
+        if (error)
+            *error = QStringLiteral("写入配置失败：%1").arg(target);
+        return false;
+    }
+    m_storageNotice = QStringLiteral("已导入配置，重启 Palune 后生效（旧配置备份在 settings.toml.import-backup）");
+    Log::info(QStringLiteral("配置已导入：%1").arg(path));
+    emit preferencesChanged();
+    return true;
+}
+
+void Preferences::chooseExportConfig()
+{
+    const QString defaultPath = AppPaths::configDir() + QStringLiteral("/palune-settings-export.toml");
+    const QString path = QFileDialog::getSaveFileName(
+        nullptr, QStringLiteral("导出配置"), defaultPath, QStringLiteral("TOML (*.toml)"));
+    if (path.isEmpty())
+        return;
+    QString error;
+    if (!exportConfigTo(path, &error)) {
+        m_storageNotice = QStringLiteral("导出失败：%1").arg(error);
+        emit preferencesChanged();
+    }
+}
+
+void Preferences::chooseImportConfig()
+{
+    const QString path = QFileDialog::getOpenFileName(
+        nullptr, QStringLiteral("导入配置"), AppPaths::configDir(),
+        QStringLiteral("TOML (*.toml)"));
+    if (path.isEmpty())
+        return;
+    QString error;
+    if (!importConfigFrom(path, &error)) {
+        m_storageNotice = QStringLiteral("导入失败：%1").arg(error);
+        emit preferencesChanged();
+    }
+}
+
+void Preferences::openStorageDir()
+{
+    QDesktopServices::openUrl(QUrl::fromLocalFile(AppPaths::configDir()));
 }
 
 } // namespace palune

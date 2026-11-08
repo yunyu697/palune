@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QString>
 #include <QVariantList>
+#include <QVariantMap>
 
 namespace palune {
 
@@ -70,6 +71,16 @@ class Preferences : public QObject
     Q_PROPERTY(QString updateProxy READ updateProxy WRITE setUpdateProxy NOTIFY preferencesChanged)
     Q_PROPERTY(QString downloadDir READ downloadDir WRITE setDownloadDir NOTIFY preferencesChanged)
 
+    // 存储整组（P0）：容量上限与日志保留天数，写入即落盘。
+    Q_PROPERTY(int thumbCacheLimitMb READ thumbCacheLimitMb WRITE setThumbCacheLimitMb
+                   NOTIFY preferencesChanged)
+    Q_PROPERTY(int logRetentionDays READ logRetentionDays WRITE setLogRetentionDays
+                   NOTIFY preferencesChanged)
+    Q_PROPERTY(QString storageNotice READ storageNotice NOTIFY preferencesChanged)
+
+    // 界面语言（P0）：system / zh_CN / en_US，默认跟随系统，重启生效。
+    Q_PROPERTY(QString language READ language WRITE setLanguage NOTIFY preferencesChanged)
+
 public:
     Preferences(Settings *settings, MpvClient *player, UpdateService *updater,
                 CompactController *compact, ActionRegistry *actions,
@@ -134,6 +145,15 @@ public:
     double audioDelay() const { return m_audioDelay; }
     void setAudioDelay(double value);
 
+    int thumbCacheLimitMb() const { return m_thumbCacheLimitMb; }
+    void setThumbCacheLimitMb(int value);
+    int logRetentionDays() const { return m_logRetentionDays; }
+    void setLogRetentionDays(int value);
+    QString storageNotice() const { return m_storageNotice; }
+
+    QString language() const { return m_language; }
+    void setLanguage(const QString &value);
+
     QString updateChannel() const { return m_updateChannel; }
     void setUpdateChannel(const QString &value);
     bool autoCheckUpdates() const { return m_autoCheckUpdates; }
@@ -157,6 +177,14 @@ public:
     Q_INVOKABLE void openCrashDir();
     Q_INVOKABLE QString downloadDirEffective() const;
 
+    // 存储：占用统计、配置导出/导入（导入后可测试的纯路径版本供自动化使用）。
+    Q_INVOKABLE QVariantMap storageUsage() const;
+    Q_INVOKABLE void chooseExportConfig();
+    Q_INVOKABLE void chooseImportConfig();
+    bool exportConfigTo(const QString &path, QString *error = nullptr);
+    bool importConfigFrom(const QString &path, QString *error = nullptr);
+    Q_INVOKABLE void openStorageDir();
+
     QString keySpec(const QString &id) const;
 
 signals:
@@ -174,6 +202,7 @@ private:
     void applyUpdates();
     void reload();
     void rebuildKeyOverrides();
+    void purgeOldLogs();
 
     Settings *m_settings = nullptr;
     MpvClient *m_player = nullptr;
@@ -214,6 +243,11 @@ private:
     bool m_autoCheckUpdates = true;
     QString m_updateProxy = QStringLiteral("system");
     QString m_downloadDir;
+
+    int m_thumbCacheLimitMb = 2000;
+    int m_logRetentionDays = 14;
+    QString m_storageNotice;
+    QString m_language = QStringLiteral("system");
 };
 
 } // namespace palune

@@ -7,6 +7,7 @@
 
 #include <QCryptographicHash>
 #include <QDateTime>
+#include <QDesktopServices>
 #include <QDir>
 #include <QDirIterator>
 #include <QFile>
@@ -68,6 +69,57 @@ QString humanSize(qint64 bytes)
     if (mb >= 1.0)
         return QString::number(mb, 'f', 1) + QStringLiteral(" MB");
     return QString::number(static_cast<double>(bytes) / 1024.0, 'f', 0) + QStringLiteral(" KB");
+}
+
+qint64 dirTotalBytes(const QString &path)
+{
+    qint64 total = 0;
+    QDir dir(path);
+    if (!dir.exists())
+        return 0;
+    const QFileInfoList entries = dir.entryInfoList(
+        QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot | QDir::Hidden);
+    for (const QFileInfo &info : entries) {
+        if (info.isDir())
+            total += dirTotalBytes(info.absoluteFilePath());
+        else
+            total += info.size();
+    }
+    return total;
+}
+
+// 按修改时间从旧到新删除，直到目录总量回到上限以下；返回删除个数。
+int pruneThumbDir(const QString &path, qint64 limitBytes)
+{
+    if (limitBytes <= 0)
+        return 0;
+    QDir dir(path);
+    if (!dir.exists())
+        return 0;
+    QFileInfoList files = dir.entryInfoList(QDir::Files, QDir::Time | QDir::Reversed);
+    qint64 total = 0;
+    for (const QFileInfo &info : files)
+        total += info.size();
+    int removed = 0;
+    for (const QFileInfo &info : files) {
+        if (total <= limitBytes)
+            break;
+        const qint64 size = info.size();
+        if (QFile::remove(info.absoluteFilePath())) {
+            total -= size;
+            ++removed;
+        }
+    }
+    return removed;
+}
+
+void clearDirectory(const QString &path)
+{
+    QDir dir(path);
+    if (!dir.exists())
+        return;
+    dir.removeRecursively();
+    dir.mkpath(QStringLiteral("."));
 }
 
 class FunctionTask : public QRunnable
@@ -231,6 +283,51 @@ void MediaLibraryService::setViewMode(const QString &mode)
     }
 }
 
+void MediaLibraryService::clearThumbCache()
+{
+    clearDirectory(thumbDir());
+    // 索引里的 poster 指向已删除的文件，先清空，避免 QML 继续显示失效图片。
+    for (QVariant &entry : m_items) {
+        QVariantMap item = entry.toMap();
+        item.insert(QStringLiteral("poster"), QString());
+        entry = item;
+    }
+    emit itemsChanged();
+    setScanStatus(QStringLiteral("已清理缩略图缓存（可重建）"));
+    Log::info(QStringLiteral("已清理缩略图缓存：%1").arg(thumbDir()));
+    if (!m_roots.isEmpty())
+        scanInBackground();
+}
+
+void MediaLibraryService::rebuildLibraryIndex()
+{
+    QFile::remove(indexFile());
+    clearDirectory(thumbDir());
+    m_items.clear();
+    emit itemsChanged();
+    emit libraryChanged();
+    setScanStatus(QStringLiteral("索引已删除，正在重新扫描…"));
+    Log::info(QStringLiteral("媒体库索引已重建：%1").arg(indexFile()));
+    if (!m_roots.isEmpty())
+        scanInBackground();
+}
+
+void MediaLibraryService::trimThumbCache()
+{
+    const int limitMb = m_settings
+        ? qBound(100, m_settings->value(QStringLiteral("storage.thumbCacheLimitMb"), 2000).toInt(), 20000)
+        : 2000;
+    const int pruned = pruneThumbDir(thumbDir(), static_cast<qint64>(limitMb) * 1024 * 1024);
+    setScanStatus(pruned > 0
+        ? QStringLiteral("已按上限 %1 MB 清理 %2 个最旧缩略图").arg(limitMb).arg(pruned)
+        : QStringLiteral("缩略图缓存未超过上限 %1 MB").arg(limitMb));
+}
+
+void MediaLibraryService::openLibraryDir()
+{
+    QDesktopServices::openUrl(QUrl::fromLocalFile(AppPaths::configDir() + QStringLiteral("/library")));
+}
+
 QString MediaLibraryService::indexFile() const
 {
     return AppPaths::configDir() + QStringLiteral("/library/index.json");
@@ -250,8 +347,13 @@ void MediaLibraryService::scanInBackground()
     setScanStatus(QCoreApplication::translate("Palune", "正在扫描…"));
     const QStringList roots = m_roots;
     const QString thumbs = thumbDir();
+    // 缩略图缓存上限（MB）在扫描结束时按「最旧优先」淘汰；默认 2000 MB。
+    const int limitMb = m_settings
+        ? qBound(100, m_settings->value(QStringLiteral("storage.thumbCacheLimitMb"), 2000).toInt(), 20000)
+        : 2000;
+    const qint64 limitBytes = static_cast<qint64>(limitMb) * 1024 * 1024;
 
-    auto task = new FunctionTask([this, roots, thumbs]() {
+    auto task = new FunctionTask([this, roots, thumbs, limitBytes]() {
         QVariantList scanned;
         int skipped = 0;
         for (const QString &root : roots) {
@@ -324,6 +426,11 @@ void MediaLibraryService::scanInBackground()
                   .arg(scanned.size()).arg(kMaxItems).arg(generated)
             : QCoreApplication::translate("Palune", "已索引 %1 项，缩略图新增 %2")
                   .arg(scanned.size()).arg(generated);
+
+        const int pruned = pruneThumbDir(thumbs, limitBytes);
+        if (pruned > 0)
+            Log::info(QStringLiteral("缩略图缓存超过上限（%1 MB），已清理 %2 个最旧文件")
+                          .arg(static_cast<qint64>(limitBytes) / (1024 * 1024)).arg(pruned));
 
         QMetaObject::invokeMethod(
             this,

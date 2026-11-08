@@ -81,7 +81,7 @@
 | M2-07 | 配置回退矩阵 5 场景（STATE M2 #7） | DONE | `m2-config-fallback.json` | — | — |
 | M2-08 | 窗口回归 20 项（STATE M2 #6） | **PARTIAL** | `m2-window.json`（20 项，`failures=0`，但跨屏移动、运行中 DPI 2 项 NOT_VERIFIED） | 18/20 有结论；跨屏与真实 DPI 切换受单显示器限制 | P2 |
 | M2-09 | 40 个 P0 动作绑定表 + 启动冲突检测 + 解绑界面（STATE M2 #9） | DONE | `src/ui/ActionRegistry.cpp`（40 条、`setOverrides`、`specForKey`、`conflicts()`）；`qml/SettingsPanel.qml` 快捷键页；`m2-actions.json`（三主题各 `dispatchedCount=40`）；`settings-probe.json`（`Ctrl+F9` 落盘并重读） | — | — |
-| M2-10 | 设置信息架构：通用/播放/字幕/音频/快捷键/关于 + 存储/更新/账户/媒体库入口（STATE M2 #5 + 用户复审要求） | **PARTIAL** | `src/settings/Preferences.*`、`qml/SettingsPanel.qml` 六页、`qml/components/Setting*.qml`；`settings-probe.json`；`shots/settings-pages/page0–5.png` | 六页功能已补齐，但**“存储”整组不存在**、**界面语言只有静态文案没有控件且文案与中英 i18n 证据矛盾**、**账户/媒体库入口不在设置页**；字幕描边预览与 B 第三栏曲线仍是静态占位。逐项见 `docs/SETTINGS-GAP.md` | **P0** |
+| M2-10 | 设置信息架构：通用/播放/字幕/音频/快捷键/存储/媒体库/关于 + 账户入口（STATE M2 #5 + 用户复审要求） | **DONE**（2026-11-08 补组后） | `src/settings/Preferences.*`（storage/language 键）、`qml/SettingsPanel.qml` 八页、`qml/components/OutlinedText.qml`；`settings-storage-probe.json`、`settings-behavior-probe*.json`、`window-state-*.json`、`shots/p0-settings/*`、`p0-settings-groups.json`、`settings-ten-items.json` | 三块 P0 已补并做行为级验证：存储整组、语言控件（错误文案删除）、媒体库入口（账户显式延后）；字幕描边预览与 B 第三栏绑定真实 prefs。保留 NOT_VERIFIED：更新包真实落盘、外部查看器、beta manifest 真实拉取；BT.2390 曲线降级为“无预览”。逐项见 `docs/SETTINGS-GAP.md` | — |
 | M2-11 | 界面文案中文（i18n）（STATE M2 #10） | DONE | `m2-i18n.json`（中/英两套，203 条，各 37 张截图）；`src/app/main.cpp` 的 `QTranslator`/`--lang`；CI `check_i18n.py` | 语言能力本身达标；但设置页仍写“只提供中文 UI”，且无语言选择入口——这是**设置项缺口**（见 SETTINGS-GAP），不是 i18n 实现缺口 | — |
 | M2-12 | 每里程碑“实机截图 × 设计稿”对照（STATE M2 收口要求） | **NOT_VERIFIED** | `UI-ALPHA5/7/8-COMPARISON.md` 存在 | **对照物（DESIGN.md / prototype）缺失**；比较文档是自述，不是与原始设计稿的逐屏对照。M0/M1/M2 也没有留完整对照记录 | P1（流程） |
 
@@ -128,10 +128,10 @@
 
 ### 7.1 必须补的硬缺口
 
-0. **版本口径**：`1.0.0` 本地包只是**功能冻结候选 RC**（alpha 段已到上限后的版本号），不是缺口闭合的正式版。M2-10 仍为 PARTIAL、P0/P1 未清，禁止对外宣称“1.0.0 已收口”。
-1. **[P0] 设置信息架构缺组**：存储整组（缓存/索引大小、清理、索引重建、配置迁移）不存在；界面语言只有一行静态文案、无控件且文案与中英 i18n 矛盾；账户/媒体库入口不在设置页。逐项见 `SETTINGS-GAP.md`。
-2. **[P0] 设置预览类“有控件无效果”**：字幕预览描边宽度固定 1px、B 第三栏字幕预览写死“15 / 1px / 8%”、BT.2390 曲线与“目标 1000 nits”为静态图，不随设置变化。用户会直接看到“改了没反应”。
-3. **[P0] 设置运行时取证缺失**：`ui.closeToTray`、`ui.minimizeToTray`、`ui.confirmExit`、`ui.startMaximized`、音频输出设备、`update.autoCheck`、beta feed、代理、下载目录、许可打开等，代码已接线但没有任何运行时证据；按判定规则应记 NOT_VERIFIED，不能算 DONE。
+0. **版本口径**：`1.0.0` 本地包只是**功能冻结候选 RC**（alpha 段已到上限后的版本号），不是缺口闭合的正式版。设置 P0 已于 11-08 闭合（M2-10 转 DONE），但 P1（生产签名/更新通道、计划文档缺失）未清，仍禁止对外宣称“1.0.0 已收口”。
+1. **[已补 11-08] 设置信息架构缺组**：新增「存储」「媒体库」两页；语言控件与错误文案修正；账户入口写明本地模式并显式延后。证据见 `SETTINGS-GAP.md` §12。
+2. **[已补 11-08] 设置预览类“有控件无效果”**：字幕描边预览改 `OutlinedText` 8 向偏移并绑定 `sub.outline`；B 第三栏绑定真实 prefs；BT.2390 静态 Canvas 已删除并明确标注不可用（NOT DONE，非占位）。
+3. **[已补 11-08] 设置运行时取证**：十项已在真实进程取证，8 项 DONE；下载真实落盘/外部查看器/beta manifest 拉取标 NOT_VERIFIED。证据 `docs/evidence/settings-ten-items.json`。
 4. **[已补] 媒体库运行取证（M3-07）**：11-08 16:20 补齐 `shots/m4-library/`（三主题海报墙、A/B 列表、点击开播）与 `ui-m4-library.json`（20 项/19 缩略图）、`tst-media-m4.xml`（8/8，含失效清理、损坏索引重建、200 文件 9.6s），该项转 DONE。
 5. **[P1] 生产签名密钥与真实更新通道（M1-18）**：当前是 `palune-test` 仓库内密钥；stable 发版前必须换成离线生产密钥，并验证回退通道。
 6. **[P1] 计划文档缺失（M2-12 / M3-08 的根因）**：`MILESTONES.md`、`DESIGN.md`、`ARCHITECTURE.md` 不在工作区，导致“逐条验收”和“逐屏对齐”都无法权威复核。必须先恢复文档，否则同类漏项会再次发生。
@@ -171,7 +171,7 @@
 | M1-06 | PARTIAL | DONE（抽象层） | 五组接口 + 注册表齐全；缺的是 M4 本地源，已由 M3-07 落地 |
 | M1-15 | NOT_VERIFIED | DONE | CI 覆盖率作业带 `--fail-under-line 70` 硬门槛且 STATE 记录绿色；仅缺归档 |
 | M1-16 | NOT_VERIFIED | DONE | CI 三平台冒烟作业 + STATE“macOS 20/20”；仅缺归档 |
-| M2-10 | DONE | **PARTIAL** | 存储/语言/账户媒体库三处 IA 缺失；见 SETTINGS-GAP |
+| M2-10 | PARTIAL | DONE（11-08 补组） | 存储/语言/账户媒体库三组已补并做行为取证；剩余 NOT_VERIFIED 单列 |
 | M2-11 | DONE（“仅中文”） | DONE（中英 i18n） | `m2-i18n.json` 203 条、37 张 ×2；旧描述低估 |
 | M3-01 | DONE（无真实数据） | DONE | 真实数据由 M3-07 代码补齐 |
 | M3-05 | PARTIAL | DONE（形态） | 形态/尺寸/拖动均达标；内容缺口归 M2-10，不重复计 |

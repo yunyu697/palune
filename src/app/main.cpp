@@ -234,12 +234,21 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    // 界面语言：默认跟随系统；非中文环境加载英文翻译（QML 文案用 qsTr 标记）。
+    // 界面语言：优先级 --lang > [ui] language > 系统语言。
+    // [ui] language 取值 system（默认）/ zh_CN / en_US，在设置「通用」页修改，重启生效。
     QTranslator translator;
     QString language = valueArg(argc, argv, "--lang");
     if (language.isEmpty()) {
-        const QStringList uiLanguages = QLocale::system().uiLanguages();
-        language = uiLanguages.isEmpty() ? QString() : uiLanguages.value(0);
+        const QString pref = settings.value(QStringLiteral("ui.language"),
+                                            QStringLiteral("system")).toString();
+        if (pref == QLatin1String("zh_CN")) {
+            language = QStringLiteral("zh_CN");
+        } else if (pref == QLatin1String("en_US")) {
+            language = QStringLiteral("en_US");
+        } else {
+            const QStringList uiLanguages = QLocale::system().uiLanguages();
+            language = uiLanguages.isEmpty() ? QString() : uiLanguages.value(0);
+        }
     }
     if (!language.startsWith(QLatin1String("zh")) && translator.load(
             QStringLiteral(":/i18n/palune_en_US.qm"))) {

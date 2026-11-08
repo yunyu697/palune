@@ -207,11 +207,18 @@ bool WindowController::start(int width, int height)
             m_player->refreshFrame();
     });
     m_compactMode->feedWidth(m_overlay->width());
-    if (m_settings && (m_settings->windowMaximized() || (m_preferences && m_preferences->startMaximized())))
-        m_overlay->showMaximized();
-    m_overlay->requestActivate();
+    // 先按恢复几何摆好两窗，再最大化；顺序反过来会被 applyGeometry 的 SetWindowPos
+    // 覆盖回普通尺寸（实测「设置 startMaximized 后启动仍是小窗」）。
     applyGeometry(r);
     applyWindowRegion();
+    if (m_settings && (m_settings->windowMaximized() || (m_preferences && m_preferences->startMaximized()))) {
+        // 同步内部状态，否则启动即最大化时再点「最大化」会变成“再次最大化”，无法还原。
+        m_restoreGeometry = r;
+        m_maximized = true;
+        m_overlay->showMaximized();
+    }
+    m_overlay->requestActivate();
+    syncVideoToOverlay();
     // 播放器属性（硬解/缓存/字幕/音频/通道）在 mpv 建好之后统一作用一次。
     if (m_preferences)
         m_preferences->applyAll();

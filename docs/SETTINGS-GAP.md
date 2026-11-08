@@ -130,24 +130,27 @@
 | M2 设置 IA · 关于 → 许可与开源声明 | **有（运行时 NOT_VERIFIED）** | 打开安装目录 `NOTICE.md`；无键。未验证安装后文件确实存在并可打开 |
 | M2 设置 IA · 关于 → 诊断入口 | **有** | 打开配置目录/崩溃目录；无键；未截图 |
 
-## 8. 存储（整组缺失）
+## 8. 存储（整组已补，P0 闭合）
 
-| 计划存在于哪一节 | 当前实际 | 缺失或差异说明（含配置键 / 生效时机 / 默认值） |
+| 计划存在于哪一节 | 当前实际 | 配置键 / 生效时机 / 默认值 |
 |---|---|---|
-| 用户复审点名 · 存储 → 缓存/索引占用展示 | **无** | 没有存储页；无键；无法看到 `cache`、媒体库索引、缩略图的占用。P0 |
-| 用户复审点名 · 存储 → 清理缓存 | **无** | 没有清理入口；无键。误删风险需要在实现时用“只清可重建缓存”约束。P0 |
-| 用户复审点名 · 存储 → 媒体库索引重建 | **无** | `MediaLibraryService` 有 `library.roots`，但没有设置页入口/重建按钮；索引损坏只能删文件。P0 |
-| 用户复审点名 · 存储 → 配置导出/迁移 | **无** | 无导入导出入口；无键。P3 |
+| 用户复审点名 · 存储 → 缓存/索引占用展示 | **有**（设置「存储」页，第 7 页） | 无键，只读统计；数据来自 `Preferences::storageUsage()`（缩略图/索引/日志/配置/合计） |
+| 用户复审点名 · 存储 → 清理缓存 | **有**（「清理缩略图缓存」「按上限立即清理」） | 只删可重建的 `library/thumbs`；上限键 `storage.thumbCacheLimitMb`，默认 2000 MB，扫描结束时按最旧优先淘汰、手动立即清理即时生效 |
+| 用户复审点名 · 存储 → 媒体库索引重建 | **有**（「重建媒体库索引」） | 删 `library/index.json` + 缩略图后重扫；即时生效 |
+| 用户复审点名 · 存储 → 配置导出/迁移 | **有**（「导出配置…」「导入配置（重启生效）…」） | 导出即时；导入校验 TOML 后覆盖 `settings.toml`，**重启后生效**，旧配置备份为 `settings.toml.import-backup` |
+| 日志保留 | **有** | `storage.logRetentionDays`，默认 14 天；修改后立即清理一次，启动时再清理 |
 
-> 结论：存储不是“少一个开关”，而是**整组没有页面容器**。不要零补；需要在设置 IA 里新增一组并一次补齐上述四项。
+> 证据：`docs/evidence/settings-storage-probe.json`（真实写 110 MB 伪缩略图 → 上限 100 MB → 剩 55 MB/1 个文件；30 天旧日志被删；导出→改键→导入→磁盘键恢复；索引文件被删），截图 `docs/evidence/shots/p0-settings/settings-page6-zh.png`。
 
-## 9. 账户 / 媒体库入口（设置页缺失）
+## 9. 账户 / 媒体库入口（设置页已补）
 
-| 计划存在于哪一节 | 当前实际 | 缺失或差异说明（含配置键 / 生效时机 / 默认值） |
+| 计划存在于哪一节 | 当前实际 | 缺失或差异说明 |
 |---|---|---|
-| 用户复审点名 · 账户 | **无** | 无账户状态/登录/登出入口；无键。当前产品也没有云端账户后端，建议**显式延后**，但应在文档写明 |
-| 用户复审点名 · 媒体库 → 根目录管理 | **无（设置页）** | 功能在 `LibraryPanel`（添加/移除根目录、重扫）；设置页没有入口；键 `library.roots`、`library.viewMode`（`MediaLibraryService.cpp:124`）。P3 |
-| 用户复审点名 · 媒体库 → 设置页入口 | **无** | 六页之外没有“媒体库”页；用户只能从主界面侧栏进入。P3 |
+| 用户复审点名 · 账户 | **有入口，功能显式延后** | 设置「媒体库」页顶部写明“本地模式：不提供账户、登录与云端同步；账户体系 1.1 之后显式延后”。无键、无后端 |
+| 用户复审点名 · 媒体库 → 根目录管理 | **有（设置页）** | 显示根目录列表 + 移除；添加目录、重新扫描、打开媒体库、打开索引目录；复用 `library.roots`；默认空 |
+| 用户复审点名 · 媒体库 → 设置页入口 | **有**（第 6 页「媒体库」） | 默认视图 `library.viewMode`（poster/list）即时生效并持久化；条目数/扫描状态/索引路径可见 |
+
+> 证据：`docs/evidence/shots/p0-settings/settings-page5-zh.png`（预置 1 个根目录，显示“条目 1 · 根目录 1 · 已索引 1 项”、索引路径、移除按钮）。
 
 ## 10. 只有入口没有功能 / 运行时未验证 汇总
 
@@ -155,27 +158,28 @@
 
 | 项 | 现状 | 影响 | 优先级 |
 |---|---|---|---|
-| 界面语言 | 一行静态文案，无控件；文案称“只提供中文”，与中英 i18n 证据矛盾 | 用户以为不能换语言；实际能力被隐藏 | P0 |
+| 界面语言 | **已补**：通用页有 system / zh_CN / en_US 选择，键 `ui.language`，默认 system，重启生效；错误文案已删除 | — | P0 闭合 |
 | 紧凑模式当前状态 | 只读展示，无手动切换 | 若设计要求手动切换则不可用 | P3 |
-| 字幕预览描边 | `Text.Outline` 固定 1px，不随 `sub.outline` 变 | “改了描边预览没反应” | P3 |
-| B 第三栏字幕预览/色调曲线 | 写死“15 / 1px / 8%”“目标 1000 nits”，静态 Canvas | 预览与实际设置不一致 | P3 |
+| 字幕预览描边 | **已补**：`OutlinedText` 用 8 向偏移模拟描边宽度，绑定 `sub.outline` | — | P0 闭合 |
+| B 第三栏字幕预览/色调曲线 | **已补**：字号/颜色/描边/位置绑定 prefs；静态 Canvas 曲线已删除，改为明确“曲线预览不可用（缺少真实 BT.2390 数据源）” | 曲线图仍是 NOT DONE（降级为无预览，非占位） | P3（曲线） |
 | 快捷键作用域 | 数据有、界面不展示 | 用户无法判断冲突作用域 | P3 |
 
-### 10.2 运行时未验证（代码已接线，但本轮不能算“有”）
+### 10.2 行为级取证（2026-11-08 已跑真实进程，结论逐项给出）
 
-| 项 | 键 | 为什么未验证 |
-|---|---|---|
-| 关闭到托盘 / 最小化到托盘 | `ui.closeToTray` / `ui.minimizeToTray` | 无托盘行为截图或 probe；`settings-probe.json` 未覆盖这两个键 |
-| 退出前确认 | `ui.confirmExit` | 无确认框截图/自动化记录 |
-| 启动时最大化 | `ui.startMaximized` | 无冷启动窗口状态记录；且被 `window.maximized` 覆盖 |
-| 音频输出设备 | `audio.device` | 无设备枚举/切换证据；probe 未切设备 |
-| 自动检查更新 | `update.autoCheck` | 无启动 3 秒后的检查日志 |
-| beta 通道 | `update.channel` | 工作区只有 `latest.json`，无 `latest-beta.json` |
-| 网络代理 | `update.proxy` | 无代理生效/失败证据 |
-| 下载目录 | `update.downloadDir` | 无下载落盘路径截图 |
-| 许可打开 | — | 无安装后 `NOTICE.md` 打开记录 |
+| 项 | 键 | 结论 | 证据 |
+|---|---|---|---|
+| 关闭到托盘 | `ui.closeToTray` | **DONE** 窗口关闭后 `visible=false`、进程存活 | `settings-behavior-probe.json` |
+| 最小化到托盘 | `ui.minimizeToTray` | **DONE** 最小化后窗口隐藏 | 同上 |
+| 退出前确认 | `ui.confirmExit` | **DONE** 关闭弹出「确定要退出 Palune 吗？」模态；取消后进程存活 | 同上 |
+| 启动时最大化 | `ui.startMaximized` | **DONE（并修复缺陷）** 冷启动 `maximized=true`、1920×1032；false 时 1180×700 | `window-state-startmax.json` / `window-state-normal.json` |
+| 音频输出设备 | `audio.device` | **DONE** 5 个设备，写入 wasapi 设备后 mpv `audio-device` 读回一致 | `settings-behavior-probe.json` |
+| 自动检查更新 | `update.autoCheck` | **DONE** 默认 true 启动后 updater 离开 `unchecked`；预置 false 时保持 `unchecked`（对照） | `settings-behavior-probe-autocheck.json` / 上式 |
+| beta 通道 | `update.channel` | **DONE（URL 级）** 切 beta 后 feed 变为 `.../latest-beta.json`；beta manifest 真实拉取未验证（网络环境） | `settings-behavior-probe.json` |
+| 网络代理 | `update.proxy` | **DONE** `manual:127.0.0.1:1` + 不可达 feed → `error` / `UPD-001 Connection refused` | 同上 |
+| 下载目录 | `update.downloadDir` | **PARTIAL / NOT_VERIFIED** 配置与有效路径已写入更新服务；真实更新包落盘未验证（无可用包与签名） | 同上 |
+| 许可打开 | — | **PARTIAL** `NOTICE.md` 存在且 `openLicense` 分支被真实调用；外部查看器是否成功打开不做断言（NOT_VERIFIED） | 同上 |
 
-> `settings-probe.json` 已真实覆盖并重读成功：字幕字号/颜色/描边/位置/延迟、自动加载/编码、音频延迟/声道、硬解/缓存、HDR/去隔行、音量/静音、紧凑断点、改键、beta feed 字符串、重启保持。未列在上表的项可视为“有运行证据”。
+> `settings-probe.json` 已真实覆盖并重读成功：字幕字号/颜色/描边/位置/延迟、自动加载/编码、音频延迟/声道、硬解/缓存、HDR/去隔行、音量/静音、紧凑断点、改键、beta feed 字符串、重启保持。上表之外仍以值级证据为准。
 
 ## 11. 结论
 
@@ -185,7 +189,7 @@
 2. **界面语言入口（P0）**：“通用”页把静态文案替换为语言选择（跟随系统/简体中文/English），键建议 `ui.language`，默认“跟随系统”，重启或即时重建翻译均可；同时删除“只提供中文 UI”的错误文案（中英 i18n 已存在）。
 3. **预览联动整组（P3，但属“改了没反应”）**：字幕预览描边宽度绑定 `sub.outline`；B 第三栏字幕预览改为绑定真实 prefs；BT.2390 曲线与“目标 nits”绑定 `playback.targetPeakNits`，不再写死。
 4. **账户/媒体库入口整组（P3）**：设置页加“媒体库”分组（根目录增删、重新扫描、索引路径），或明确从 IA 中删除该入口；账户当前无后端，**显式延后并在文档写明**。
-5. **设置运行时取证整组（P0）**：对 §10.2 的十项各做一次真实进程 probe/截图，补进 `docs/evidence/`；在此之前它们在复审中只能是 NOT_VERIFIED。
+5. **设置运行时取证整组（P0）**：§10.2 十项已跑真实进程；8 项 DONE，2 项（下载落盘、外部查看器）标 NOT_VERIFIED 并写明原因。证据在 `docs/evidence/settings-behavior-probe*.json`、`window-state-*.json`。
 
 ### 11.2 建议显式延后
 
@@ -203,3 +207,17 @@
 - M2-10 判 **PARTIAL** 的依据就是本文件 §8/§9 与 §10.1。
 - M3-05 的“设置形态”判 **DONE**；本文件的缺项只影响 M2-10，不把 M3-05 重新打成 PARTIAL。
 - 本次核对纠正旧版 §9 的两处过判：①“预览联动全部绑定”不成立（描边未绑定）；②“界面语言延后”不成立（i18n 已存在，缺的是入口和文案）。
+
+## 12. 本轮 P0 闭合记录（2026-11-08）
+
+| 组 | 状态 | 配置键 / 默认值 / 生效时机 | 行为级证据 |
+|---|---|---|---|
+| 存储整组 | **DONE** | `storage.thumbCacheLimitMb`=2000 MB（下次扫描/手动即时）；`storage.logRetentionDays`=14 天（即时+启动） | `docs/evidence/settings-storage-probe.json`、`shots/p0-settings/settings-page6-zh.png` |
+| 界面语言控件与错误文案 | **DONE（翻译覆盖 PARTIAL）** | `ui.language`=system / zh_CN / en_US，默认 system，**重启生效**；错误文案已删除 | 启动日志 `界面语言：zh-Hans-CN` 与 `界面语言：en_US` 两次；`shots/p0-settings/settings-page2-zh.png` 等 |
+| 账户与媒体库入口 | **DONE**（账户功能显式延后） | `library.viewMode`=poster（即时持久化）；`library.roots` 复用；账户无键 | `shots/p0-settings/settings-page5-zh.png`，扫描日志“媒体库扫描完成：1 项” |
+| 字幕描边预览联动 | **DONE** | `sub.outline`（0–6px 绑定）、`sub.fontSize`、`sub.color`、`sub.position` | 字号 22 / 描边 2.0px / 位置 20% 的预览截图（第三栏与字幕页一致） |
+| 布局 B 第三栏真实联动 | **DONE**（曲线降级） | 字幕字号/颜色/描边/位置绑定 prefs；`playback.targetPeakNits` 显示真实值 | 同上；曲线区明确标注“曲线预览不可用” |
+| BT.2390 曲线图 | **NOT DONE（降级为无预览）** | — | 没有真实 BT.2390 数据源，未用静态占位冒充完成 |
+| 英文翻译覆盖 | **PARTIAL** | — | 新增 P0 文案（媒体库/存储/账户说明）尚未写入 `palune_en_US.ts/.qm`，en_US 下回退中文；旧 6 页英文仍有效 |
+
+> 版本口径：以上闭合后，设置三块 P0 与预览联动已补齐；剩余未验证项仅“下载真实落盘、外部查看器、beta manifest 真实拉取”。对外仍只写 **1.0.0-RC**，M2-10 在 GAP-AUDIT 中可改为 DONE（保留上述 NOT_VERIFIED 备注）。

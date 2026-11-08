@@ -51,7 +51,7 @@ Item {
     // 避免设置卡片超出窗口造成截断（M2 缩放基线判据）。
     readonly property bool narrow: !panelRoot.windowMode && (panelRoot.width < 720 || panelRoot.height < 520)
 
-    readonly property var pageTitles: [qsTr("通用"), qsTr("播放"), qsTr("字幕"), qsTr("音频"), qsTr("快捷键"), qsTr("关于")]
+    readonly property var pageTitles: [qsTr("通用"), qsTr("播放"), qsTr("字幕"), qsTr("音频"), qsTr("快捷键"), qsTr("媒体库"), qsTr("存储"), qsTr("关于")]
 
     Rectangle {
         anchors.fill: parent
@@ -476,8 +476,24 @@ Item {
                                 onPicked: function (v) { prefs.logLevel = v }
                             }
                         }
+                        SettingRow {
+                            label: qsTr("界面语言")
+                            hint: qsTr("写入 [ui] language：system / zh_CN / en_US，默认跟随系统，重启后生效")
+                            SettingCycle {
+                                current: prefs.language
+                                options: [
+                                    { label: qsTr("跟随系统"), value: "system" },
+                                    { label: qsTr("简体中文"), value: "zh_CN" },
+                                    { label: "English", value: "en_US" }
+                                ]
+                                onPicked: function (v) { prefs.language = v }
+                            }
+                        }
                         Text {
-                            text: qsTr("界面语言：简体中文（当前版本只提供中文 UI，多语言在本期范围外，已显式记录为延后项）")
+                            text: qsTr("当前生效：") + (prefs.language === "en_US" ? "English"
+                                                  : prefs.language === "zh_CN" ? qsTr("简体中文")
+                                                  : qsTr("跟随系统（当前界面文案）"))
+                                  + qsTr(" · 切换语言需重启 Palune")
                             color: panelRoot.mutedColor
                             font.pixelSize: 11
                             wrapMode: Text.WordWrap
@@ -741,22 +757,17 @@ Item {
                             color: "#0b0c10"
                             border.width: 1
                             border.color: panelRoot.lineColor
-                            // 预览与实际设置联动：字号、颜色、描边、底部位置。
-                            Text {
+                            clip: true
+                            // 预览与实际设置联动：字号、颜色、描边（0–6px）、底部位置。
+                            OutlinedText {
+                                width: parent.width - 24
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 y: parent.height - height - Math.max(4, parent.height * (prefs.subtitlePosition / 100))
-                                text: qsTr("字幕预览：字号与描边按左侧设置实时变化")
-                                color: "#000000"
-                                font.pixelSize: prefs.subtitleFontSize
-                                style: Text.Outline
-                                styleColor: "#000000"
-                            }
-                            Text {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                y: parent.height - height - Math.max(4, parent.height * (prefs.subtitlePosition / 100))
-                                text: qsTr("字幕预览：字号与描边按左侧设置实时变化")
-                                color: prefs.subtitleColor
-                                font.pixelSize: prefs.subtitleFontSize
+                                text: qsTr("字幕预览：字号、颜色、描边、位置按左侧设置实时变化")
+                                pixelSize: prefs.subtitleFontSize
+                                textColor: prefs.subtitleColor
+                                outline: prefs.subtitleOutline
+                                horizontalAlignment: Text.AlignHCenter
                             }
                         }
 
@@ -986,10 +997,224 @@ Item {
                         Item { Layout.fillHeight: true }
                     }
 
-                    // 5 关于
+                    // 5 媒体库（账户状态 + 根目录管理；P0 补齐设置页入口）
                     ColumnLayout {
                         Layout.fillWidth: true
                         visible: panelRoot.page === 5
+                        spacing: 12
+
+                        Text { text: qsTr("账户"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text {
+                            text: qsTr("本地模式：不提供账户、登录与云端同步。账户体系无后端支撑，1.1 之后显式延后，不计入 1.0.0 范围。")
+                            color: panelRoot.mutedColor
+                            font.pixelSize: 11
+                            wrapMode: Text.WordWrap
+                            Layout.fillWidth: true
+                        }
+
+                        Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
+
+                        Text { text: qsTr("媒体库"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text {
+                            text: qsTr("条目 %1 · 根目录 %2 · 状态：%3")
+                                  .arg(library.itemCount).arg(library.roots.length)
+                                  .arg(library.scanStatus === "" ? qsTr("就绪") : library.scanStatus)
+                            color: panelRoot.mutedColor
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
+                            Layout.fillWidth: true
+                        }
+                        Text {
+                            text: qsTr("索引文件：") + (library.available ? library.indexFile : qsTr("（尚未生成）"))
+                            color: panelRoot.mutedColor
+                            font.pixelSize: 11
+                            elide: Text.ElideMiddle
+                            Layout.fillWidth: true
+                        }
+                        RowLayout {
+                            spacing: 8
+                            PillButton {
+                                label: qsTr("添加目录…")
+                                onClicked: library.addRoot()
+                            }
+                            PillButton {
+                                label: qsTr("重新扫描")
+                                onClicked: library.rescan()
+                            }
+                            PillButton {
+                                label: qsTr("打开媒体库")
+                                onClicked: { if (panelRoot.hasWindow) win.action("openLibrary") }
+                            }
+                            PillButton {
+                                label: qsTr("打开索引目录")
+                                onClicked: library.openLibraryDir()
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("默认视图")
+                            hint: qsTr("写入 [library] viewMode = poster / list，即时生效，重启后保持")
+                            SettingCycle {
+                                current: library.viewMode
+                                options: [
+                                    { label: qsTr("海报墙"), value: "poster" },
+                                    { label: qsTr("列表"), value: "list" }
+                                ]
+                                onPicked: function (v) { library.setViewMode(v) }
+                            }
+                        }
+
+                        Text {
+                            visible: library.roots.length === 0
+                            text: qsTr("还没有添加视频目录。点击「添加目录…」后会扫描并生成缩略图。")
+                            color: panelRoot.mutedColor
+                            font.pixelSize: 11
+                            wrapMode: Text.WordWrap
+                            Layout.fillWidth: true
+                        }
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 6
+                            Repeater {
+                                model: library.roots
+                                delegate: RowLayout {
+                                    required property string modelData
+                                    Layout.fillWidth: true
+                                    spacing: 8
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: modelData
+                                        color: panelRoot.textColor
+                                        font.pixelSize: 11
+                                        elide: Text.ElideMiddle
+                                    }
+                                    PillButton {
+                                        label: qsTr("移除")
+                                        onClicked: library.removeRoot(modelData)
+                                    }
+                                }
+                            }
+                        }
+                        Item { Layout.fillHeight: true }
+                    }
+
+                    // 6 存储（整组：占用展示、可重建缓存清理、索引重建、配置导出/迁移）
+                    ColumnLayout {
+                        id: storagePage
+                        Layout.fillWidth: true
+                        visible: panelRoot.page === 6
+                        spacing: 10
+
+                        property var usage: ({})
+                        function refreshUsage() { storagePage.usage = prefs.storageUsage() }
+                        Component.onCompleted: refreshUsage()
+                        onVisibleChanged: if (visible) refreshUsage()
+
+                        Timer {
+                            interval: 2500
+                            repeat: true
+                            running: storagePage.visible
+                            onTriggered: storagePage.refreshUsage()
+                        }
+
+                        Text { text: qsTr("缓存与索引占用"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text {
+                            text: qsTr("缩略图 %1 · 索引 %2 · 日志 %3 · 配置 %4 · 合计 %5")
+                                  .arg(storagePage.usage.thumbsText || "-")
+                                  .arg(storagePage.usage.indexText || "-")
+                                  .arg(storagePage.usage.logsText || "-")
+                                  .arg(storagePage.usage.configText || "-")
+                                  .arg(storagePage.usage.totalText || "-")
+                            color: panelRoot.mutedColor
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
+                            Layout.fillWidth: true
+                        }
+                        Text {
+                            text: qsTr("配置目录：") + (storagePage.usage.configDir || "")
+                            color: panelRoot.mutedColor
+                            font.pixelSize: 11
+                            elide: Text.ElideMiddle
+                            Layout.fillWidth: true
+                        }
+
+                        SettingRow {
+                            label: qsTr("缩略图缓存上限")
+                            hint: qsTr("写入 [storage] thumbCacheLimitMb，默认 2000 MB；下次扫描结束时按最旧优先淘汰")
+                            SettingStepper {
+                                value: prefs.thumbCacheLimitMb
+                                minimum: 100
+                                maximum: 20000
+                                step: 100
+                                suffix: "MB"
+                                onChanged: function (v) { prefs.thumbCacheLimitMb = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("日志保留天数")
+                            hint: qsTr("写入 [storage] logRetentionDays，默认 14 天；修改后立即清理一次，启动时再清理")
+                            SettingStepper {
+                                value: prefs.logRetentionDays
+                                minimum: 1
+                                maximum: 365
+                                step: 1
+                                suffix: qsTr("天")
+                                onChanged: function (v) { prefs.logRetentionDays = v }
+                            }
+                        }
+
+                        RowLayout {
+                            spacing: 8
+                            PillButton {
+                                label: qsTr("清理缩略图缓存")
+                                onClicked: { library.clearThumbCache(); storagePage.refreshUsage() }
+                            }
+                            PillButton {
+                                label: qsTr("按上限立即清理")
+                                onClicked: { library.trimThumbCache(); storagePage.refreshUsage() }
+                            }
+                            PillButton {
+                                label: qsTr("重建媒体库索引")
+                                onClicked: { library.rebuildLibraryIndex(); storagePage.refreshUsage() }
+                            }
+                        }
+                        RowLayout {
+                            spacing: 8
+                            PillButton {
+                                label: qsTr("导出配置…")
+                                onClicked: { prefs.chooseExportConfig(); storagePage.refreshUsage() }
+                            }
+                            PillButton {
+                                label: qsTr("导入配置（重启生效）…")
+                                onClicked: { prefs.chooseImportConfig(); storagePage.refreshUsage() }
+                            }
+                            PillButton {
+                                label: qsTr("打开配置目录")
+                                onClicked: prefs.openStorageDir()
+                            }
+                        }
+                        Text {
+                            visible: prefs.storageNotice !== ""
+                            text: prefs.storageNotice
+                            color: panelRoot.accent
+                            font.pixelSize: 11
+                            wrapMode: Text.WordWrap
+                            Layout.fillWidth: true
+                        }
+                        Text {
+                            visible: library.scanStatus !== ""
+                            text: qsTr("媒体库：") + library.scanStatus
+                            color: panelRoot.mutedColor
+                            font.pixelSize: 11
+                            wrapMode: Text.WordWrap
+                            Layout.fillWidth: true
+                        }
+                        Item { Layout.fillHeight: true }
+                    }
+
+                    // 7 关于
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        visible: panelRoot.page === 7
                         spacing: 12
 
                         // 品牌图标与窗口/任务栏/exe 共用同一份源（resources/brand）。
@@ -1085,7 +1310,7 @@ Item {
                     }   // contentColumn
                 }       // contentFlick
 
-                // B 的第三栏：字幕预览 + BT.2390 曲线（设计稿 §3.B / §7.1）
+                // B 的第三栏：字幕预览（绑定真实设置）+ BT.2390 预览降级说明
                 Rectangle {
                     visible: panelRoot.threeColumn
                     Layout.preferredWidth: 1
@@ -1113,19 +1338,24 @@ Item {
                         color: "#0b0c10"
                         border.width: 1
                         border.color: panelRoot.lineColor
+                        clip: true
 
-                        Text {
-                            anchors.centerIn: parent
+                        OutlinedText {
                             width: parent.width - 32
-                            horizontalAlignment: Text.AlignHCenter
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            y: parent.height - height - Math.max(6, parent.height * (prefs.subtitlePosition / 100))
                             text: qsTr("这是一行用于校准字号与描边的字幕预览")
-                            color: panelRoot.textColor
-                            font.pixelSize: 15
-                            wrapMode: Text.WordWrap
+                            pixelSize: prefs.subtitleFontSize
+                            textColor: prefs.subtitleColor
+                            outline: prefs.subtitleOutline
+                            horizontalAlignment: Text.AlignHCenter
                         }
                     }
                     Text {
-                        text: qsTr("字号 15 · 描边 1px · 底部安全距 8%")
+                        text: qsTr("字号 %1 · 描边 %2px · 底部安全距 %3%")
+                              .arg(prefs.subtitleFontSize)
+                              .arg(prefs.subtitleOutline.toFixed(1))
+                              .arg(prefs.subtitlePosition)
                         color: panelRoot.mutedColor
                         font.pixelSize: 11
                     }
@@ -1137,43 +1367,32 @@ Item {
                         font.weight: Font.DemiBold
                         Layout.topMargin: 6
                     }
-                    Canvas {
-                        id: toneCurve
+                    Text {
+                        text: qsTr("目标峰值 %1 nits（playback.targetPeakNits，即时生效）").arg(prefs.targetPeakNits)
+                        color: panelRoot.textColor
+                        font.pixelSize: 12
+                        wrapMode: Text.WordWrap
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 140
-                        onPaint: {
-                            var ctx = getContext("2d")
-                            ctx.reset()
-                            ctx.strokeStyle = "#26ffffff"
-                            ctx.lineWidth = 1
-                            for (var i = 1; i < 4; ++i) {
-                                var gx = width * i / 4
-                                var gy = height * i / 4
-                                ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, height); ctx.stroke()
-                                ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(width, gy); ctx.stroke()
-                            }
-                            // BT.2390：高光段压缩更平缓（低段近线性）
-                            ctx.strokeStyle = "#e7b27c"
-                            ctx.lineWidth = 2
-                            ctx.beginPath()
-                            for (var x = 0; x <= width; ++x) {
-                                var t = x / width
-                                var y = height * (1 - (t < 0.6 ? t : 0.6 + (t - 0.6) * 0.7))
-                                if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y)
-                            }
-                            ctx.stroke()
-                            // 参考线性曲线
-                            ctx.strokeStyle = "#55e7b27c"
-                            ctx.lineWidth = 1
-                            ctx.beginPath()
-                            ctx.moveTo(0, height); ctx.lineTo(width, 0)
-                            ctx.stroke()
+                    }
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 72
+                        radius: 8
+                        color: "#0b0c10"
+                        border.width: 1
+                        border.color: panelRoot.lineColor
+                        Text {
+                            anchors.centerIn: parent
+                            width: parent.width - 24
+                            horizontalAlignment: Text.AlignHCenter
+                            text: qsTr("曲线预览不可用\n缺少真实 BT.2390 数据源，1.0 不提供图形曲线（非占位图）")
+                            color: panelRoot.mutedColor
+                            font.pixelSize: 10
+                            wrapMode: Text.WordWrap
                         }
-                        onWidthChanged: requestPaint()
-                        onHeightChanged: requestPaint()
                     }
                     Text {
-                        text: qsTr("目标 1000 nits · 输入 HDR10（占位曲线，接入 mpv 色调映射参数后替换）")
+                        text: qsTr("提示：目标峰值来自播放页的「目标峰值」，修改后立即作用于 mpv。")
                         color: panelRoot.mutedColor
                         font.pixelSize: 10
                         wrapMode: Text.WordWrap

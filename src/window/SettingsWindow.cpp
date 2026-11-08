@@ -1,5 +1,6 @@
 #include "window/SettingsWindow.h"
 
+#include "media/MediaLibraryService.h"
 #include <QGuiApplication>
 #include <QQmlContext>
 #include <QQmlEngine>
@@ -58,6 +59,7 @@ SettingsWindow::SettingsWindow(WindowController *controller,
     ctx->setContextProperty(QStringLiteral("compactMode"), compact);
     ctx->setContextProperty(QStringLiteral("settingsWindow"), this);
     ctx->setContextProperty(QStringLiteral("prefs"), controller ? controller->preferences() : nullptr);
+    ctx->setContextProperty(QStringLiteral("library"), controller ? controller->library() : nullptr);
     const QString current = theme ? theme->currentTheme() : QStringLiteral("A");
     ctx->setContextProperty(QStringLiteral("settingsPanelRadius"), radiusForTheme(current));
 
@@ -149,7 +151,7 @@ void SettingsWindow::closeSelf()
 void SettingsWindow::setPage(int page)
 {
     if (QQuickItem *item = rootObject())
-        item->setProperty("page", qBound(0, page, 5));
+        item->setProperty("page", qBound(0, page, 7));
 }
 
 void SettingsWindow::showEvent(QShowEvent *event)

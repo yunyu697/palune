@@ -112,6 +112,7 @@ qt_add_resources(Palune "app_resources"
         qml/components/SettingSwitch.qml
         qml/components/SettingCycle.qml
         qml/components/SettingStepper.qml
+        qml/components/OutlinedText.qml
         qml/shell/VideoHost.qml
         qml/layouts/LayoutA/LayoutA.qml
         qml/layouts/LayoutB/LayoutB.qml

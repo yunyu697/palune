@@ -1,0 +1,69 @@
+{
+    "date": "2026-11-08",
+    "build": "build/Release/Palune.exe (Release, MSVC, Qt 6.8.3)",
+    "scope": "SETTINGS-GAP P0 整组闭合（存储 / 语言 / 账户与媒体库入口 / 字幕预览与 B 第三栏）",
+    "groups": {
+        "storage": {
+            "status": "DONE",
+            "keys": {
+                "storage.thumbCacheLimitMb": { "default": 2000, "unit": "MB", "applies": "扫描结束时淘汰最旧缩略图；设置页「按上限立即清理」即时生效" },
+                "storage.logRetentionDays": { "default": 14, "unit": "days", "applies": "修改后立即清理一次；每次启动 applyAll() 再清理" }
+            },
+            "ui": ["存储页占用统计", "清理缩略图缓存", "按上限立即清理", "重建媒体库索引", "导出配置…", "导入配置（重启生效）…", "打开配置目录"],
+            "behavior_evidence": {
+                "thumbsBytesBefore": 115343360,
+                "thumbsBytesAfter": 57671680,
+                "thumbsFilesAfter": 1,
+                "limitMb": 100,
+                "oldLogExistsBefore": true,
+                "oldLogExistsAfter": false,
+                "exported": true,
+                "exportBytes": 637,
+                "imported": true,
+                "importRestoredAutoPlay": true,
+                "indexExistsBefore": true,
+                "indexExistsAfter": false
+            },
+            "raw": "docs/evidence/settings-storage-probe.json",
+            "screenshot": "docs/evidence/shots/p0-settings/settings-page6-zh.png"
+        },
+        "language": {
+            "status": "DONE (translation coverage PARTIAL)",
+            "keys": {
+                "ui.language": { "default": "system", "values": ["system", "zh_CN", "en_US"], "applies": "重启生效（QTranslator 在 QApplication 启动时装载）" }
+            },
+            "behavior_evidence": {
+                "startup_log_zh": "界面语言：zh-Hans-CN",
+                "startup_log_en": "界面语言：en_US",
+                "error_copy_removed": "旧文案「当前版本只提供中文 UI，多语言在本期范围外」已删除"
+            },
+            "screenshot": "docs/evidence/shots/p0-settings/settings-storage-en.png"
+        },
+        "account_library": {
+            "status": "DONE (account backend explicitly deferred)",
+            "keys": {
+                "library.roots": { "default": [], "applies": "复用既有媒体库配置；设置页可增删/重扫" },
+                "library.viewMode": { "default": "poster", "values": ["poster", "list"], "applies": "即时生效并持久化" }
+            },
+            "account": "本地模式，无账户/登录/云端同步；1.1 之后显式延后",
+            "behavior_evidence": {
+                "seeded_root": "qa/runtime/p0-storage2/media",
+                "scan_log": "媒体库扫描完成：1 项",
+                "ui_stats": "条目 1 · 根目录 1 · 已索引 1 项"
+            },
+            "screenshot": "docs/evidence/shots/p0-settings/settings-page5-zh.png"
+        },
+        "subtitle_and_layout_b": {
+            "status": "DONE (BT.2390 curve NOT DONE, degraded to no-preview)",
+            "bound_keys": ["sub.fontSize", "sub.color", "sub.outline", "sub.position", "playback.targetPeakNits"],
+            "implementation": "新增 qml/components/OutlinedText.qml：8 向偏移文本模拟 0–6px 描边；字幕页预览与布局 B 第三栏共用；删除静态 Canvas 曲线",
+            "screenshot": "docs/evidence/shots/p0-settings/settings-page2-zh.png"
+        }
+    },
+    "not_done": [
+        "BT.2390 曲线图形预览：缺少真实 BT.2390 数据源，界面明确标注「曲线预览不可用」，未用静态占位"
+    ],
+    "partial": [
+        "en_US 翻译未覆盖新增 P0 文案（媒体库/存储/账户说明），英文模式下回退中文；旧 6 页英文仍有效"
+    ]
+}

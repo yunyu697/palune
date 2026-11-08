@@ -75,6 +75,7 @@ public:
     ActionRegistry *actions() const { return m_actions; }
     Settings *settings() const { return m_settings; }
     Preferences *preferences() const { return m_preferences; }
+    MediaLibraryService *library() const { return m_library; }
 
     // 布局统一动作入口（布局只发动作名，不直接调用播放器）。
     // QML 不填默认参数，按参数个数区分两个重载。

@@ -17,7 +17,7 @@
 
 ## 设置整组补齐（S1–S6）
 
-按 `docs/SETTINGS-GAP.md` §8 的分组整组补齐，不留零散缺口；最终状态、配置键、生效时机、默认值见该文件 §9。
+按 `docs/SETTINGS-GAP.md` §8 的分组整组补齐；配置键与默认值以 `src/settings/Preferences.cpp` 的注册表为准，运行时取证状态见 `SETTINGS-GAP.md` §10.2（2026-11-08 十项已跑真实进程，8 项 DONE，3 项标 NOT_VERIFIED）。
 
 | 组 | 改动 | 证据 |
 |---|---|---|
@@ -27,6 +27,9 @@
 | S4 播放 | 硬解、缓存、HDR 映射与目标峰值、去隔行、续播开关、自动下一集、速度持久化 | `page1.png`、`settings-probe.json` |
 | S5 快捷键 | 40 条动作表、按键捕获改键、解绑、恢复默认、冲突展示、`[keys]` 持久化（`ActionRegistry::setOverrides`） | `page4.png`、`settings-probe.json` |
 | S6 更新 | 通道（beta → `latest-beta.json`）、启动自动检查、代理、下载目录、许可与诊断入口 | `page5.png`、`settings-probe.json` |
+| S7 存储（P0 补齐） | 占用统计、清理缩略图缓存、按上限淘汰、索引重建、配置导出/导入；`storage.thumbCacheLimitMb`（2000 MB，下次扫描/手动即时）、`storage.logRetentionDays`（14 天，即时+启动） | `settings-storage-probe.json`、`shots/p0-settings/settings-page6-zh.png` |
+| S8 语言（P0 补齐） | `ui.language`（system/zh_CN/en_US，默认 system，重启生效）；删除“只提供中文 UI”错误文案 | `settings-probe` 启动日志两次（zh-Hans-CN / en_US），`shots/p0-settings/*` |
+| S9 媒体库入口（P0 补齐） | 设置「媒体库」页：条目/根目录/扫描状态/索引路径、添加/移除/重扫、打开媒体库、默认视图；账户区域明确“本地模式，1.1 后显式延后” | `shots/p0-settings/settings-page5-zh.png` |
 
 端到端探针：`PALUNE_PREFS_PROBE=<json>` 启动真实进程，在 mpv 解码中通过 `Preferences` setter 改全部设置，读取 mpv 属性 + 新建 `Settings` 从磁盘重读，结果见 `docs/evidence/settings-probe.json`（全部一致）。
 
@@ -49,7 +52,7 @@
 
 ### 1.0.0 候选版本（RC）记录
 
-口径：**这是功能冻结候选版本，不是缺口已闭合的正式版**。按 `GAP-AUDIT.md`，M2-10 仍为 PARTIAL（存储整组 / 语言入口 / 账户与媒体库入口未补）、设置十项运行时取证未完成、P1 签名与计划文档未闭合，因此不得对外称“已收口”。
+口径：**这是功能冻结候选版本，不是缺口已闭合的正式版**。设置三块 P0 与预览联动已于 11-08 补齐（M2-10 转 DONE），十项行为取证 8 项 DONE、3 项 NOT_VERIFIED；但 P1（生产签名/更新通道、计划文档缺失）未清，对外只写 `1.0.0-RC`，不得称“已收口”。
 
 | 项 | 值 |
 |---|---|

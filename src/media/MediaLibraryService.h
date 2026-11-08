@@ -69,6 +69,13 @@ public:
     Q_INVOKABLE void rescan();
     Q_INVOKABLE void setViewMode(const QString &mode);
 
+    // 存储整组：缩略图缓存只清可重建内容（缩略图），索引重建会同时清空缩略图。
+    // 上限来自 settings.toml 的 storage.thumbCacheLimitMb（默认 2000 MB）。
+    Q_INVOKABLE void clearThumbCache();
+    Q_INVOKABLE void rebuildLibraryIndex();
+    Q_INVOKABLE void trimThumbCache();
+    Q_INVOKABLE void openLibraryDir();
+
 signals:
     void libraryChanged();
     void adaptersChanged();

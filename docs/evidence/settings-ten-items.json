@@ -1,0 +1,24 @@
+{
+    "date": "2026-11-08",
+    "scope": "SETTINGS-GAP §10.2 十项设置的行为级取证（真实窗口/播放器/网络，不是只读键值）",
+    "build": "build/Release/Palune.exe (Release, Qt 6.8.3, Windows)",
+    "method": "PALUNE_PREFS_PROBE 在真实进程内执行；窗口态由 PALUNE_WINDOW_STATE_PROBE 单独冷启动两次；代理用不可达端点触发真实请求",
+    "items": [
+        { "id": "closeToTray", "key": "ui.closeToTray", "status": "DONE", "observed": { "visibleBefore": true, "visibleAfter": false, "processAlive": true } },
+        { "id": "minimizeToTray", "key": "ui.minimizeToTray", "status": "DONE", "observed": { "visibleAfter": false } },
+        { "id": "confirmExit", "key": "ui.confirmExit", "status": "DONE", "observed": { "dialogShown": true, "dialogText": "确定要退出 Palune 吗？", "cancelKeptAlive": true } },
+        { "id": "startMaximized", "key": "ui.startMaximized", "status": "DONE", "observed": { "trueRun": { "maximized": true, "size": "1920x1032" }, "falseRun": { "maximized": false, "size": "1180x700" } }, "defect_fixed": "applyGeometry 在 showMaximized 之后执行会把窗口改回普通尺寸；同时补 m_maximized/m_restoreGeometry 同步，避免启动最大化后无法还原" },
+        { "id": "audioDevice", "key": "audio.device", "status": "DONE", "observed": { "devices": 5, "chosen": "wasapi/{067ff86b-2cb2-4511-a750-06670fe28df9}", "readBack": "wasapi/{067ff86b-2cb2-4511-a750-06670fe28df9}" } },
+        { "id": "autoCheckUpdates", "key": "update.autoCheck", "status": "DONE", "observed": { "defaultTrueStateAtProbe": "checking", "seededFalseStateAtProbe": "unchecked" } },
+        { "id": "betaChannel", "key": "update.channel", "status": "DONE_URL_LEVEL", "observed": { "feed": "https://github.com/yunyu697/palune-releases/releases/latest/download/latest-beta.json" }, "not_verified": "beta manifest 的真实拉取（网络环境）" },
+        { "id": "updateProxy", "key": "update.proxy", "status": "DONE", "observed": { "state": "error", "errorCode": "UPD-001", "errorMessage": "网络不可达或请求超时，请检查网络后重试（Connection refused）" } },
+        { "id": "downloadDir", "key": "update.downloadDir", "status": "NOT_VERIFIED", "observed": { "effective": "qa/runtime/p0-behavior2/appdata/Palune/probe-downloads", "isolated": true }, "reason": "缺少可用更新包与签名，无法验证真实下载落盘位置" },
+        { "id": "openLicense", "status": "PARTIAL", "observed": { "licenseFileExists": true, "actionInvoked": true }, "reason": "外部查看器是否成功打开无法自动断言；已验证文件存在与 openLicense 分支调用" }
+    ],
+    "raw": [
+        "docs/evidence/settings-behavior-probe-autocheck.json",
+        "docs/evidence/settings-behavior-probe.json",
+        "docs/evidence/window-state-startmax.json",
+        "docs/evidence/window-state-normal.json"
+    ]
+}

@@ -26,10 +26,10 @@ $MpvAsset = "mpv-dev-x86_64-20261106-git-9028187538.7z"
 $MpvSha256 = "b5a3cc91b5dabf88ad5bb21d000834da4fd0bbda30f4584d39c082127bd62414"
 $SodiumAsset = "libsodium-1.0.22-msvc.zip"
 $SodiumSha256 = "3e03a726fac4bc09cb61d8f29d658ef7a5eca0811de59082130414f7ca2e4279"
-# 压缩包里同时有 Win32/x64、Debug/Release、v142/v143 多份 libsodium.dll，
-# 按路径或顺序取第一份会拿到 Debug 版（1.25MB，与已发布包里的 Release 版 349KB 不同）。
-# 直接按 DLL 的 SHA256 挑，保证 CI 与本地包逐字节一致。
-$SodiumDllSha256 = "f1b56eb55a86edee37a2614c8bd38272ac325ec6fa6fa7a4088a4d1a42815c4c"
+# 压缩包里有 Win32/ARM64/x64、Debug/Release、v142/v143 多份 libsodium.dll。
+# 按目录顺序取第一份曾拿到 Debug 版（1.25MB，且不在 x64 下）；这里只认
+# x64 + Release + dynamic 的路径，多版本时取字典序最大的（v143 优先）。
+# 内容确定性由上面的压缩包 SHA256 保证，不需要再单独钉 DLL 哈希。
 
 $MpvUrl = "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/$MpvTag/$MpvAsset"
 $SodiumUrl = "https://github.com/jedisct1/libsodium/releases/download/1.0.22-RELEASE/$SodiumAsset"
@@ -115,18 +115,23 @@ if (Test-Path (Join-Path $sodiumDir "libsodium.dll")) {
     $extract = Join-Path $env:RUNNER_TEMP "libsodium"
     Remove-Item -Recurse -Force $extract -ErrorAction SilentlyContinue
     & 7z x -y "-o$extract" $zip | Out-Null
-    $expectedDll = $SodiumDllSha256.ToLowerInvariant()
     $dll = Get-ChildItem -Recurse -Filter "libsodium.dll" $extract |
-        Where-Object { (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() -eq $expectedDll } |
+        Where-Object {
+            $_.FullName -match '\\x64\\' -and
+            $_.FullName -match '\\Release\\' -and
+            $_.FullName -match '\\dynamic\\'
+        } |
+        Sort-Object FullName -Descending |
         Select-Object -First 1
     if (-not $dll) {
-        throw "libsodium 压缩包里没有 sha256=$expectedDll 的 libsodium.dll（$SodiumAsset）"
+        throw "libsodium 压缩包里没有 x64/Release/dynamic 的 libsodium.dll（$SodiumAsset）"
     }
     if ($VerifyOnly) {
         Write-Output "预检通过：libsodium.dll 来自 $SodiumAsset"
     } else {
         Copy-Item $dll.FullName (Join-Path $sodiumDir "libsodium.dll") -Force
-        Write-Output "已就绪 libsodium.dll（$SodiumAsset）"
+        $h = (Get-FileHash (Join-Path $sodiumDir "libsodium.dll") -Algorithm SHA256).Hash.ToLowerInvariant()
+        Write-Output "已就绪 libsodium.dll（$($dll.FullName.Substring($extract.Length + 1))，sha256=$h）"
     }
 }
 

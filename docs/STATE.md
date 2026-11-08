@@ -361,6 +361,10 @@
 - **Windows 运行时依赖**：`fetch_win_runtime.ps1` 不再匿名调用 GitHub REST API（未认证限流 60 次/小时/IP，`42483173880` 的 `We couldn't respond…` 即此），改为钉死 tag 的 Release 资产直链（libmpv `20261106`、libsodium 上游 1.0.x 线）+ 资产 SHA256 校验 + 3 次重试/单次 300s 超时 + `actions/cache`（命中即零联网）；libsodium 从多架构/多配置包里固定选 `x64/Release/dynamic`（避免误取 1.25MB 的 Debug 版），内容确定性由压缩包 SHA256 保证。该步骤失败时只跳过 Windows headless 冒烟（`continue-on-error` + `::warning::`），编译与单测继续，不阻断整条矩阵。Windows 冒烟 20/20 PASS（run `42486966936`）；`libmpv-2.dll` 与本地包逐字节一致（sha256 `ccfb18e0…`），libsodium 固定取上游 `x64/Release/dynamic`（462,848 B，sha256 `f656aeb7…`）。注意：`dist/` 里既有安装包用的是较旧版本（349,184 B，sha256 `f1b56eb5…`，来源未固定），与 CI 不一致；下次出包前需用本脚本刷新 `third_party/`，或直接以 CI 产物为准。
 - **文档归属**：设计基线 `ARCHITECTURE.md` 已从工作区外目录纳入 `docs/ARCHITECTURE.md`（文件头写明归属与维护规则），架构/标识变更随代码提交。
 - **本地依赖对齐（11-08）**：`third_party/libsodium` 已用固定脚本刷新为上游最新 1.0.x（462,848 B，sha256 `f656aeb7…`），与 CI 同一文件；重打安装包 `dist/release-1.0.0-deps-refresh/Palune-1.0.0-win-x64.exe`（59,720,467 B，sha256 `e43bef5a…`），换 DLL 后 headless 冒烟 20/20 PASS。旧包（349,184 B，sha256 `f1b56eb5…`）未被覆盖。依赖来源/挑选规则/未入库依赖（Qt 6.8.3 本机 vs 6.9.3 CI、MSVC Redist 机器相关）见 `third_party/MANIFEST.md`。
+- **依赖后续项（按 UI 六条修复之后排期）**：
+  - **Qt 版本收敛**：本机出包 6.8.3、CI 验证 6.9.3，发布二进制与 CI 验证对象运行时不同。已在 `third_party/MANIFEST.md` 写明“已验证/未验证范围”（编译、单测、headless 冒烟两边都有；GUI/安装器只有本机证据）。收敛做法：本机装 Qt 6.9.3 后用 `package_windows.ps1` 重出包。
+  - **出包记录**：MSVC Redist 属机器相关输入可以保留，但每次出包须记录实际取到的版本与文件哈希（`vcruntime140/msvcp140/...`），由打包脚本生成 `build-record.json` 随包留存，做到可追溯到具体 redist 版本。
+  - **已发布 `1.0.0-RC` 资产重发**：线上资产仍带旧 libsodium（349,184 B，sha256 `f1b56eb5…`）。等六条 UI 修复完成后统一重发一次：替换资产、更新清单与 SHA256SUMS、重新走签名验签校验；不为依赖单独发版。
 - **1 小时压测**：已完成 1/3 轮，`docs/evidence/m1-soak.json`，RSS 218MB→190MB（-28.3MB/h），无增长趋势；完整 8h 数据由 M2 soak 补齐。
 - macOS/Linux headless 冒烟：Linux/macOS 均绿。
 

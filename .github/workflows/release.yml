@@ -296,6 +296,7 @@ jobs:
           GH_TOKEN: ${{ secrets.RELEASE_REPO_TOKEN }}
           TAG: ${{ github.ref_name }}
           VERSION: ${{ needs.version.outputs.version }}
+          CHANNEL: ${{ needs.version.outputs.channel }}
         run: |
           set -euo pipefail
           # dist 里混有 Windows 安装验证输出目录（dist/verify），gh release 不接受目录；
@@ -303,12 +304,16 @@ jobs:
           mapfile -t FILES < <(find dist -maxdepth 1 -type f | sort)
           echo "发布资产："
           printf '%s\n' "${FILES[@]}"
+          # 预发布口径：alpha 打 --prerelease，不接管 releases/latest；只有 stable 才发普通 Release。
+          PRERELEASE=""
+          if [ "$CHANNEL" != "stable" ]; then
+            PRERELEASE="--prerelease"
+          fi
+          echo "通道=$CHANNEL 预发布参数=${PRERELEASE:-（无）}"
           if gh release view "$TAG" --repo "$RELEASE_REPO" >/dev/null 2>&1; then
             gh release upload "$TAG" "${FILES[@]}" --repo "$RELEASE_REPO" --clobber
           else
-            # 不加 --prerelease：GitHub 的 releases/latest 只指向非预发布 Release，
-            # 否则客户端固定使用的 latest/download/latest.json 会 404。
-            gh release create "$TAG" "${FILES[@]}" --repo "$RELEASE_REPO" \
+            gh release create "$TAG" "${FILES[@]}" --repo "$RELEASE_REPO" $PRERELEASE \
               --title "Palune $VERSION" \
               --notes "Palune $VERSION 发行产物。源码在私有仓库；更新清单见 latest.json，校验值见 SHA256SUMS。"
           fi
@@ -321,11 +326,19 @@ jobs:
     env:
       RELEASE_REPO: yunyu697/palune-releases
       VERSION: ${{ needs.version.outputs.version }}
+      CHANNEL: ${{ needs.version.outputs.channel }}
+      TAG: ${{ github.ref_name }}
     steps:
       - name: 不带任何凭据 GET latest.json 与安装包
         run: |
           set -uo pipefail
-          FEED="https://github.com/${RELEASE_REPO}/releases/latest/download/latest.json"
+          # 预发布不接管 releases/latest，因此断言走 tag 定点 URL；只有 stable 才断言 latest 主链。
+          if [ "$CHANNEL" = "stable" ]; then
+            FEED="https://github.com/${RELEASE_REPO}/releases/latest/download/latest.json"
+          else
+            FEED="https://github.com/${RELEASE_REPO}/releases/download/${TAG}/latest.json"
+          fi
+          echo "通道=$CHANNEL 断言 URL=$FEED"
           HEADERS="$(mktemp)"
           CODE="$(curl -sSL -o feed.json -D "$HEADERS" -w '%{http_code}' --max-redirs 5 \
             --retry 6 --retry-delay 10 --retry-all-errors \

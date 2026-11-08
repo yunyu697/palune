@@ -13,7 +13,7 @@
 3. 每个里程碑收口前必须做**真实窗口逐屏核对**；自渲染矩阵只作辅助。设计稿/DESIGN.md 缺失时，相关结论只能写 NOT_VERIFIED，不得写"已对齐"。
 4. 收口证据固定落盘：`docs/GAP-AUDIT.md`（里程碑复审）、`docs/SETTINGS-GAP.md`（设置核对）、`docs/evidence/UI-<版本>-COMPARISON.md`（逐屏对照）。
 5. 每条缺陷修复必须写清**根因（哪个对象、哪一层、什么机制）**与修复方式，不得只调参数遮现象。
-6. 版本以 `VERSION` 为唯一来源：预发布段最多到 `alpha10`，之后转正式 `1.0.0`；只本地打包、只本地打 tag，**不推送 tag、不建 Release、不推 palune-releases**。
+6. 版本以 `VERSION` 为唯一来源：预发布段最多到 `alpha10`，之后转正式 `1.0.0`；本地打包、本地打 tag。**发行仓只发预发布**（`--prerelease`，不接管 `releases/latest`）；源码仓 tag 推送仍需单独放行，因为 `release.yml` 会按 `VERSION` 推出 `stable` 并创建正式 Release（2026-11-08 已改工作流按通道处理，补推前仍需核对）。
 
 ## 设置整组补齐（S1–S6）
 
@@ -64,6 +64,19 @@
 | 单元测试 | 7/7 可执行文件 PASS（media 8 用例；`docs/evidence/tst-media-m4.xml`） |
 | 本地 tag | `1.0.0`（仅本地，未推送） |
 | 备注 | 安装自测报告 `fallbackReason=缺少 [ui] theme` 来自复验专用配置目录，非安装缺陷；启动 1878ms 仍高于 800ms 基线，归 P3 |
+
+### GitHub 发行（2026-11-08，预发布）
+
+| 项 | 值 |
+|---|---|
+| 源仓 tag | 本地 8 个（`1.0.0`、alpha1/4/5/7/8/9/10），远端只有 alpha1/4/5/7；alpha8 起未推送 |
+| 源仓 Release | alpha1、alpha4、alpha5（均为 Pre-release）；alpha7 起无 Release |
+| 发行仓 | `1.0.0-alpha6`（旧规则、非预发布、挂着 Latest）→ 新增 `1.0.0-RC`（`prerelease=true`，不接管 Latest） |
+| RC 资产 | exe 59,649,289 B、`latest.json`、`SHA256SUMS`、安装证据 2 份；GitHub digest 与本地 SHA-256 一致 |
+| 清单验签 | `docs/evidence/release-1.0.0-rc/manifest-verify.json` PASS（信任公钥 `resources/trust/update.pub`，keyId `palune-test`） |
+| 匿名主链 | NOT_VERIFIED：GitHub 边缘对 `releases/download/*` 返回 504，alpha6 历史资产同样；记录见 `github-publish-audit.json` |
+| 工作流改动 | `publish` 按通道加 `--prerelease`；`assert-public-feed` 预发布改断 tag 定点 URL |
+| 未做 | 源码仓 tag 补推（会以 stable 口径发布）、mac/Linux 产物、MSI、生产签名 |
 
 ## alpha10：六项实机缺陷
 

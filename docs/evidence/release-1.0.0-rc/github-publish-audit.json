@@ -1,0 +1,73 @@
+{
+  "recordedAt": "2026-11-08T17:15:00+08:00",
+  "scope": "GitHub 现状核对 + 1.0.0-RC 预发布",
+  "sourceRepo": {
+    "repo": "yunyu697/palune",
+    "visibility": "private",
+    "localTags": ["1.0.0", "1.0.0-alpha1", "1.0.0-alpha4", "1.0.0-alpha5", "1.0.0-alpha7", "1.0.0-alpha8", "1.0.0-alpha9", "1.0.0-alpha10"],
+    "remoteTags": ["1.0.0-alpha1", "1.0.0-alpha4", "1.0.0-alpha5", "1.0.0-alpha7"],
+    "localOnlyTags": ["1.0.0", "1.0.0-alpha8", "1.0.0-alpha9", "1.0.0-alpha10"],
+    "releases": [
+      {"tag": "1.0.0-alpha5", "prerelease": true},
+      {"tag": "1.0.0-alpha4", "prerelease": true},
+      {"tag": "1.0.0-alpha1", "prerelease": true}
+    ],
+    "note": "远端 tag 停在 alpha7；alpha8/alpha9/alpha10/1.0.0 从未推送。本轮有意不推送：release.yml 监听 refs/tags/*，一旦推送会按 version 推导 channel=stable 并创建非预发布 Release，与 RC 口径冲突。"
+  },
+  "releaseRepo": {
+    "repo": "yunyu697/palune-releases",
+    "visibility": "public",
+    "releaseBefore": [
+      {"tag": "1.0.0-alpha6", "prerelease": false, "isLatest": true}
+    ],
+    "releaseAfter": {
+      "tag": "1.0.0-RC",
+      "name": "Palune 1.0.0-RC",
+      "isDraft": false,
+      "isPrerelease": true,
+      "publishedAt": "2026-11-08T09:14:40Z",
+      "url": "https://github.com/yunyu697/palune-releases/releases/tag/1.0.0-RC",
+      "assets": [
+        {"name": "Palune-1.0.0-win-x64.exe", "size": 59649289, "githubDigest": "sha256:4f1cb5cadf4aa304ab2c53c7404ec984b38cdc532d57af8c6a16bde43917b82c", "matchesLocal": true},
+        {"name": "latest.json", "size": 1297, "githubDigest": "sha256:b2d33ee7e16602a1ca75ca4efaeae7125054eb1c6372904b2211ef9b61d538da"},
+        {"name": "SHA256SUMS", "size": 92, "githubDigest": "sha256:8ca3753cf388c7969c078a5201b2f44a97b464a807fe650993396f35dc9aaa7b"},
+        {"name": "windows-install-evidence.json", "size": 1991, "githubDigest": "sha256:2d255fd39e1ec6cc1333d9814e28c315b66d069c6a087e1dc19eba0ea111541f"},
+        {"name": "install-launch.json", "size": 424, "githubDigest": "sha256:1a6de6ff731abe7692ca6ea63187fdfbf7f163903115636253dc7233936ff340"}
+      ]
+    },
+    "latestPointerAfter": {"tag": "1.0.0-alpha6", "prerelease": false},
+    "latestPointerNote": "gh api releases/latest 仍返回 1.0.0-alpha6，主更新链未被 RC 接管，符合预发布口径。"
+  },
+  "manifestCheck": {
+    "file": "docs/evidence/release-1.0.0-rc/manifest-verify.json",
+    "verdict": "PASS",
+    "trustKey": "resources/trust/update.pub（与 test-update.pub 同一把，公钥 1ef63fe4…）",
+    "keyIdInManifest": "palune-test",
+    "checks": {
+      "manifestSignature": true,
+      "versionMatches": true,
+      "sha256sums": true,
+      "artifacts": true
+    }
+  },
+  "feedProbe": {
+    "checkedAt": "2026-11-08T17:15:48+08:00",
+    "anonymousGet": [
+      {"url": "https://github.com/yunyu697/palune-releases/releases/latest/download/latest.json", "http": 504},
+      {"url": "https://github.com/yunyu697/palune-releases/releases/download/1.0.0-RC/latest.json", "http": 504},
+      {"url": "https://github.com/yunyu697/palune-releases/releases/download/1.0.0-alpha6/latest.json", "http": 504},
+      {"url": "https://github.com/yunyu697/palune-releases/releases/tag/1.0.0-RC", "http": 200},
+      {"url": "https://api.github.com/repos/yunyu697/palune-releases/releases/latest", "http": 200}
+    ],
+    "diagnosis": "504 由 GitHub 边缘节点返回（含 X-GitHub-Request-Id、x-github-edge-region: southeastasia），且 alpha6 的历史资产同样 504，说明是下载 CDN 区域性问题，不是本次发布造成的。",
+    "verdict": "NOT_VERIFIED",
+    "impact": "更新链 releases/latest/download/latest.json 在本区域当前取不到；清单签名与字节完整性已由本地上传摘要和信任公钥校验证明。"
+  },
+  "notDone": [
+    {"item": "macOS / Linux 产物", "reason": "本机只有 Windows，CI 三平台构建未在本轮运行"},
+    {"item": "MSI", "reason": "本机无 WiX，package_windows.ps1 跳过"},
+    {"item": "生产签名", "reason": "update.pub 与 test-key.pem 是同一对测试密钥，未轮换离线生产密钥"},
+    {"item": "源仓库 tag 推送（alpha8/alpha9/alpha10/1.0.0）", "reason": "会触发 release.yml 以 stable 口径创建非预发布 Release，与 RC 口径冲突，需先改工作流再推"},
+    {"item": "匿名更新链可达性断言", "reason": "GitHub 下载 CDN 在本区域返回 504，无法完成 assert-public-feed 等价验证"}
+  ]
+}

@@ -1,8 +1,18 @@
 # Palune
 
-轻量、无位图皮肤、面向 Windows 优先的桌面视频播放器。M2 阶段：三主题验收矩阵（36 界面基线、50 次切换状态保持、紧凑降级、配置回退）与 Windows 安装器修复。
+轻量、无位图皮肤、面向 Windows 优先的桌面视频播放器。
 
-当前版本：**1.0.0-alpha5**（版本号唯一来源是仓库根目录 `VERSION`）。
+当前版本：**1.0.0-RC**（`VERSION` = `1.0.0`；功能冻结候选，**尚未收口**，见「已知限制」；对外不得称正式版）。
+
+已实现主线（截至 2026-11-08）：
+
+| 能力 | 状态 | 入口 |
+| --- | --- | --- |
+| 三主题 A/B/C + 四层主题架构 | 已实现 | `qml/layouts/*`、`src/theme/*` |
+| 本地媒体库（扫描 / 索引 / 缩略图 / 海报墙 + 列表） | 已实现 | `src/media/MediaLibraryService.*`、`qml/LibraryPanel.qml` |
+| 媒体服务器（认证 / 列表 / 取流 / 上报 / 能力五组接口） | **仅接口抽象，无任何适配器实现** | `src/media/MediaServerAdapter.h` |
+| 更新机制（清单签名 + 产物签名 + 镜像回退 + 断点续传） | 已实现（测试密钥） | `src/update/*` |
+| 设置八页（通用/播放/字幕/音频/快捷键/媒体库/存储/关于） | 已实现 | `qml/SettingsPanel.qml`、`src/settings/Preferences.*` |
 
 ## 已完成（M1）
 
@@ -29,8 +39,8 @@
 | 1080p 播放内存 | ≤500MB | **PASS** | 204.5MB（播放 15s 后），丢帧 0、错时帧 0 |
 | 主题切换 10 次（1080p） | 每次 ≤300ms、不断播、无黑帧 | **PASS** | 最大 104.1ms；布局构建 ≤6.7ms；亮度采样 125.7±1 全部非黑；`start-file`/`end-file` 增量均为 0；布局内无 `VideoHost` |
 | 主题回退与切换单测 | 缺键/非法/资源缺失回退 A；切换 <300ms | **PASS** | `tst_theme` 覆盖 7 组场景 |
-| 覆盖率 | ≥70% | **待验证** | 已补 `tst_core` 与关键路径过滤，等待新 CI 出数 |
-| 20 样本 × 3 OS 冒烟 | macOS/Linux 各 ≥19/20 | **待验证** | 本机仅有 Windows；CI headless 冒烟结果为准 |
+| 覆盖率 | ≥70% | **PASS（CI 门槛）** | `ci.yml` 覆盖率作业带 `gcovr --fail-under-line 70` 硬门槛且为绿；原始覆盖率报告未归档，离线复核需重跑 CI |
+| 20 样本 × 3 OS 冒烟 | macOS/Linux 各 ≥19/20 | **PASS（CI）** | `ci.yml` 三平台矩阵各跑 `--m1-smoke` 并上传 artifact（macOS 20/20）；原始 JSON 未下载归档 |
 | 1h × 3 循环 RSS 漂移 | 无持续增长 | **PARTIAL** | 已完成 1 轮 60 分钟：RSS 218MB→190MB，漂移 -28.3MB/h（无增长）；仍缺 2 轮 |
 | 签名与更新通道 | 可签名、可回退 | **PARTIAL** | 清单/产物签名与校验链路具备且单测通过；无正式发布私钥、`updates.palune.app` 域名不受控 |
 | 安装包 ×3 OS + 干净虚拟机 | 三平台可装 | **PARTIAL** | Windows 已完成真实安装→启动→卸载（见下）；macOS/Linux 未验证 |
@@ -43,6 +53,13 @@
 - 紧凑模式自动降级：默认断点 560px、`settings.toml` 可配（非法值回退并提示）、±24px 滞回、60ms 防抖；10Hz 抖动 50 次切换数为 0
 - 配置回退矩阵（5 场景）：无 settings / 无 `[ui]` / 非法主题 Z / TOML 损坏 / 合法 B，全部回退 A 并给出原因
 - 报告：`docs/evidence/m2-stateswitch.json`、`m2-compact.json`、`m2-config-fallback.json`、`m2-ui-baseline.json`
+
+## 已完成（M3 界面收口 / M4 本地媒体库）
+
+- M3：媒体库按主题分支（A 右侧 352 滑出栏、B 居中宽面板、C 右侧 76% 抽屉）；设置改为独立顶层窗（可拖动、贴右下 16px）；无边框窗去 NC 合成层（画面/边缘无浅色框）；布局 B 右栏不透明且不压控制条；鼠标语义统一（单击播放暂停、双击全屏、右键菜单、滚轮音量、Ctrl+滚轮 seek）；控制栏声明式自动隐藏
+- M4：递归扫描本地目录（格式过滤、跳过不可读/符号链接）、索引持久化与损坏重建、系统缩略图（`IShellItemImageFactory`，按 mtime 命名）、海报墙与列表两形态、点击条目直接开播、失效根目录/文件清理、扫描在工作线程不阻塞 UI
+- 设置补齐（2026-11-08）：存储页（占用统计、按上限淘汰缩略图、索引重建、配置导出/导入、日志保留）、语言入口（`ui.language` = system/zh_CN/en_US，重启生效）、媒体库入口页、字幕描边实时预览与布局 B 第三栏绑定
+- 证据：`docs/GAP-AUDIT.md`、`docs/SETTINGS-GAP.md`、`docs/STATE.md`、`docs/evidence/`（`ui-alpha10-*.json`、`settings-storage-probe.json`、`settings-behavior-probe*.json`、`shots/p0-settings/`）
 
 ## Windows 安装器修复（alpha4）
 
@@ -109,8 +126,19 @@ macOS / Linux 依赖：`tools/ci/fetch_deps.sh`（brew / apt / dnf / pacman）�
 - 清单与产物必须已签名；`manifest` job 自带断言，`signature` 缺失直接失败
 - 跨仓库发布凭据：`RELEASE_REPO_TOKEN`（仅对 `palune-releases` 有 `contents:write`），存放在本仓库 Actions Secret；GitHub 自带的 `GITHUB_TOKEN` 无法跨仓库使用
 - 发布后 `assert-public-feed` job 会**不带凭据** GET `releases/latest/download/latest.json`，要求 200 且能取到 `version`；401/404 直接失败
-- 发行仓库的 alpha Release 不加 `--prerelease`，否则 `releases/latest` 不会指向它（会 404）
+- 发行仓库的预发布（alpha / RC）以 **prerelease** 发布，**不接管** `releases/latest`；只有正式版才用普通 Release，否则会把候选版本推给所有客户端
 - 最新发布页：https://github.com/yunyu697/palune-releases/releases
+
+### 1.0.0-RC 当前发布状态（2026-11-08）
+
+| 项 | 值 |
+| --- | --- |
+| Release | [1.0.0-RC](https://github.com/yunyu697/palune-releases/releases/tag/1.0.0-RC)，`prerelease=true` |
+| 资产 | `Palune-1.0.0-win-x64.exe`（59,649,289 B）、`latest.json`、`SHA256SUMS`、`windows-install-evidence.json`、`install-launch.json` |
+| 清单 | `--channel stable`、`version 1.0.0`、`keyId palune-test`；用 `resources/trust/update.pub` 独立验签 PASS（`docs/evidence/release-1.0.0-rc/manifest-verify.json`） |
+| 更新主链 | `releases/latest` 仍指向 `1.0.0-alpha6`，RC 未接管 |
+| 未提供 | macOS/Linux 产物、MSI、生产签名（P1 未清） |
+| 审计 | `docs/evidence/release-1.0.0-rc/github-publish-audit.json` |
 
 ## 版本号规则（硬约束）
 
@@ -189,6 +217,18 @@ tests/unit/     版本、清单、settings、主题、内容源抽象测试
 tools/          版本校验、分层检查、样本生成、依赖准备、自测运行、e2e 模拟服务
 docs/evidence/  实测报告与截图
 ```
+
+## 已知限制（1.0.0-RC）
+
+- **媒体服务器**：只有五组接口抽象，注册表内没有任何适配器，设置页账户区明确写「本地模式，1.1 后显式延后」
+- **HDR/色调映射曲线**：设置页不画 BT.2390 曲线（缺真实数据源），只显示“曲线预览不可用”，不是占位图
+- **英文界面**：`en_US` 覆盖历史文案；本轮新增的 P0 设置文案在英文下回退中文（PARTIAL）
+- **设置行为取证**：十项中 8 项 DONE，3 项 NOT_VERIFIED（下载真实落盘位置、外部许可查看器打开、beta manifest 真实拉取），见 `docs/SETTINGS-GAP.md` §10.2
+- **平台**：macOS/Linux 只有 CI 构建与冒烟，未在真机安装运行；MSI 未产出（本机无 WiX）；生产签名未轮换（`update.pub` 与测试私钥同对）
+- **跨屏 DPI**：单显示器环境，跨屏拖动与运行时 DPI 切换只能模拟
+- **冷启动**：安装包实测 1878ms，高于 800ms 基线（P3，未修）
+- **更新链**：`releases/latest/download/latest.json` 在部分地区 GitHub 边缘节点返回 504（alpha6 历史资产同样如此，与本版本无关）
+- **源码仓 tag**：远端只到 `alpha7`，`alpha8/alpha9/alpha10/1.0.0` 未推送（推送会触发 workflow 以 stable 口径自动发布，需先改工作流）
 
 ## 明确不做（M0 与文档排除项）
 

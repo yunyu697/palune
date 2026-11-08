@@ -364,3 +364,9 @@ add_test(NAME core COMMAND tst_core)
 add_executable(tst_actions tests/unit/tst_actions.cpp)
 target_link_libraries(tst_actions PRIVATE palune_core Qt6::Test)
 add_test(NAME actions COMMAND tst_actions)
+
+# Preferences 是配置持久化的唯一入口（QML 改设置 → 立即落盘）。
+add_executable(tst_preferences tests/unit/tst_preferences.cpp)
+target_link_libraries(tst_preferences PRIVATE palune_core Qt6::Test)
+palune_copy_runtime_libs(tst_preferences)
+add_test(NAME preferences COMMAND tst_preferences)

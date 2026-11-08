@@ -134,7 +134,7 @@
 3. **[已补 11-08] 设置运行时取证**：十项已在真实进程取证，8 项 DONE；下载真实落盘/外部查看器/beta manifest 拉取标 NOT_VERIFIED。证据 `docs/evidence/settings-ten-items.json`。
 4. **[已补] 媒体库运行取证（M3-07）**：11-08 16:20 补齐 `shots/m4-library/`（三主题海报墙、A/B 列表、点击开播）与 `ui-m4-library.json`（20 项/19 缩略图）、`tst-media-m4.xml`（8/8，含失效清理、损坏索引重建、200 文件 9.6s），该项转 DONE。
 5. **[P1] 生产签名密钥与真实更新通道（M1-18）**：当前是 `palune-test` 仓库内密钥；stable 发版前必须换成离线生产密钥，并验证回退通道。
-6. **[P1] 计划文档缺失（M2-12 / M3-08 的根因）**：`MILESTONES.md`、`DESIGN.md`、`ARCHITECTURE.md` 不在工作区，导致“逐条验收”和“逐屏对齐”都无法权威复核。必须先恢复文档，否则同类漏项会再次发生。
+6. **[P1 部分闭合 11-08] 计划文档缺失（M2-12 / M3-08 的根因）**：`ARCHITECTURE.md` 已纳入本仓 `docs/ARCHITECTURE.md`（文件头写明归属与维护规则），架构/标识类验收可权威复核；`MILESTONES.md`、`DESIGN.md` 仍不在工作区，逐条里程碑验收与逐屏对齐仍缺依据。
 7. **[P2] 平台与分发**：macOS/Linux 真机运行（M0-10）；干净虚拟机安装、macOS/Linux 包实际安装、MSI 安装流程（M1-19，三平台安装包本身已产出）；macOS 图标显示（M3-11）。
 8. **[P3] 性能与体验**：冷启动 1466/2116ms 对 800ms 基线（M1-11）、soak 只跑 1/3 轮（M1-17）、跨屏 DPI 与真实 Snap 手势（M0-07/09、M2-08）。
 

@@ -145,12 +145,45 @@ jobs:
           # 建窗时跳到无效地址的 SIGBUS）。只暴露确实需要的两个目录。
           echo "DYLD_LIBRARY_PATH=$(brew --prefix libsodium)/lib:$(brew --prefix mpv)/lib" >> "$GITHUB_ENV"
 
-      - name: 安装运行时依赖（Windows）
+      - name: 缓存 Windows 运行时依赖
+        # 依赖版本钉死在 fetch_win_runtime.ps1 里；用脚本体哈希做 key，
+        # 升级版本后缓存自动失效。命中缓存时完全不联网。
         if: runner.os == 'Windows'
+        uses: actions/cache@v4
+        with:
+          path: |
+            third_party/libmpv
+            third_party/libsodium
+          key: win-runtime-${{ hashFiles('tools/release/fetch_win_runtime.ps1') }}
+
+      - name: 安装运行时依赖（Windows）
+        # 这一层只影响 headless 冒烟需要的 libmpv / libsodium / ffmpeg。
+        # 编译与单测不依赖它们（CMake 缺文件时照常构建），所以：
+        # - 失败不红整条矩阵（continue-on-error），下面用 outcome 决定是否跳过冒烟；
+        # - 单独打印 ::warning::，问题仍然可见，不会被静默吞掉。
+        id: win_runtime
+        if: runner.os == 'Windows'
+        continue-on-error: true
         shell: pwsh
         run: |
           ./tools/release/fetch_win_runtime.ps1
-          choco install ffmpeg -y --no-progress
+          if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+            $ok = $false
+            for ($i = 1; $i -le 3; $i++) {
+              choco install ffmpeg -y --no-progress
+              if (Get-Command ffmpeg -ErrorAction SilentlyContinue) { $ok = $true; break }
+              Write-Warning "ffmpeg 安装第 $i 次未成功，10 秒后重试"
+              Start-Sleep -Seconds 10
+            }
+            if (-not $ok) { throw "ffmpeg 三次安装均失败" }
+          }
+
+      - name: 运行时依赖缺失告警（不阻断矩阵）
+        if: runner.os == 'Windows' && steps.win_runtime.outcome != 'success'
+        shell: pwsh
+        run: |
+          Write-Output "::warning::Windows 运行时依赖准备失败（网络或 SHA256 校验不通过）。"
+          Write-Output "编译与单元测试继续执行；headless 冒烟跳过。其它平台矩阵不受影响。"
 
       - name: 配置
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
@@ -163,6 +196,8 @@ jobs:
         run: ctest --test-dir build -C Release --output-on-failure
 
       - name: 生成 20 个冒烟样本
+        # Windows 上 ffmpeg 跟运行时依赖同属「外部下载」，缺失时跳过而不是把矩阵拉红。
+        if: runner.os != 'Windows' || steps.win_runtime.outcome == 'success'
         shell: bash
         run: python tools/qa/gen_samples.py --out qa/runtime/samples
 
@@ -203,7 +238,7 @@ jobs:
           }
 
       - name: headless 冒烟（Windows）
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && steps.win_runtime.outcome == 'success'
         shell: pwsh
         env:
           PALUNE_CONFIG_DIR: ${{ github.workspace }}/qa/runtime/config-ci
@@ -219,4 +254,28 @@ jobs:
         with:
           name: m1-smoke-${{ matrix.name }}
           path: qa/runtime/m1-smoke.json
+          if-no-files-found: warn
+
+      - name: 记录 Windows 产物指纹
+        # 用于核对 CI 构建与本地包的运行时依赖是否同一份（libmpv / libsodium / exe 版本）。
+        if: runner.os == 'Windows' && success()
+        shell: pwsh
+        run: |
+          $lines = @()
+          foreach ($f in @("build/Release/Palune.exe", "build/Release/libmpv-2.dll", "build/Release/libsodium.dll")) {
+            if (Test-Path $f) {
+              $h = (Get-FileHash $f -Algorithm SHA256).Hash.ToLowerInvariant()
+              $size = (Get-Item $f).Length
+              $lines += "$f|$size|$h"
+            }
+          }
+          $lines | Out-File -Encoding utf8 build-fingerprint.txt
+          Get-Content build-fingerprint.txt
+
+      - name: 上传 Windows 产物指纹
+        if: runner.os == 'Windows' && success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build-fingerprint
+          path: build-fingerprint.txt
           if-no-files-found: warn

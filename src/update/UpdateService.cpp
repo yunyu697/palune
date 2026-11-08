@@ -101,6 +101,19 @@ UpdateService::UpdateService(const QUrl &feedUrl, const QString &downloadDirOver
     loadLastCheck();
 }
 
+void UpdateService::setChannel(const QString &channel)
+{
+    m_channel = channel == QLatin1String("beta") ? QStringLiteral("beta")
+                                                  : QStringLiteral("stable");
+    const QString base = QStringLiteral("https://github.com/yunyu697/palune-releases/releases/latest/download/");
+    const QString current = m_feedUrl.toString();
+    if (!current.startsWith(base))
+        return; // 测试或自定义 feed 不按通道改写
+    const QString file = m_channel == QLatin1String("beta") ? QStringLiteral("latest-beta.json")
+                                                            : QStringLiteral("latest.json");
+    m_feedUrl = QUrl(base + file);
+}
+
 QString UpdateService::state() const
 {
     return stateName(m_state);

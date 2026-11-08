@@ -8,6 +8,7 @@
 #include "m0/SelfTest.h"
 #include "media/MediaLibraryService.h"
 #include "mpv/MpvClient.h"
+#include "settings/Preferences.h"
 #include "settings/Settings.h"
 #include "app/ShotContexts.h"
 #include "theme/LayoutHost.h"
@@ -28,6 +29,7 @@
 #include <QDir>
 #include <QElapsedTimer>
 #include <QEventLoop>
+#include <QFile>
 #include <QFile>
 #include <QFileInfo>
 #include <QGuiApplication>
@@ -180,11 +182,36 @@ void AppController::startNormal()
     QString path = m_options.openPath;
     if (!path.isEmpty())
         m_windows->openFile(QUrl::fromLocalFile(path));
+    else if (m_windows->preferences() && m_windows->preferences()->restoreLastSession()) {
+        // 「恢复上次会话」：没有命令行文件时，自动打开最近列表的第一个文件。
+        const QVariantList recent = m_windows->recentFiles();
+        if (!recent.isEmpty()) {
+            const QString last = recent.first().toMap().value(QStringLiteral("path")).toString();
+            if (QFileInfo::exists(last)) {
+                Log::info(QStringLiteral("恢复上次会话：%1").arg(last));
+                m_windows->openFile(QUrl::fromLocalFile(last));
+            }
+        }
+    }
+
+    // 「自动检查更新」：启动后延迟一次静默检查，不抢占窗口激活；自动化截图/取证时跳过。
+    const bool automationMode = !m_options.uiTheme.isEmpty() || !m_options.uiPanel.isEmpty()
+        || !m_options.uiCapture.isEmpty() || !m_options.uiActions.isEmpty();
+    if (!automationMode && m_windows->preferences() && m_windows->preferences()->autoCheckUpdates()) {
+        QTimer::singleShot(3000, this, [this]() {
+            if (m_updater && !m_updater->isDownloading())
+                m_updater->checkForUpdates();
+        });
+    }
+
+    // S1–S6 设置端到端探针（由环境变量触发，正常启动不受影响）。
+    const QString probePath = qEnvironmentVariable("PALUNE_PREFS_PROBE");
+    if (!probePath.isEmpty())
+        QTimer::singleShot(5000, this, [this, probePath]() { runPreferencesProbe(probePath); });
 
     // 通知区域图标：窗口被最小化或切走后仍能找到入口。图标与窗口/exe 共用同一份
     // 品牌资源（qrc 里的 256 PNG），自动化截图场景不创建，避免遮挡与干扰。
-    const bool uiAutomation = !m_options.uiTheme.isEmpty() || !m_options.uiPanel.isEmpty()
-        || !m_options.uiCapture.isEmpty() || !m_options.uiActions.isEmpty();
+    const bool uiAutomation = automationMode;
     if (!uiAutomation && QSystemTrayIcon::isSystemTrayAvailable()) {
         m_tray = new QSystemTrayIcon(QIcon(QStringLiteral(":/packaging/palune-256.png")), this);
         m_tray->setToolTip(QStringLiteral("Palune 媒体播放器"));
@@ -201,7 +228,7 @@ void AppController::startNormal()
         QAction *quitAction = menu->addAction(QStringLiteral("退出"));
         connect(quitAction, &QAction::triggered, this, [this]() {
             if (m_windows)
-                m_windows->close();
+                m_windows->quitApplication();
         });
         m_tray->setContextMenu(menu);
         connect(m_tray, &QSystemTrayIcon::activated, this,
@@ -244,9 +271,16 @@ void AppController::startNormal()
                         return;
                     QImage image;
                     if (m_options.uiPanel == QLatin1String("settings")
-                        && m_windows->settingsWindow())
+                        && m_windows->settingsWindow()) {
+                        // 截图分页：PALUNE_SETTINGS_PAGE=0..5
+                        m_windows->settingsWindow()->setPage(
+                            qEnvironmentVariableIntValue("PALUNE_SETTINGS_PAGE"));
+                        QElapsedTimer settle;
+                        settle.start();
+                        while (settle.elapsed() < 160)
+                            QCoreApplication::processEvents(QEventLoop::AllEvents, 40);
                         image = m_windows->settingsWindow()->grabWindow();
-                    else if (m_windows->overlay())
+                    } else if (m_windows->overlay())
                         image = m_windows->overlay()->grabWindow();
                     if (!image.isNull() && image.save(m_options.uiCapture))
                         Log::info(QStringLiteral("真实窗口截图：%1 %2x%3")
@@ -304,6 +338,9 @@ void AppController::runShots()
     Settings demoSettings;
     ThemeRegistry demoTheme(&demoSettings, [](const QString &) { return true; });
     UiStateStore demoUi(&demoSettings);
+    CompactController demoCompact(&demoSettings);
+    ActionRegistry demoActions;
+    Preferences demoPrefs(&demoSettings, nullptr, &demo, &demoCompact, &demoActions);
     MediaLibraryService demoLibrary;
     QQuickView view;
     // 不用 offscreen 平台截图：offscreen + software 后端的字体引擎拿不到系统字体，中文会变方块。
@@ -318,6 +355,7 @@ void AppController::runShots()
     view.engine()->rootContext()->setContextProperty(QStringLiteral("themeRegistry"), &demoTheme);
     view.engine()->rootContext()->setContextProperty(QStringLiteral("uiState"), &demoUi);
     view.engine()->rootContext()->setContextProperty(QStringLiteral("library"), &demoLibrary);
+    view.engine()->rootContext()->setContextProperty(QStringLiteral("prefs"), &demoPrefs);
     view.setSource(QUrl(QStringLiteral("qrc:/qml/SettingsPanel.qml")));
     if (view.status() != QQuickView::Ready) {
         for (const auto &error : view.errors())
@@ -1080,6 +1118,7 @@ void AppController::runM2Actions()
 
     // 让 40 个动作都有可核对的状态变化（截图/自动化桩，不触发真实解码）。
     ActionRegistry registry;
+    Preferences demoPrefs(&demoSettings, nullptr, &demo, &demoCompact, &registry);
     QStringList dispatched;
     registry.setInvoker([&](const QString &id, const QVariant &value) {
         dispatched << id;
@@ -1145,6 +1184,7 @@ void AppController::runM2Actions()
     ctx->setContextProperty(QStringLiteral("compactMode"), &demoCompact);
     ctx->setContextProperty(QStringLiteral("actions"), &registry);
     ctx->setContextProperty(QStringLiteral("library"), &demoLibrary);
+    ctx->setContextProperty(QStringLiteral("prefs"), &demoPrefs);
     view.resize(1280, 720);
     view.setSource(QUrl(QStringLiteral("qrc:/qml/Main.qml")));
     if (view.status() != QQuickView::Ready) {
@@ -1548,6 +1588,8 @@ void AppController::runM2UiPerf()
     ThemeRegistry demoTheme(&demoSettings, [](const QString &) { return true; });
     UiStateStore demoUi(&demoSettings);
     CompactController demoCompact(&demoSettings);
+    ActionRegistry demoActions;
+    Preferences demoPrefs(&demoSettings, nullptr, &demo, &demoCompact, &demoActions);
     MediaLibraryService demoLibrary;
     ShotPlayer shotPlayer;
     ShotWindow shotWin;
@@ -1569,8 +1611,9 @@ void AppController::runM2UiPerf()
     ctx->setContextProperty(QStringLiteral("themeRegistry"), &demoTheme);
     ctx->setContextProperty(QStringLiteral("uiState"), &demoUi);
     ctx->setContextProperty(QStringLiteral("compactMode"), &demoCompact);
+    ctx->setContextProperty(QStringLiteral("actions"), &demoActions);
     ctx->setContextProperty(QStringLiteral("library"), &demoLibrary);
-    // 4K60：3840×2160，预算 16.7ms/帧。
+    ctx->setContextProperty(QStringLiteral("prefs"), &demoPrefs);
     view.resize(3840, 2160);
     view.setSource(QUrl(QStringLiteral("qrc:/qml/Main.qml")));
     if (view.status() != QQuickView::Ready) {
@@ -1716,6 +1759,124 @@ void AppController::runM2UiPerf()
     finishWithCode(allPass ? 0 : 2);
 }
 
+void AppController::runPreferencesProbe(const QString &path)
+{
+    if (!m_windows || !m_player || !m_settings) {
+        finishWithCode(1);
+        return;
+    }
+    Preferences *prefs = m_windows->preferences();
+    if (!prefs) {
+        finishWithCode(1);
+        return;
+    }
+
+    // 逐组写入（S1–S6），全部走 Q_PROPERTY setter，与设置页控件完全同一条路径。
+    prefs->setRestoreLastSession(true);
+    prefs->setAutoPlay(true);
+    prefs->setStartMaximized(false);
+    prefs->setCloseToTray(false);
+    prefs->setMinimizeToTray(false);
+    prefs->setConfirmExit(false);
+    prefs->setCompactBreakpoint(600);
+    prefs->setLogLevel(QStringLiteral("debug"));
+
+    prefs->setHwdecMode(QStringLiteral("off"));
+    prefs->setCacheSeconds(30);
+    prefs->setToneMapping(false);
+    prefs->setTargetPeakNits(800);
+    prefs->setDeinterlace(QStringLiteral("on"));
+    prefs->setResumePlayback(false);
+    prefs->setAutoNext(true);
+
+    prefs->setSubtitleFontSize(22);
+    prefs->setSubtitleColor(QStringLiteral("#ffe082"));
+    prefs->setSubtitleOutline(2.0);
+    prefs->setSubtitleDelay(0.5);
+    prefs->setSubtitlePosition(20);
+    prefs->setAutoLoadSubtitles(false);
+    prefs->setSubtitleEncoding(QStringLiteral("utf-8"));
+
+    prefs->setAudioDelay(0.3);
+    prefs->setAudioChannels(QStringLiteral("stereo"));
+
+    prefs->setUpdateChannel(QStringLiteral("beta"));
+    prefs->setAutoCheckUpdates(false);
+    prefs->setUpdateProxy(QStringLiteral("none"));
+
+    prefs->setKeyBinding(QStringLiteral("playPause"), QStringLiteral("Ctrl+F9"));
+
+    m_player->setVolume(70);
+    if (!m_player->muted())
+        m_player->toggleMute();
+    prefs->saveSessionState();
+    prefs->setLogLevel(QStringLiteral("info")); // 探针后回落，避免日志膨胀
+
+    QTimer::singleShot(1500, this, [this, path, prefs]() {
+        const QStringList mpvNames = {
+            QStringLiteral("sub-font-size"), QStringLiteral("sub-color"),
+            QStringLiteral("sub-border-size"), QStringLiteral("sub-pos"),
+            QStringLiteral("sub-delay"), QStringLiteral("sub-auto"),
+            QStringLiteral("sub-codepage"), QStringLiteral("audio-delay"),
+            QStringLiteral("audio-channels"), QStringLiteral("hwdec"),
+            QStringLiteral("cache-secs"), QStringLiteral("tone-mapping"),
+            QStringLiteral("target-peak"), QStringLiteral("deinterlace"),
+            QStringLiteral("volume"), QStringLiteral("mute"),
+        };
+        QJsonObject mpv;
+        for (const QString &name : mpvNames)
+            mpv.insert(name, m_player->propertyString(name));
+
+        const QStringList keys = {
+            QStringLiteral("ui.restoreLastSession"), QStringLiteral("ui.autoPlay"),
+            QStringLiteral("ui.startMaximized"), QStringLiteral("ui.closeToTray"),
+            QStringLiteral("ui.minimizeToTray"), QStringLiteral("ui.confirmExit"),
+            QStringLiteral("playback.hwdec"), QStringLiteral("playback.cacheSeconds"),
+            QStringLiteral("playback.toneMapping"), QStringLiteral("playback.targetPeakNits"),
+            QStringLiteral("playback.deinterlace"), QStringLiteral("playback.resume"),
+            QStringLiteral("playback.autoNext"), QStringLiteral("playback.speed"),
+            QStringLiteral("sub.fontSize"), QStringLiteral("sub.color"),
+            QStringLiteral("sub.outline"), QStringLiteral("sub.delay"),
+            QStringLiteral("sub.position"), QStringLiteral("sub.autoLoad"),
+            QStringLiteral("sub.encoding"), QStringLiteral("audio.volume"),
+            QStringLiteral("audio.muted"), QStringLiteral("audio.channels"),
+            QStringLiteral("audio.delay"), QStringLiteral("update.channel"),
+            QStringLiteral("update.autoCheck"), QStringLiteral("update.proxy"),
+            QStringLiteral("keys.playPause"), QStringLiteral("diag.logLevel"),
+        };
+        QJsonObject saved;
+        for (const QString &key : keys)
+            saved.insert(key, m_settings->value(key).toString());
+
+        // 用新的 Settings 从磁盘重新读一次，证明「重启后保持」。
+        Settings disk(m_settings->path());
+        disk.load();
+        QJsonObject reloaded;
+        for (const QString &key : keys)
+            reloaded.insert(key, disk.value(key).toString());
+
+        QJsonObject report;
+        report.insert(QStringLiteral("mpv"), mpv);
+        report.insert(QStringLiteral("settingsValues"), saved);
+        report.insert(QStringLiteral("reloadedFromDisk"), reloaded);
+        report.insert(QStringLiteral("settingsPath"), m_settings->path());
+        report.insert(QStringLiteral("compactBreakpoint"), prefs->compactBreakpoint());
+        report.insert(QStringLiteral("keySpec"), prefs->keySpec(QStringLiteral("playPause")));
+        report.insert(QStringLiteral("updateChannel"), prefs->updateChannel());
+        report.insert(QStringLiteral("updateFeed"), m_updater ? m_updater->feedUrl().toString()
+                                                              : QString());
+        report.insert(QStringLiteral("downloadDir"), prefs->downloadDirEffective());
+        report.insert(QStringLiteral("keyRows"), prefs->keyRows().size());
+
+        QFile file(m_settings->path());
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+            report.insert(QStringLiteral("settingsToml"), QString::fromUtf8(file.readAll()));
+
+        writeJsonReport(report, path);
+        finishWithCode(0);
+    });
+}
+
 void AppController::runShotMatrix()
 {
     QDir().mkpath(m_options.shotDir);
@@ -1724,6 +1885,8 @@ void AppController::runShotMatrix()
     ThemeRegistry demoTheme(&demoSettings, [](const QString &) { return true; });
     UiStateStore demoUi(&demoSettings);
     CompactController demoCompact(&demoSettings);
+    ActionRegistry demoActions;
+    Preferences demoPrefs(&demoSettings, nullptr, &demo, &demoCompact, &demoActions);
     MediaLibraryService demoLibrary;
     ShotPlayer shotPlayer;
     ShotWindow shotWin;
@@ -1754,6 +1917,7 @@ void AppController::runShotMatrix()
     ctx->setContextProperty(QStringLiteral("uiState"), &demoUi);
     ctx->setContextProperty(QStringLiteral("compactMode"), &demoCompact);
     ctx->setContextProperty(QStringLiteral("library"), &demoLibrary);
+    ctx->setContextProperty(QStringLiteral("prefs"), &demoPrefs);
     const QSize normalSize = m_options.shotSize.isValid() ? m_options.shotSize : QSize(1440, 900);
     view.resize(normalSize);
     view.setSource(QUrl(QStringLiteral("qrc:/qml/Main.qml")));

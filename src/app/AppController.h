@@ -90,6 +90,8 @@ private:
     void runM2UiPerf();
     void runM2Window();
     void runShotMatrix();
+    // S1–S6 设置项端到端探针：走真实 Preferences → mpv → settings.toml，输出证据 JSON。
+    void runPreferencesProbe(const QString &path);
     QStringList collectMedia() const;
     bool waitFor(const std::function<bool()> &predicate, int timeoutMs);
     void sleepMs(int ms);

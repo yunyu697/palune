@@ -5,6 +5,7 @@
 #include "diag/Log.h"
 #include "media/MediaLibraryService.h"
 #include "mpv/MpvClient.h"
+#include "settings/Preferences.h"
 #include "settings/Settings.h"
 #include "theme/LayoutHost.h"
 #include "theme/ThemeRegistry.h"
@@ -27,6 +28,8 @@
 #include <QQmlEngine>
 #include <QQuickItem>
 #include <QScreen>
+#include <QSystemTrayIcon>
+#include <QMessageBox>
 #include <QTimer>
 #include <QUrl>
 #include <QWindow>
@@ -69,6 +72,12 @@ WindowController::WindowController(MpvClient *player,
     m_compactMode = new CompactController(m_settings, this);
     m_actions = new ActionRegistry(this);
     m_actions->setInvoker([this](const QString &id, const QVariant &value) { action(id, value); });
+    m_preferences = new Preferences(m_settings, m_player, m_updater, m_compactMode, m_actions, this);
+    // 本地媒体库：根目录与索引来自 settings.toml / configDir/library/index.json。
+    if (m_library) {
+        m_library->setSettings(m_settings);
+        m_library->load();
+    }
     m_compactMode->setTheme(m_themeRegistry->currentTheme());
     connect(m_themeRegistry, &ThemeRegistry::currentThemeChanged, this, [this]() {
         m_compactMode->setTheme(m_themeRegistry->currentTheme());
@@ -90,6 +99,15 @@ WindowController::WindowController(MpvClient *player,
                 Log::info(QStringLiteral("续播到 %1s").arg(m_pendingResume, 0, 'f', 1));
             }
             m_pendingResume = -1.0;
+            // 「启动时自动播放」关闭时，文件加载完成后停在暂停态。
+            if (m_preferences && !m_preferences->autoPlay() && m_player && !m_player->paused())
+                m_player->setPaused(true);
+        });
+        // 「自动播放下一集」开启时，正常播完（eof）后顺序播放同目录下一个文件。
+        connect(m_player, &MpvClient::endFile, this, [this](const QString &reason) {
+            if (!m_preferences || !m_preferences->autoNext() || reason != QLatin1String("eof"))
+                return;
+            playSibling(1);
         });
         connect(m_player, &MpvClient::positionChanged, this, [this]() {
             const double pos = m_player ? m_player->position() : 0.0;
@@ -189,11 +207,14 @@ bool WindowController::start(int width, int height)
             m_player->refreshFrame();
     });
     m_compactMode->feedWidth(m_overlay->width());
-    if (m_settings && m_settings->windowMaximized())
+    if (m_settings && (m_settings->windowMaximized() || (m_preferences && m_preferences->startMaximized())))
         m_overlay->showMaximized();
     m_overlay->requestActivate();
     applyGeometry(r);
     applyWindowRegion();
+    // 播放器属性（硬解/缓存/字幕/音频/通道）在 mpv 建好之后统一作用一次。
+    if (m_preferences)
+        m_preferences->applyAll();
 
     // 设置窗跟随主窗位置/尺寸，并在主题切换时换尺寸与圆角。
     connect(m_overlay, &QWindow::xChanged, this, &WindowController::repositionSettingsWindow);
@@ -239,6 +260,7 @@ bool WindowController::loadQml()
     ctx->setContextProperty(QStringLiteral("compactMode"), m_compactMode);
     ctx->setContextProperty(QStringLiteral("actions"), m_actions);
     ctx->setContextProperty(QStringLiteral("library"), m_library);
+    ctx->setContextProperty(QStringLiteral("prefs"), m_preferences);
 
     m_overlay->setSource(QUrl(QStringLiteral("qrc:/qml/Main.qml")));
     if (m_overlay->status() != QQuickView::Ready) {
@@ -520,10 +542,36 @@ void WindowController::activate()
 
 void WindowController::close()
 {
+    // 「关闭到托盘」：只隐藏两个窗口，进程与播放器状态保留在托盘。
+    if (!m_forceQuit && m_preferences && m_preferences->closeToTray()
+        && QSystemTrayIcon::isSystemTrayAvailable()) {
+        m_minimized = true;
+        if (m_overlay)
+            m_overlay->hide();
+        if (m_video)
+            m_video->hide();
+        CrashBreadcrumb::record(QStringLiteral("关闭到托盘"));
+        Log::info(QStringLiteral("关闭到托盘：窗口已隐藏"));
+        return;
+    }
+    if (!m_forceQuit && m_preferences && m_preferences->confirmExit()) {
+        const auto reply = QMessageBox::question(nullptr, QStringLiteral("退出 Palune"),
+                                                 QStringLiteral("确定要退出 Palune 吗？"));
+        if (reply != QMessageBox::Yes)
+            return;
+    }
+    if (m_preferences)
+        m_preferences->saveSessionState();
     saveResumePosition();
     saveWindowState();
     CrashBreadcrumb::record(QStringLiteral("用户关闭窗口"));
     QCoreApplication::quit();
+}
+
+void WindowController::quitApplication()
+{
+    m_forceQuit = true;
+    close();
 }
 
 void WindowController::moveBy(double dx, double dy)
@@ -570,6 +618,14 @@ void WindowController::minimizeWindow()
     if (!m_overlay)
         return;
     m_minimized = true;
+    if (m_preferences && m_preferences->minimizeToTray()
+        && QSystemTrayIcon::isSystemTrayAvailable()) {
+        m_overlay->hide();
+        if (m_video)
+            m_video->hide();
+        Log::info(QStringLiteral("最小化到托盘：窗口已隐藏"));
+        return;
+    }
     m_overlay->showMinimized();
     if (m_video)
         m_video->hide();
@@ -938,6 +994,13 @@ void WindowController::playSibling(int delta)
     openFile(QUrl::fromLocalFile(media.at(next)));
 }
 
+void WindowController::openPath(const QString &path)
+{
+    if (path.isEmpty())
+        return;
+    openFile(path.contains(QStringLiteral("://")) ? QUrl(path) : QUrl::fromLocalFile(path));
+}
+
 void WindowController::openFile(const QUrl &url)
 {
     QString path;
@@ -950,6 +1013,8 @@ void WindowController::openFile(const QUrl &url)
     // 切文件前先记住当前文件的进度。
     saveResumePosition();
     m_pendingResume = m_settings ? m_settings->resumePosition(path) : -1.0;
+    if (m_preferences && !m_preferences->resumePlayback())
+        m_pendingResume = -1.0;
     if (m_pendingResume <= 3.0)
         m_pendingResume = -1.0;
     if (!m_player->openFile(path)) {

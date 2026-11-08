@@ -120,11 +120,27 @@ QVariantList ActionRegistry::actions() const
         QVariantMap keys;
         for (const QString &platform : {QStringLiteral("windows"), QStringLiteral("macos"),
                                         QStringLiteral("linux")})
-            keys.insert(platform, platformKeySpec(action.keys, platform));
+            keys.insert(platform, effectiveKeyFor(action.id, platform));
         entry.insert(QStringLiteral("keys"), keys);
         list.append(entry);
     }
     return list;
+}
+
+QString ActionRegistry::defaultKeyFor(const QString &id, const QString &platform) const
+{
+    for (const Action &action : actionTable()) {
+        if (action.id == id)
+            return platformKeySpec(action.keys, platform);
+    }
+    return {};
+}
+
+QString ActionRegistry::effectiveKeyFor(const QString &id, const QString &platform) const
+{
+    if (m_overrides.contains(id))
+        return m_overrides.value(id).toString();
+    return defaultKeyFor(id, platform);
 }
 
 QVariantList ActionRegistry::conflicts() const
@@ -134,7 +150,9 @@ QVariantList ActionRegistry::conflicts() const
                                     QStringLiteral("linux")}) {
         QMap<QString, QString> seen; // scope|key -> id
         for (const Action &action : actionTable()) {
-            const QString key = platformKeySpec(action.keys, platform);
+            const QString key = effectiveKeyFor(action.id, platform);
+            if (key.isEmpty())
+                continue; // 解绑的动作不占键位，也不会冲突
             const QString slot = action.scope + QLatin1Char('|') + key;
             const QString previous = seen.value(slot);
             if (!previous.isEmpty()) {
@@ -155,19 +173,35 @@ QVariantList ActionRegistry::conflicts() const
 
 QString ActionRegistry::keysFor(const QString &id, const QString &platform) const
 {
-    for (const Action &action : actionTable()) {
-        if (action.id == id)
-            return platformKeySpec(action.keys, platform);
-    }
-    return {};
+    return effectiveKeyFor(id, platform);
+}
+
+void ActionRegistry::setOverrides(const QVariantMap &overrides)
+{
+    m_overrides = overrides;
+    buildBindings();
+}
+
+QString ActionRegistry::specForKey(int key, int modifiers) const
+{
+    const QString token = keyToken(key);
+    if (token.isEmpty())
+        return {};
+    const QString mods = modifierPrefix(modifiers);
+    return mods.isEmpty() ? token : mods + QLatin1Char('+') + token;
 }
 
 void ActionRegistry::buildBindings()
 {
+    m_bindings.clear();
     for (const QString &platform : {QStringLiteral("windows"), QStringLiteral("macos"),
                                     QStringLiteral("linux")}) {
-        for (const Action &action : actionTable())
-            m_bindings[platform][platformKeySpec(action.keys, platform)] = action.id;
+        for (const Action &action : actionTable()) {
+            const QString spec = effectiveKeyFor(action.id, platform);
+            if (spec.isEmpty())
+                continue;
+            m_bindings[platform][spec] = action.id;
+        }
     }
 }
 

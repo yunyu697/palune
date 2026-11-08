@@ -23,6 +23,7 @@ public:
 
     QVariant value(const QString &key, const QVariant &fallback = {}) const;
     void setValue(const QString &key, const QVariant &value);
+    void removeValue(const QString &key);
 
     // 主题原始值：空字符串表示缺键（由 ThemeRegistry 判定是否回退）。
     QString rawTheme() const;

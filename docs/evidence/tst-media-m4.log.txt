@@ -1,0 +1,410 @@
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F17600] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F17600] moov atom not found
+[matroska,webm @ 0000017A18F20C00] Format matroska,webm detected only with low score of 1, misdetection possible!
+[matroska,webm @ 0000017A18F20C00] File ended prematurely at pos. 1 (0x1)
+[matroska,webm @ 0000017A18F20C00] EBML header parsing failed
+[matroska,webm @ 0000017A18F20C00] Format matroska,webm detected only with low score of 1, misdetection possible!
+[matroska,webm @ 0000017A18F20C00] File ended prematurely at pos. 1 (0x1)
+[matroska,webm @ 0000017A18F20C00] EBML header parsing failed
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F20C00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F20C00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F20C00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F20C00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F20C00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F20C00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F20C00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F20C00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F20C00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F20C00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F20C00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F20C00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F20C00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F20C00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F20C00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F20C00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F20C00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F20C00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F20C00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F20C00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F20C00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F20C00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF8000] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF8000] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF8D80] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF8D80] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF73080] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF73080] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF70600] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF70600] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF1300] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF1300] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF28DC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF28DC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF63780] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF63780] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF5E840] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF5E840] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B017AC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B017AC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B016AC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B016AC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF72080] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF72080] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF70600] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF70600] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF76B80] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF76B80] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF4340] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF4340] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF4600] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF4600] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF728C0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF728C0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF36900] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF36900] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF35B80] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF35B80] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF37640] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF37640] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF60DC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF60DC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF605C0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF605C0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF25C0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF25C0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF39E40] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF39E40] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3A100] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3A100] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEFDC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEFDC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF28B00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF28B00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF4E00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF4E00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF32E40] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF32E40] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF35C0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF35C0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF4E00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF4E00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF318C0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF318C0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE7280] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE7280] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF75E00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF75E00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEEAC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEEAC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF37640] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF37640] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF60DC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF60DC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEF000] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEF000] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF22C0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF22C0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF35B80] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF35B80] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF348C0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF348C0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF76340] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF76340] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF56B00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF56B00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF5840] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF5840] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF3D80] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF3D80] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF5EDC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF5EDC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3E680] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3E680] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF5B00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF5B00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF4D80] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF4D80] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3E680] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3E680] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF56D80] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF56D80] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF36640] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF36640] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF29300] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF29300] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF33600] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF33600] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF35100] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF35100] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3BBC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3BBC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3DBC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3DBC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F1B300] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F1B300] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF61600] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF61600] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE9540] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE9540] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF5580] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF5580] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3C100] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3C100] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEF2C0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEF2C0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF60DC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF60DC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF57C80] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF57C80] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEED40] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEED40] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF62E00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF62E00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3A640] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3A640] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF59700] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF59700] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF63600] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF63600] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3FBC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3FBC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF4AC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF4AC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF5840] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF5840] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF28DC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF28DC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF37B80] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF37B80] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF28B00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF28B00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEFD80] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEFD80] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3C100] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3C100] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3CBC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3CBC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF32380] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF32380] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEE800] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEE800] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF71080] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF71080] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF62B40] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF62B40] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF37600] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF37600] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF74340] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF74340] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE4D00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE4D00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F1B840] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F1B840] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF59480] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF59480] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF72080] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF72080] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3C100] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3C100] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF5580] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF5580] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3D900] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3D900] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF75080] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF75080] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF71340] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF71340] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF760C0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF760C0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B0182C0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B0182C0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF4580] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF4580] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B0850C0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B0850C0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE7280] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE7280] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B017580] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B017580] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B016D40] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B016D40] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF2AE00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF2AE00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE5540] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE5540] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE4A80] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE4A80] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF2A080] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF2A080] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF29B00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF29B00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE7280] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE7280] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF2A880] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF2A880] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18EE9240] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18EE9240] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF3580] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF3580] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3EBC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3EBC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF4580] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF4580] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE4D00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE4D00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEF000] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEF000] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEF000] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEF000] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEEAC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEEAC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEDAC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEDAC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF57F40] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF57F40] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEE280] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEE280] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEFAC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEFAC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF37380] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF37380] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B08C300] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B08C300] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF37100] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF37100] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF625C0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF625C0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF37BC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF37BC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF37900] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF37900] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE4500] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE4500] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE5540] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE5540] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B083380] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B083380] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF60880] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF60880] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B083B80] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B083B80] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF4580] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF4580] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF55C80] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF55C80] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F1A000] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F1A000] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F22D80] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F22D80] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF54F00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF54F00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF55700] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF55700] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F1B580] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F1B580] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B08EB40] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B08EB40] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF56480] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF56480] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B018040] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B018040] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B084340] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B084340] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B084600] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B084600] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B085380] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B085380] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEE280] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEE280] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F22D80] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F22D80] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3DBC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3DBC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B084E00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B084E00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B084E00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B084E00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF605C0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF605C0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF28B00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF28B00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B08CDC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B08CDC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B08C300] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B08C300] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F1A580] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F1A580] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF5B00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF5B00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE4FC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE4FC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFED540] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFED540] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F1A580] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F1A580] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F1AD80] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F1AD80] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF75600] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF75600] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B09A340] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1B09A340] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF61B40] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF61B40] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFED800] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFED800] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEDAC0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEDAC0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF34380] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF34380] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE4500] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFE4500] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F1A840] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F1A840] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF740C0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF740C0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFECD40] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFECD40] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F22840] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F22840] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF33B80] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF33B80] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF4840] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFF4840] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3F900] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3F900] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF605C0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF605C0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEF2C0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFEF2C0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF338C0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF338C0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF63080] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF63080] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF63340] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF63340] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF34380] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF34380] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF73600] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF73600] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3AB00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3AB00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F23B00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A18F23B00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF73340] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF73340] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF748C0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF748C0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF74600] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF74600] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF73340] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF73340] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF28840] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF28840] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF28B00] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF28B00] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF56740] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF56740] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFED800] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AFED800] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3B5C0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000017A1AF3B5C0] moov atom not found

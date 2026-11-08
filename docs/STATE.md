@@ -3,8 +3,8 @@
 > 自动推进的续跑点。每完成一个可验证节点更新本文件；撞到单轮上限时以本文件为准。
 
 更新时间：2026-11-08（Asia/Shanghai）
-当前里程碑：**alpha10 实机六项缺陷修复 + 里程碑复审（M4 之前）**
-版本：`1.0.0-alpha10`（进行中，alpha9 已收口）
+当前里程碑：**M4 本地媒体库完成（扫描/索引/缩略图/海报墙/列表），待 M5**
+版本：`1.0.0`（预发布段已到 alpha10 上限，按版本纪律转正式号；安装包 `1.0.0`）
 
 ## 里程碑收口标准（长期纪律，之后每个里程碑按此执行）
 
@@ -13,7 +13,51 @@
 3. 每个里程碑收口前必须做**真实窗口逐屏核对**；自渲染矩阵只作辅助。设计稿/DESIGN.md 缺失时，相关结论只能写 NOT_VERIFIED，不得写"已对齐"。
 4. 收口证据固定落盘：`docs/GAP-AUDIT.md`（里程碑复审）、`docs/SETTINGS-GAP.md`（设置核对）、`docs/evidence/UI-<版本>-COMPARISON.md`（逐屏对照）。
 5. 每条缺陷修复必须写清**根因（哪个对象、哪一层、什么机制）**与修复方式，不得只调参数遮现象。
-6. 版本 `1.0.0-alphaN` 自增；只本地打包、只本地打 tag，**不推送 tag、不建 Release、不推 palune-releases**。
+6. 版本以 `VERSION` 为唯一来源：预发布段最多到 `alpha10`，之后转正式 `1.0.0`；只本地打包、只本地打 tag，**不推送 tag、不建 Release、不推 palune-releases**。
+
+## 设置整组补齐（S1–S6）
+
+按 `docs/SETTINGS-GAP.md` §8 的分组整组补齐，不留零散缺口；最终状态、配置键、生效时机、默认值见该文件 §9。
+
+| 组 | 改动 | 证据 |
+|---|---|---|
+| S1 通用 | 新增 `src/settings/Preferences.*` 作为唯一写入入口；紧凑断点可调、启动 3 项、关闭 3 项、日志级别；Launch/Close 行为接入 `WindowController`（关闭到托盘、最小化到托盘、退出确认） | `shots/settings-pages/page0.png` |
+| S2 字幕 | 轨道选择、字号/颜色/描边/延迟/位置、自动加载、编码、外挂加载、预览联动；映射到 mpv `sub-*` 属性 | `page2.png`、`settings-probe.json` |
+| S3 音频 | 音量/静音持久化、音轨选择、输出设备（读 `audio-device-list`）、声道、音频延迟 | `page3.png`、`settings-probe.json` |
+| S4 播放 | 硬解、缓存、HDR 映射与目标峰值、去隔行、续播开关、自动下一集、速度持久化 | `page1.png`、`settings-probe.json` |
+| S5 快捷键 | 40 条动作表、按键捕获改键、解绑、恢复默认、冲突展示、`[keys]` 持久化（`ActionRegistry::setOverrides`） | `page4.png`、`settings-probe.json` |
+| S6 更新 | 通道（beta → `latest-beta.json`）、启动自动检查、代理、下载目录、许可与诊断入口 | `page5.png`、`settings-probe.json` |
+
+端到端探针：`PALUNE_PREFS_PROBE=<json>` 启动真实进程，在 mpv 解码中通过 `Preferences` setter 改全部设置，读取 mpv 属性 + 新建 `Settings` 从磁盘重读，结果见 `docs/evidence/settings-probe.json`（全部一致）。
+
+## M4：本地媒体库（真实内容源）
+
+| 验收项 | 结论 | 证据 |
+|---|---|---|
+| 本地目录扫描（递归、格式过滤、跳过不可读/符号链接） | DONE | `src/media/MediaLibraryService.cpp`；`ui-m4-library.json`：真实样本目录 20 项；单测 `localScanIndexesAndPrunes` |
+| 索引持久化与重建 | DONE | `configDir/library/index.json`（`version/roots/items`）；单测 `corruptedIndexRebuilds`（损坏 JSON → 重扫重建） |
+| 缩略图 | DONE | `src/media/ThumbnailProvider.cpp`（`IShellItemImageFactory`，320×180 JPG，按 mtime 命名避免缓存串图）；19/20 命中，TS 无系统缩略图时回退占位；单测含缩略图失败路径 |
+| 海报墙 | DONE | `LibraryPanel.qml` GridView；`shots/m4-library/poster-{A,B,C}.png` |
+| 列表 / 表格 | DONE | `LibraryPanel.qml` 带表头 ListView；`shots/m4-library/list-{A,B}.png`；`viewMode` 写入 `library.viewMode` |
+| 接 A/B/C 面板 | DONE | A 右侧 352 滑出栏、B 居中宽面板、C 右侧 76% 抽屉；三张海报墙截图 |
+| 点击条目开播 | DONE | 真实鼠标点击海报 → 面板关闭、标题变 `Palune — 01-h264-1080p-aac.mp4`；`ui-m4-open.json`、`shots/m4-library/open-proof.png` |
+| 失效根目录/文件清理 | DONE | `load()` 剔除不存在根目录；重扫不再保留已删文件（单测 `localScanIndexesAndPrunes`） |
+| 大目录耗时 | DONE | 200 个文件扫描+缩略图尝试 9.6s（单测 `largeDirectoryScanStaysBounded`，上限 30s） |
+| 扫描不阻塞 UI | DONE | `QThreadPool` 工作线程扫描/取图，主线程仅 `QueuedConnection` 替换模型 |
+
+测试：`ctest -C Release` 8/8 PASS（`docs/evidence/tst-media-m4.xml`）。扫描状态文案已从底部移到工具栏下方，避免压住最后一条（本轮截图复验发现并修正）。
+
+### 1.0.0 收口记录
+
+| 项 | 值 |
+|---|---|
+| 安装包 | `dist/Palune-1.0.0-win-x64.exe` |
+| 字节数 | 59,649,289 |
+| SHA-256 | `4F1CB5CADF4AA304AB2C53C7404EC984B38CDC532D57AF8C6A16BDE43917B82C` |
+| 安装→启动→卸载 | `PASS`（`docs/evidence/release-1.0.0/windows-install-evidence.json`、`install-launch.json`；安装退出码 0，快捷方式/卸载项存在，自测退出码 0，卸载后目录与快捷方式清空） |
+| 单元测试 | 7/7 可执行文件 PASS（media 8 用例；`docs/evidence/tst-media-m4.xml`） |
+| 本地 tag | `1.0.0`（仅本地，未推送） |
+| 备注 | 安装自测报告 `fallbackReason=缺少 [ui] theme` 来自复验专用配置目录，非安装缺陷；启动 1878ms 仍高于 800ms 基线，归 P3 |
 
 ## alpha10：六项实机缺陷
 

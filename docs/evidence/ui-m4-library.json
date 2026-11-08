@@ -1,0 +1,51 @@
+{
+  "mode": "m4-library",
+  "samples": "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\palune\\qa\\runtime\\samples",
+  "rows": [
+    {
+      "tag": "poster-A",
+      "theme": "A",
+      "viewMode": "poster",
+      "screenshot": "docs\\evidence\\shots\\m4-library\\poster-A.png",
+      "captured": true,
+      "indexedItems": 20,
+      "thumbnails": 19
+    },
+    {
+      "tag": "poster-B",
+      "theme": "B",
+      "viewMode": "poster",
+      "screenshot": "docs\\evidence\\shots\\m4-library\\poster-B.png",
+      "captured": true,
+      "indexedItems": 20,
+      "thumbnails": 19
+    },
+    {
+      "tag": "poster-C",
+      "theme": "C",
+      "viewMode": "poster",
+      "screenshot": "docs\\evidence\\shots\\m4-library\\poster-C.png",
+      "captured": true,
+      "indexedItems": 20,
+      "thumbnails": 19
+    },
+    {
+      "tag": "list-A",
+      "theme": "A",
+      "viewMode": "list",
+      "screenshot": "docs\\evidence\\shots\\m4-library\\list-A.png",
+      "captured": true,
+      "indexedItems": 20,
+      "thumbnails": 19
+    },
+    {
+      "tag": "list-B",
+      "theme": "B",
+      "viewMode": "list",
+      "screenshot": "docs\\evidence\\shots\\m4-library\\list-B.png",
+      "captured": true,
+      "indexedItems": 20,
+      "thumbnails": 19
+    }
+  ]
+}

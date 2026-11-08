@@ -94,6 +94,11 @@ void Settings::setValue(const QString &key, const QVariant &value)
     m_values.insert(key, value);
 }
 
+void Settings::removeValue(const QString &key)
+{
+    m_values.remove(key);
+}
+
 QString Settings::rawTheme() const
 {
     return value(kTheme).toString();

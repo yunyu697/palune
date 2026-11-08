@@ -20,6 +20,7 @@ class CompactController;
 class MediaLibraryService;
 class ActionRegistry;
 class SettingsWindow;
+class Preferences;
 
 // 双窗几何同步结果（M0 判据用）。
 struct ApplyResult {
@@ -73,6 +74,7 @@ public:
     CompactController *compactMode() const { return m_compactMode; }
     ActionRegistry *actions() const { return m_actions; }
     Settings *settings() const { return m_settings; }
+    Preferences *preferences() const { return m_preferences; }
 
     // 布局统一动作入口（布局只发动作名，不直接调用播放器）。
     // QML 不填默认参数，按参数个数区分两个重载。
@@ -80,6 +82,8 @@ public:
     Q_INVOKABLE void action(const QString &name, const QVariant &value);
     Q_INVOKABLE void openFolderDialog();
     Q_INVOKABLE void openRecentFile(const QString &path);
+    // 媒体库条目点击：接受本地绝对路径或已编码的 URL。
+    Q_INVOKABLE void openPath(const QString &path);
     // 无边框窗口的原生拖拽 / 边缘缩放 / 最大化：交给系统处理，保证与 Snap、多屏 DPI 一致。
     Q_INVOKABLE void startSystemMove();
     Q_INVOKABLE void startSystemResize(int edges);
@@ -111,6 +115,8 @@ public slots:
     void toggleFullscreen();
     void minimize();
     void close();
+    // 托盘「退出」必须绕过「关闭到托盘」。
+    Q_INVOKABLE void quitApplication();
     void moveBy(double dx, double dy);
     void openFileDialog();
     void openFile(const QUrl &url);
@@ -149,6 +155,7 @@ private:
     UiStateStore *m_uiState = nullptr;
     CompactController *m_compactMode = nullptr;
     ActionRegistry *m_actions = nullptr;
+    Preferences *m_preferences = nullptr;
     VideoWindow *m_video = nullptr;
     OverlayWindow *m_overlay = nullptr;
     SettingsWindow *m_settingsWindow = nullptr;
@@ -159,6 +166,7 @@ private:
     bool m_minimized = false;
     bool m_maximized = false;
     bool m_syncing = false;
+    bool m_forceQuit = false;
     int m_cornerRadius = 14;
     // 视频区相对覆盖窗的内缩（逻辑像素）；0 表示视频铺满整窗（A/C 与全屏）。
     double m_insetLeft = 0.0;

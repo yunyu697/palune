@@ -3,11 +3,12 @@
 #include <QGuiApplication>
 #include <QQmlContext>
 #include <QQmlEngine>
+#include <QQuickItem>
 #include <QScreen>
 #include <QShowEvent>
 
 #include "mpv/MpvClient.h"
-#include "settings/Settings.h"
+#include "settings/Preferences.h"
 #include "theme/ThemeRegistry.h"
 #include "ui/CompactController.h"
 #include "update/UpdateService.h"
@@ -56,6 +57,7 @@ SettingsWindow::SettingsWindow(WindowController *controller,
     ctx->setContextProperty(QStringLiteral("updater"), updater);
     ctx->setContextProperty(QStringLiteral("compactMode"), compact);
     ctx->setContextProperty(QStringLiteral("settingsWindow"), this);
+    ctx->setContextProperty(QStringLiteral("prefs"), controller ? controller->preferences() : nullptr);
     const QString current = theme ? theme->currentTheme() : QStringLiteral("A");
     ctx->setContextProperty(QStringLiteral("settingsPanelRadius"), radiusForTheme(current));
 
@@ -142,6 +144,12 @@ void SettingsWindow::closeSelf()
         if (m_owner)
             m_owner->requestActivate();
     }
+}
+
+void SettingsWindow::setPage(int page)
+{
+    if (QQuickItem *item = rootObject())
+        item->setProperty("page", qBound(0, page, 5));
 }
 
 void SettingsWindow::showEvent(QShowEvent *event)

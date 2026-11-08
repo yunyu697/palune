@@ -1,0 +1,14 @@
+{
+    "configDir": "C:\\Users\\Tyler Zhang\\AppData\\Roaming\\Palune",
+    "fallbackReason": "缺少 [ui] theme，已回退到布局 A",
+    "generatedAt": "2026-11-08T16:27:43",
+    "mode": "m2-config-check",
+    "played": false,
+    "playerAvailable": true,
+    "settingsParseFailed": false,
+    "theme": "A",
+    "verdict": "PASS",
+    "version": "1.0.0",
+    "windowReadyMs": 1878,
+    "windowReadyWithin800ms": false
+}

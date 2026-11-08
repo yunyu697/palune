@@ -319,6 +319,10 @@ Item {
         anchors.fill: parent
         visible: root.overlayPanel === "library"
         onCloseRequested: root.closePanel()
+        onFileSelected: function (path) {
+            root.closePanel()
+            win.openPath(path)
+        }
     }
 
     // 快捷键统一走 C++ ActionRegistry（40 个 P0 动作、平台键位、冲突检测）。

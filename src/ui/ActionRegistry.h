@@ -4,6 +4,7 @@
 #include <QString>
 #include <QVariant>
 #include <QVariantList>
+#include <QVariantMap>
 #include <QVector>
 
 #include <functional>
@@ -47,6 +48,14 @@ public:
     Q_INVOKABLE bool handleKey(int key, int modifiers);
     Q_INVOKABLE bool dispatch(const QString &id, const QVariant &value = QVariant());
     Q_INVOKABLE bool has(const QString &id) const;
+    // 设置页改键：overrides 里存在某 id 即覆盖默认键位，空串表示解绑。
+    void setOverrides(const QVariantMap &overrides);
+    // 当前生效键位（含用户覆盖）。
+    QString effectiveKeyFor(const QString &id, const QString &platform) const;
+    // 键盘事件 → 键位字符串（"Ctrl+O" / "Escape" / ""）。
+    Q_INVOKABLE QString specForKey(int key, int modifiers) const;
+    Q_INVOKABLE QString defaultKeyFor(const QString &id,
+                                      const QString &platform = currentPlatform()) const;
 
     static QString currentPlatform(); // windows | macos | linux
     static QString keyToken(int key); // 键码 → "A"/"Space"/"F11" 等
@@ -59,6 +68,7 @@ private:
     void buildBindings();
 
     Invoker m_invoker;
+    QVariantMap m_overrides;
     std::map<QString, std::map<QString, QString>> m_bindings; // platform -> keySpec -> actionId
 };
 

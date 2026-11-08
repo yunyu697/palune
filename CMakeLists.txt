@@ -25,6 +25,8 @@ add_library(palune_core STATIC
     src/mpv/MpvClient.h
     src/settings/Settings.cpp
     src/settings/Settings.h
+    src/settings/Preferences.cpp
+    src/settings/Preferences.h
     src/settings/Toml.cpp
     src/settings/Toml.h
     src/theme/LayoutHost.cpp
@@ -39,6 +41,8 @@ add_library(palune_core STATIC
     src/ui/ActionRegistry.h
     src/media/MediaLibraryService.cpp
     src/media/MediaLibraryService.h
+    src/media/ThumbnailProvider.cpp
+    src/media/ThumbnailProvider.h
     src/media/MediaServerAdapter.h
     src/media/Types.h
     src/update/UpdateManifest.cpp
@@ -68,7 +72,8 @@ target_compile_definitions(palune_core PUBLIC
     PALUNE_VERSION_NUMERIC_PATCH=0
 )
 if(WIN32)
-    target_link_libraries(palune_core PUBLIC user32 dwmapi shell32 psapi)
+    # ole32：ThumbnailProvider 用 IShellItemImageFactory（SHCreateItemFromParsingName）。
+    target_link_libraries(palune_core PUBLIC user32 dwmapi shell32 psapi ole32)
 endif()
 
 qt_add_executable(Palune
@@ -103,6 +108,10 @@ qt_add_resources(Palune "app_resources"
         qml/components/VolumeBar.qml
         qml/components/EmptyState.qml
         qml/components/WindowButtons.qml
+        qml/components/SettingRow.qml
+        qml/components/SettingSwitch.qml
+        qml/components/SettingCycle.qml
+        qml/components/SettingStepper.qml
         qml/shell/VideoHost.qml
         qml/layouts/LayoutA/LayoutA.qml
         qml/layouts/LayoutB/LayoutB.qml

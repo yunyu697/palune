@@ -8,8 +8,11 @@ Item {
     focus: true
 
     property int panelRadius: typeof settingsPanelRadius !== "undefined" ? settingsPanelRadius : 18
+    // 自动化/截图：转发到内容面板的页码（0 通用 … 5 关于）。
+    property alias page: panel.page
 
     SettingsPanel {
+        id: panel
         anchors.fill: parent
         windowMode: true
         panelRadius: root.panelRadius
@@ -31,5 +34,25 @@ Item {
         }
     }
 
-    Keys.onEscapePressed: settingsWindow.requestClose()
+    // 改键捕获：设置页点「改键」后，下一次按键写入 [keys] 并即时重建绑定。
+    Keys.onPressed: function (event) {
+        if (panel.captureActionId === "") {
+            if (event.key === Qt.Key_Escape) {
+                settingsWindow.requestClose()
+                event.accepted = true
+            }
+            return
+        }
+        if (event.key === Qt.Key_Escape) {
+            panel.captureActionId = ""
+            event.accepted = true
+            return
+        }
+        var spec = prefs.specForKey(event.key, event.modifiers)
+        if (spec !== "") {
+            prefs.setKeyBinding(panel.captureActionId, spec)
+            panel.captureActionId = ""
+            event.accepted = true
+        }
+    }
 }

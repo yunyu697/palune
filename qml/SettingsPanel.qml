@@ -11,6 +11,8 @@ Item {
 
     property bool shotMode: false
     property int page: 0
+    // 改键捕获：非空时，设置窗口根节点把下一次按键写入该动作。
+    property string captureActionId: ""
     // 独立顶层窗口模式：隐藏压暗层，卡片铺满自身窗口，圆角与原生 Region 共用 panelRadius。
     property bool windowMode: false
     property int panelRadius: 18
@@ -371,13 +373,22 @@ Item {
                             font.weight: Font.DemiBold
                         }
                         Text {
-                            text: qsTr("断点：") + (typeof compactMode !== "undefined" ? compactMode.breakpoint : "-")
-                                  + qsTr("px · 滞回 ±") + (typeof compactMode !== "undefined" ? compactMode.hysteresis : "-")
-                                  + qsTr("px · 当前：") + (panelRoot.compact ? qsTr("紧凑") : qsTr("常规"))
+                            text: qsTr("当前：") + (panelRoot.compact ? qsTr("紧凑") : qsTr("常规"))
+                                  + qsTr(" · 滞回 ±") + (typeof compactMode !== "undefined" ? compactMode.hysteresis : "-") + qsTr("px")
                             color: panelRoot.mutedColor
                             font.pixelSize: 12
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
+                        }
+                        SettingRow {
+                            label: qsTr("紧凑断点")
+                            hint: qsTr("窗口宽度低于该值切到紧凑布局，写入 [ui.layout.<主题>] compactBelow，即时生效（360–1600）")
+                            SettingStepper {
+                                value: prefs.compactBreakpoint
+                                minimum: 360
+                                maximum: 1600
+                                step: 20
+                                suffix: "px"
+                                onChanged: function (v) { prefs.compactBreakpoint = v }
+                            }
                         }
                         Text {
                             visible: typeof compactMode !== "undefined" && compactMode.configNotice !== ""
@@ -385,8 +396,88 @@ Item {
                             color: panelRoot.accent
                             font.pixelSize: 11
                         }
+
+                        Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
+
                         Text {
-                            text: qsTr("断点在 settings.toml 的 [ui.layout.<主题>] compactBelow 中配置，非法值回退 560。")
+                            text: qsTr("启动与关闭")
+                            color: panelRoot.textColor
+                            font.pixelSize: 14
+                            font.weight: Font.DemiBold
+                        }
+                        SettingRow {
+                            label: qsTr("恢复上次会话")
+                            hint: qsTr("启动时自动打开最近播放的文件（[ui] restoreLastSession，默认关）")
+                            SettingSwitch {
+                                checked: prefs.restoreLastSession
+                                onToggled: function (v) { prefs.restoreLastSession = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("打开文件后自动播放")
+                            hint: qsTr("[ui] autoPlay，默认开")
+                            SettingSwitch {
+                                checked: prefs.autoPlay
+                                onToggled: function (v) { prefs.autoPlay = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("启动时最大化")
+                            hint: qsTr("[ui] startMaximized，默认关（下次启动生效）")
+                            SettingSwitch {
+                                checked: prefs.startMaximized
+                                onToggled: function (v) { prefs.startMaximized = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("关闭窗口时留在托盘")
+                            hint: qsTr("[ui] closeToTray，默认关；托盘菜单「退出」始终真正退出")
+                            SettingSwitch {
+                                checked: prefs.closeToTray
+                                onToggled: function (v) { prefs.closeToTray = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("最小化时隐藏到托盘")
+                            hint: qsTr("[ui] minimizeToTray，默认关")
+                            SettingSwitch {
+                                checked: prefs.minimizeToTray
+                                onToggled: function (v) { prefs.minimizeToTray = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("退出前确认")
+                            hint: qsTr("[ui] confirmExit，默认关")
+                            SettingSwitch {
+                                checked: prefs.confirmExit
+                                onToggled: function (v) { prefs.confirmExit = v }
+                            }
+                        }
+
+                        Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
+
+                        Text {
+                            text: qsTr("诊断")
+                            color: panelRoot.textColor
+                            font.pixelSize: 14
+                            font.weight: Font.DemiBold
+                        }
+                        SettingRow {
+                            label: qsTr("日志级别")
+                            hint: qsTr("写入 [diag] logLevel，即时生效；debug 仅用于排查，会产生大量日志")
+                            SettingCycle {
+                                current: prefs.logLevel
+                                options: [
+                                    { label: qsTr("调试"), value: "debug" },
+                                    { label: qsTr("信息"), value: "info" },
+                                    { label: qsTr("警告"), value: "warn" },
+                                    { label: qsTr("错误"), value: "error" }
+                                ]
+                                onPicked: function (v) { prefs.logLevel = v }
+                            }
+                        }
+                        Text {
+                            text: qsTr("界面语言：简体中文（当前版本只提供中文 UI，多语言在本期范围外，已显式记录为延后项）")
                             color: panelRoot.mutedColor
                             font.pixelSize: 11
                             wrapMode: Text.WordWrap
@@ -417,8 +508,88 @@ Item {
                         Text { text: qsTr("解码与渲染"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
                         Text { text: qsTr("渲染：libmpv（动态加载）· 输出：") + Qt.platform.os + qsTr(" 原生窗口")
                                color: panelRoot.mutedColor; font.pixelSize: 12; wrapMode: Text.WordWrap; Layout.fillWidth: true }
-                        Text { text: qsTr("硬件解码、缓冲与 HDR 状态在 M3/M4 接入。")
-                               color: panelRoot.mutedColor; font.pixelSize: 11 }
+                        SettingRow {
+                            label: qsTr("硬件解码")
+                            hint: qsTr("[playback] hwdec = auto / hardware / off，即时生效（切文件后重新初始化解码器）")
+                            SettingCycle {
+                                current: prefs.hwdecMode
+                                options: [
+                                    { label: qsTr("自动"), value: "auto" },
+                                    { label: qsTr("强制硬解"), value: "hardware" },
+                                    { label: qsTr("关闭（软解）"), value: "off" }
+                                ]
+                                onPicked: function (v) { prefs.hwdecMode = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("缓存时长")
+                            hint: qsTr("[playback] cacheSeconds = 0/30/60；0 表示 mpv 默认，下次打开文件生效")
+                            SettingCycle {
+                                current: prefs.cacheSeconds
+                                options: [
+                                    { label: qsTr("默认"), value: 0 },
+                                    { label: qsTr("30 秒"), value: 30 },
+                                    { label: qsTr("60 秒"), value: 60 }
+                                ]
+                                onPicked: function (v) { prefs.cacheSeconds = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("HDR 色调映射（BT.2390）")
+                            hint: qsTr("[playback] toneMapping，默认开；关闭时交给 mpv 选映射算法")
+                            SettingSwitch {
+                                checked: prefs.toneMapping
+                                onToggled: function (v) { prefs.toneMapping = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("映射目标峰值")
+                            hint: qsTr("[playback] targetPeakNits，默认 1000 nits，即时生效")
+                            SettingCycle {
+                                current: prefs.targetPeakNits
+                                options: [
+                                    { label: "600 nits", value: 600 },
+                                    { label: "800 nits", value: 800 },
+                                    { label: "1000 nits", value: 1000 }
+                                ]
+                                onPicked: function (v) { prefs.targetPeakNits = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("去隔行")
+                            hint: qsTr("[playback] deinterlace = auto / on / off，即时生效")
+                            SettingCycle {
+                                current: prefs.deinterlace
+                                options: [
+                                    { label: qsTr("自动"), value: "auto" },
+                                    { label: qsTr("开启"), value: "on" },
+                                    { label: qsTr("关闭"), value: "off" }
+                                ]
+                                onPicked: function (v) { prefs.deinterlace = v }
+                            }
+                        }
+
+                        Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
+
+                        Text { text: qsTr("播放行为"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        SettingRow {
+                            label: qsTr("断点续播")
+                            hint: qsTr("[playback] resume，默认开；关闭后不再自动跳回上次位置")
+                            SettingSwitch {
+                                checked: prefs.resumePlayback
+                                onToggled: function (v) { prefs.resumePlayback = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("自动播放下一集")
+                            hint: qsTr("[playback] autoNext，默认关；播完当前文件后顺序播放下一个同目录文件")
+                            SettingSwitch {
+                                checked: prefs.autoNext
+                                onToggled: function (v) { prefs.autoNext = v }
+                            }
+                        }
+                        Text { text: qsTr("播放速度在退出时写入 [playback] speed，下次启动恢复。")
+                               color: panelRoot.mutedColor; font.pixelSize: 11; wrapMode: Text.WordWrap; Layout.fillWidth: true }
 
                         Item { Layout.fillHeight: true }
                     }
@@ -430,13 +601,33 @@ Item {
                         spacing: 10
 
                         Text { text: qsTr("字幕轨道"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
-                        Repeater {
-                            model: player.subtitleTracks
-                            delegate: Text {
-                                required property var modelData
-                                text: (modelData.selected ? "● " : "○ ") + (modelData.title || (qsTr("轨道 ") + modelData.id))
-                                color: panelRoot.mutedColor
-                                font.pixelSize: 12
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 4
+                            Repeater {
+                                model: player.subtitleTracks
+                                delegate: Rectangle {
+                                    required property var modelData
+                                    Layout.fillWidth: true
+                                    implicitHeight: 24
+                                    radius: 6
+                                    color: modelData.selected ? panelRoot.accent + "22" : "transparent"
+                                    border.width: 1
+                                    border.color: modelData.selected ? panelRoot.accent : panelRoot.lineColor
+                                    Text {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 8
+                                        verticalAlignment: Text.AlignVCenter
+                                        text: (modelData.selected ? "● " : "○ ") + (modelData.title || (qsTr("轨道 ") + modelData.id))
+                                        color: modelData.selected ? panelRoot.accent : panelRoot.mutedColor
+                                        font.pixelSize: 11
+                                    }
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: player.setSubtitleTrack(modelData.id)
+                                    }
+                                }
                             }
                         }
                         Text {
@@ -445,11 +636,129 @@ Item {
                             color: panelRoot.mutedColor
                             font.pixelSize: 12
                         }
+                        PillButton {
+                            visible: player.subtitleTracks.length > 0
+                            label: qsTr("关闭字幕")
+                            onClicked: player.setSubtitleTrack(-1)
+                        }
 
                         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
 
-                        Text { text: qsTr("字号 / 延迟 / 外挂字幕在 M3 接入；本页为轨道状态展示。")
-                               color: panelRoot.mutedColor; font.pixelSize: 11; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+                        Text { text: qsTr("字幕样式"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        SettingRow {
+                            label: qsTr("字号")
+                            hint: qsTr("[sub] fontSize，默认 15，即时生效")
+                            SettingStepper {
+                                value: prefs.subtitleFontSize
+                                minimum: 8
+                                maximum: 64
+                                step: 1
+                                onChanged: function (v) { prefs.subtitleFontSize = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("颜色")
+                            hint: qsTr("[sub] color，默认白，即时生效")
+                            SettingCycle {
+                                current: prefs.subtitleColor
+                                options: [
+                                    { label: qsTr("白色"), value: "#ffffff" },
+                                    { label: qsTr("黄色"), value: "#ffe082" },
+                                    { label: qsTr("青色"), value: "#a5f3fc" },
+                                    { label: qsTr("绿色"), value: "#bbf7d0" }
+                                ]
+                                onPicked: function (v) { prefs.subtitleColor = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("描边")
+                            hint: qsTr("[sub] outline，默认 1.0px，即时生效")
+                            SettingStepper {
+                                value: prefs.subtitleOutline
+                                minimum: 0
+                                maximum: 6
+                                step: 0.5
+                                decimals: 1
+                                suffix: "px"
+                                onChanged: function (v) { prefs.subtitleOutline = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("延迟")
+                            hint: qsTr("[sub] delay，默认 0.0s（正值为字幕推迟），即时生效")
+                            SettingStepper {
+                                value: prefs.subtitleDelay
+                                minimum: -10
+                                maximum: 10
+                                step: 0.1
+                                decimals: 1
+                                suffix: "s"
+                                onChanged: function (v) { prefs.subtitleDelay = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("底部位置")
+                            hint: qsTr("[sub] position，默认贴底 8%，即时生效")
+                            SettingStepper {
+                                value: prefs.subtitlePosition
+                                minimum: 0
+                                maximum: 40
+                                step: 2
+                                suffix: "%"
+                                onChanged: function (v) { prefs.subtitlePosition = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("自动加载外挂字幕")
+                            hint: qsTr("[sub] autoLoad，默认开（模糊匹配同名字幕）")
+                            SettingSwitch {
+                                checked: prefs.autoLoadSubtitles
+                                onToggled: function (v) { prefs.autoLoadSubtitles = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("字幕编码")
+                            hint: qsTr("[sub] encoding，默认自动检测；乱码时手动指定")
+                            SettingCycle {
+                                current: prefs.subtitleEncoding
+                                options: [
+                                    { label: qsTr("自动"), value: "auto" },
+                                    { label: "UTF-8", value: "utf-8" },
+                                    { label: "GB18030", value: "gb18030" }
+                                ]
+                                onPicked: function (v) { prefs.subtitleEncoding = v }
+                            }
+                        }
+                        PillButton {
+                            label: qsTr("加载外挂字幕…")
+                            onClicked: prefs.chooseSubtitleFile()
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 84
+                            radius: 8
+                            color: "#0b0c10"
+                            border.width: 1
+                            border.color: panelRoot.lineColor
+                            // 预览与实际设置联动：字号、颜色、描边、底部位置。
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                y: parent.height - height - Math.max(4, parent.height * (prefs.subtitlePosition / 100))
+                                text: qsTr("字幕预览：字号与描边按左侧设置实时变化")
+                                color: "#000000"
+                                font.pixelSize: prefs.subtitleFontSize
+                                style: Text.Outline
+                                styleColor: "#000000"
+                            }
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                y: parent.height - height - Math.max(4, parent.height * (prefs.subtitlePosition / 100))
+                                text: qsTr("字幕预览：字号与描边按左侧设置实时变化")
+                                color: prefs.subtitleColor
+                                font.pixelSize: prefs.subtitleFontSize
+                            }
+                        }
 
                         Item { Layout.fillHeight: true }
                     }
@@ -478,17 +787,44 @@ Item {
                             actionId: "toggleMute"
                             onClicked: win.action("toggleMute")
                         }
+                        Text {
+                            text: qsTr("音量与静音状态在退出时写入 [audio] volume / muted，下次启动恢复。")
+                            color: panelRoot.mutedColor
+                            font.pixelSize: 11
+                            wrapMode: Text.WordWrap
+                            Layout.fillWidth: true
+                        }
 
                         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
 
                         Text { text: qsTr("音频轨道"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
-                        Repeater {
-                            model: player.audioTracks
-                            delegate: Text {
-                                required property var modelData
-                                text: (modelData.selected ? "● " : "○ ") + (modelData.title || (qsTr("轨道 ") + modelData.id))
-                                color: panelRoot.mutedColor
-                                font.pixelSize: 12
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 4
+                            Repeater {
+                                model: player.audioTracks
+                                delegate: Rectangle {
+                                    required property var modelData
+                                    Layout.fillWidth: true
+                                    implicitHeight: 24
+                                    radius: 6
+                                    color: modelData.selected ? panelRoot.accent + "22" : "transparent"
+                                    border.width: 1
+                                    border.color: modelData.selected ? panelRoot.accent : panelRoot.lineColor
+                                    Text {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 8
+                                        verticalAlignment: Text.AlignVCenter
+                                        text: (modelData.selected ? "● " : "○ ") + (modelData.title || (qsTr("轨道 ") + modelData.id))
+                                        color: modelData.selected ? panelRoot.accent : panelRoot.mutedColor
+                                        font.pixelSize: 11
+                                    }
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: player.setAudioTrack(modelData.id)
+                                    }
+                                }
                             }
                         }
                         Text {
@@ -496,6 +832,51 @@ Item {
                             text: qsTr("当前文件没有音频轨道。")
                             color: panelRoot.mutedColor
                             font.pixelSize: 12
+                        }
+
+                        Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
+
+                        Text { text: qsTr("输出"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        SettingRow {
+                            label: qsTr("输出设备")
+                            hint: qsTr("[audio] device，默认跟随系统；列表由 mpv 的 audio-device-list 提供，即时生效")
+                            SettingCycle {
+                                current: prefs.audioDevice
+                                options: {
+                                    var list = [{ label: qsTr("自动（系统默认）"), value: "auto" }]
+                                    var devices = prefs.audioDevices()
+                                    for (var i = 0; i < devices.length; ++i)
+                                        list.push({ label: devices[i].label, value: devices[i].value })
+                                    return list
+                                }
+                                onPicked: function (v) { prefs.audioDevice = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("声道")
+                            hint: qsTr("[audio] channels = auto / stereo / 5.1，即时生效")
+                            SettingCycle {
+                                current: prefs.audioChannels
+                                options: [
+                                    { label: qsTr("自动（原样）"), value: "auto" },
+                                    { label: qsTr("立体声"), value: "stereo" },
+                                    { label: "5.1", value: "5.1" }
+                                ]
+                                onPicked: function (v) { prefs.audioChannels = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("音频延迟")
+                            hint: qsTr("[audio] delay，默认 0.0s；音画不同步时微调，即时生效")
+                            SettingStepper {
+                                value: prefs.audioDelay
+                                minimum: -10
+                                maximum: 10
+                                step: 0.05
+                                decimals: 2
+                                suffix: "s"
+                                onChanged: function (v) { prefs.audioDelay = v }
+                            }
                         }
 
                         Item { Layout.fillHeight: true }
@@ -507,27 +888,99 @@ Item {
                         visible: panelRoot.page === 4
                         spacing: 8
 
-                        Text { text: qsTr("已接线快捷键"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
                         Text {
-                            text: qsTr("空格 播放/暂停 · F11 全屏 · Esc 退出面板/全屏 · O 打开文件\n")
-                                  + qsTr("← / → 后退/前进 10 秒 · ↑ / ↓ 音量 ±5 · Enter 激活焦点控件\n")
-                                  + qsTr("Tab 在可操作控件间移动焦点")
-                            color: panelRoot.mutedColor
-                            font.pixelSize: 12
-                            lineHeight: 1.4
-                            wrapMode: Text.WordWrap
-                            Layout.fillWidth: true
+                            text: qsTr("快捷键（共 ") + prefs.keyRows().length + qsTr(" 项）")
+                            color: panelRoot.textColor
+                            font.pixelSize: 14
+                            font.weight: Font.DemiBold
                         }
-
-                        Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
-
-                        Text { text: qsTr("快捷键系统进度"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
                         Text {
-                            text: qsTr("40 个 P0 动作的绑定表、启动冲突检测与解绑界面尚未完成（M2 待办）。当前 10 项为主窗口直接接线。")
+                            text: qsTr("点击「改键」后直接按下新组合键；「解绑」置为空；「默认」删除自定义项。写入 [keys] <动作ID>，即时生效并重启保持。")
                             color: panelRoot.mutedColor
                             font.pixelSize: 11
                             wrapMode: Text.WordWrap
                             Layout.fillWidth: true
+                        }
+                        Text {
+                            visible: panelRoot.captureActionId !== ""
+                            text: qsTr("正在等待新快捷键…按 Esc 取消")
+                            color: panelRoot.accent
+                            font.pixelSize: 12
+                        }
+                        PillButton {
+                            visible: panelRoot.captureActionId !== ""
+                            label: qsTr("取消改键")
+                            onClicked: panelRoot.captureActionId = ""
+                        }
+                        Text {
+                            visible: prefs.keyConflicts().length > 0
+                            text: qsTr("检测到 ") + prefs.keyConflicts().length + qsTr(" 处键位冲突（同作用域内相同组合键）")
+                            color: "#ff8a80"
+                            font.pixelSize: 11
+                        }
+                        Repeater {
+                            model: prefs.keyConflicts()
+                            delegate: Text {
+                                required property var modelData
+                                text: "  · " + modelData.keys + qsTr("（") + modelData.scope + qsTr("）：")
+                                      + modelData.first + qsTr(" / ") + modelData.second
+                                color: "#ff8a80"
+                                font.pixelSize: 10
+                            }
+                        }
+                        PillButton {
+                            visible: prefs.keyRows().some(function (row) { return row.custom })
+                            label: qsTr("全部恢复默认")
+                            onClicked: {
+                                var rows = prefs.keyRows()
+                                for (var i = 0; i < rows.length; ++i) {
+                                    if (rows[i].custom)
+                                        prefs.resetKeyBinding(rows[i].id)
+                                }
+                            }
+                        }
+
+                        Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
+
+                        Repeater {
+                            model: prefs.keyRows()
+                            delegate: RowLayout {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                spacing: 6
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: modelData.label
+                                    color: panelRoot.textColor
+                                    font.pixelSize: 11
+                                    elide: Text.ElideRight
+                                }
+                                Text {
+                                    Layout.preferredWidth: 92
+                                    horizontalAlignment: Text.AlignRight
+                                    text: modelData.key === "" ? qsTr("（未绑定）") : modelData.key
+                                    color: modelData.custom ? panelRoot.accent : panelRoot.mutedColor
+                                    font.pixelSize: 11
+                                    elide: Text.ElideRight
+                                }
+                                PillButton {
+                                    label: panelRoot.captureActionId === modelData.id ? qsTr("按键中…") : qsTr("改键")
+                                    onClicked: panelRoot.captureActionId = modelData.id
+                                }
+                                PillButton {
+                                    label: qsTr("解绑")
+                                    onClicked: {
+                                        panelRoot.captureActionId = ""
+                                        prefs.clearKeyBinding(modelData.id)
+                                    }
+                                }
+                                PillButton {
+                                    visible: modelData.custom
+                                    label: qsTr("默认")
+                                    onClicked: prefs.resetKeyBinding(modelData.id)
+                                }
+                            }
                         }
 
                         Item { Layout.fillHeight: true }
@@ -565,10 +1018,69 @@ Item {
                         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
 
                         Text { text: qsTr("更新"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        SettingRow {
+                            label: qsTr("更新通道")
+                            hint: qsTr("[update] channel = stable / beta；beta 读取 latest-beta.json，需发行仓库发布该清单后才有内容")
+                            SettingCycle {
+                                current: prefs.updateChannel
+                                options: [
+                                    { label: qsTr("正式版"), value: "stable" },
+                                    { label: qsTr("测试版"), value: "beta" }
+                                ]
+                                onPicked: function (v) { prefs.updateChannel = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("启动时自动检查更新")
+                            hint: qsTr("[update] autoCheck，默认开；启动 3 秒后静默检查，只提示下载，不自动安装")
+                            SettingSwitch {
+                                checked: prefs.autoCheckUpdates
+                                onToggled: function (v) { prefs.autoCheckUpdates = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("网络代理")
+                            hint: qsTr("[update] proxy，默认跟随系统；即时应用，下次启动仍读取该值")
+                            SettingCycle {
+                                current: prefs.updateProxy
+                                options: [
+                                    { label: qsTr("跟随系统"), value: "system" },
+                                    { label: qsTr("不使用代理"), value: "none" }
+                                ]
+                                onPicked: function (v) { prefs.updateProxy = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("下载目录")
+                            hint: prefs.downloadDirEffective()
+                            PillButton {
+                                label: qsTr("选择…")
+                                onClicked: prefs.chooseDownloadDir()
+                            }
+                        }
                         UpdateSection {
                             Layout.fillWidth: true
-                            Layout.fillHeight: true
                         }
+
+                        Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
+
+                        Text { text: qsTr("许可与诊断"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        RowLayout {
+                            spacing: 8
+                            PillButton {
+                                label: qsTr("查看许可与开源声明")
+                                onClicked: prefs.openLicense()
+                            }
+                            PillButton {
+                                label: qsTr("打开配置目录")
+                                onClicked: prefs.openConfigDir()
+                            }
+                            PillButton {
+                                label: qsTr("打开崩溃目录")
+                                onClicked: prefs.openCrashDir()
+                            }
+                        }
+                        Item { Layout.fillHeight: true }
                     }
                     }   // contentColumn
                 }       // contentFlick

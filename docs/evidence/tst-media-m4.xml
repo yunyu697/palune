@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite name="TestMedia" timestamp="2026&#x002D;11&#x002D;08T16:20:52" hostname="MS&#x002D;7B54" tests="8" failures="0" errors="0" skipped="0" time="9.620">
+  <properties>
+    <property name="QTestVersion" value="6.8.3"/>
+    <property name="QtVersion" value="6.8.3"/>
+    <property name="QtBuild" value="Qt 6.8.3 (x86_64&#x002D;little_endian&#x002D;llp64 shared (dynamic) release build; by MSVC 2022)"/>
+  </properties>
+  <testcase name="initTestCase" classname="TestMedia" time="0.000"/>
+  <testcase name="emptyLibraryIsUnavailableButUsable" classname="TestMedia" time="0.000"/>
+  <testcase name="adapterRegistryRejectsDuplicates" classname="TestMedia" time="0.000"/>
+  <testcase name="localScanIndexesAndPrunes" classname="TestMedia" time="0.944"/>
+  <testcase name="corruptedIndexRebuilds" classname="TestMedia" time="0.695"/>
+  <testcase name="largeDirectoryScanStaysBounded" classname="TestMedia" time="7.977">
+    <system-out>
+      <![CDATA[200 文件扫描耗时(含缩略图尝试): 7734 ms]]>
+    </system-out>
+  </testcase>
+  <testcase name="adapterContractIsComplete" classname="TestMedia" time="0.000"/>
+  <testcase name="cleanupTestCase" classname="TestMedia" time="0.000"/>
+</testsuite>

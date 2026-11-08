@@ -405,6 +405,198 @@ void MpvClient::setSubtitleTrack(int id)
         Log::info(QStringLiteral("字幕轨切换为 %1").arg(id < 0 ? QStringLiteral("关闭") : QString::number(id)));
 }
 
+bool MpvClient::setStringProperty(const char *name, const char *value)
+{
+    if (!m_initialized)
+        return false;
+    const int rc = m_api->setPropertyString(m_mpv, name, value);
+    if (rc < 0) {
+        Log::warn(QStringLiteral("mpv 属性写入失败：%1=%2（%3）")
+                      .arg(QString::fromUtf8(name), QString::fromUtf8(value),
+                           m_api->errorString(rc)));
+        return false;
+    }
+    return true;
+}
+
+void MpvClient::setSubtitleStyle(int fontSize, const QString &color, double outline,
+                                 int positionPercent)
+{
+    // mpv 的 sub-font-size 以 720p 为基准（默认 55），界面上的 15 对应约 54。
+    const int scaled = qBound(8, qRound(fontSize * 3.6), 200);
+    setStringProperty("sub-font-size", QByteArray::number(scaled).constData());
+    setStringProperty("sub-color", color.toUtf8().constData());
+    const int border = qBound(0, qRound(outline * 2.0), 12);
+    setStringProperty("sub-border-size", QByteArray::number(border).constData());
+    // sub-pos：100 为贴底，向上移动 = 减小数值。
+    const int pos = qBound(0, 100 - positionPercent, 100);
+    setStringProperty("sub-pos", QByteArray::number(pos).constData());
+}
+
+void MpvClient::setSubtitleDelayAbsolute(double seconds)
+{
+    if (!m_initialized)
+        return;
+    m_subtitleDelay = qBound(-10.0, seconds, 10.0);
+    double writable = m_subtitleDelay;
+    if (m_api->setProperty(m_mpv, "sub-delay", MPV_FORMAT_DOUBLE, &writable) < 0)
+        Log::warn(QStringLiteral("字幕延迟设置失败：%1").arg(seconds));
+}
+
+void MpvClient::setSubtitleAutoLoad(bool enabled)
+{
+    setStringProperty("sub-auto", enabled ? "fuzzy" : "no");
+}
+
+void MpvClient::setSubtitleEncoding(const QString &encoding)
+{
+    // 内部值：auto / utf-8 / gb18030
+    QByteArray value = "auto";
+    if (encoding.compare(QLatin1String("utf-8"), Qt::CaseInsensitive) == 0)
+        value = "utf-8";
+    else if (encoding.compare(QLatin1String("gb18030"), Qt::CaseInsensitive) == 0)
+        value = "gb18030";
+    setStringProperty("sub-codepage", value.constData());
+}
+
+void MpvClient::addSubtitleFile(const QString &path)
+{
+    if (!m_initialized || path.isEmpty())
+        return;
+    const QByteArray file = QFileInfo(path).absoluteFilePath().toUtf8();
+    const char *args[] = {"sub-add", file.constData(), "select", nullptr};
+    if (m_api->command(m_mpv, args) < 0)
+        Log::warn(QStringLiteral("外挂字幕加载失败：%1").arg(path));
+    else
+        Log::info(QStringLiteral("外挂字幕已加载：%1").arg(path));
+}
+
+void MpvClient::setAudioDelay(double seconds)
+{
+    if (!m_initialized)
+        return;
+    double writable = qBound(-10.0, seconds, 10.0);
+    if (m_api->setProperty(m_mpv, "audio-delay", MPV_FORMAT_DOUBLE, &writable) < 0)
+        Log::warn(QStringLiteral("音频延迟设置失败：%1").arg(seconds));
+}
+
+void MpvClient::setAudioChannels(const QString &channels)
+{
+    const QByteArray value = channels == QLatin1String("stereo") ? QByteArray("stereo")
+        : (channels == QLatin1String("5.1") ? QByteArray("5.1") : QByteArray("auto"));
+    setStringProperty("audio-channels", value.constData());
+}
+
+void MpvClient::setAudioDevice(const QString &device)
+{
+    const QByteArray value = (device.isEmpty() || device == QLatin1String("auto"))
+        ? QByteArray("auto") : device.toUtf8();
+    setStringProperty("audio-device", value.constData());
+}
+
+QVariantList MpvClient::audioDevices() const
+{
+    QVariantList devices;
+    if (!m_initialized)
+        return devices;
+    mpv_node node;
+    memset(&node, 0, sizeof(node));
+    if (m_api->getProperty(m_mpv, "audio-device-list", MPV_FORMAT_NODE, &node) < 0)
+        return devices;
+    if (node.format != MPV_FORMAT_NODE_ARRAY) {
+        m_api->freeNodeContents(&node);
+        return devices;
+    }
+    for (int i = 0; i < node.u.list->num; ++i) {
+        const mpv_node &entry = node.u.list->values[i];
+        if (entry.format != MPV_FORMAT_NODE_MAP)
+            continue;
+        QString name;
+        QString description;
+        for (int j = 0; j < entry.u.list->num; ++j) {
+            const QString key = QString::fromUtf8(entry.u.list->keys[j]);
+            const mpv_node &value = entry.u.list->values[j];
+            if (value.format != MPV_FORMAT_STRING)
+                continue;
+            if (key == QLatin1String("name"))
+                name = QString::fromUtf8(value.u.string);
+            else if (key == QLatin1String("description"))
+                description = QString::fromUtf8(value.u.string);
+        }
+        if (name.isEmpty())
+            continue;
+        QVariantMap item;
+        item.insert(QStringLiteral("label"), description.isEmpty() ? name : description);
+        item.insert(QStringLiteral("value"), name);
+        devices.append(item);
+    }
+    m_api->freeNodeContents(&node);
+    return devices;
+}
+
+void MpvClient::setHwdecMode(const QString &mode)
+{
+    QByteArray value = "auto-safe";
+#if defined(Q_OS_WIN)
+    // 自动：Windows 上仍是 d3d11va；显式 off 关闭硬解。
+    value = "d3d11va";
+#elif defined(Q_OS_MACOS)
+    value = "videotoolbox";
+#endif
+    if (mode == QLatin1String("off"))
+        value = "no";
+    else if (mode == QLatin1String("hardware")) {
+#if defined(Q_OS_WIN)
+        value = "d3d11va";
+#elif defined(Q_OS_MACOS)
+        value = "videotoolbox";
+#else
+        value = "auto-safe";
+#endif
+    }
+    setStringProperty("hwdec", value.constData());
+}
+
+void MpvClient::setCacheSeconds(int seconds)
+{
+    if (!m_initialized)
+        return;
+    QString cacheValue = seconds > 0 ? QStringLiteral("yes") : QStringLiteral("auto");
+    setStringProperty("cache", cacheValue.toUtf8().constData());
+    int64_t secs = seconds > 0 ? seconds : 10;
+    if (m_api->setProperty(m_mpv, "cache-secs", MPV_FORMAT_INT64, &secs) < 0)
+        Log::warn(QStringLiteral("缓存时长设置失败：%1s").arg(secs));
+}
+
+void MpvClient::setToneMapping(bool enabled, int targetPeakNits)
+{
+    setStringProperty("tone-mapping", enabled ? "bt.2390" : "auto");
+    if (!m_initialized)
+        return;
+    int64_t peak = qBound(200, targetPeakNits, 2000);
+    if (m_api->setProperty(m_mpv, "target-peak", MPV_FORMAT_INT64, &peak) < 0)
+        Log::warn(QStringLiteral("目标峰值亮度设置失败：%1").arg(peak));
+}
+
+void MpvClient::setDeinterlace(const QString &mode)
+{
+    const QByteArray value = mode == QLatin1String("on") ? QByteArray("yes")
+        : (mode == QLatin1String("off") ? QByteArray("no") : QByteArray("auto"));
+    setStringProperty("deinterlace", value.constData());
+}
+
+QString MpvClient::propertyString(const QString &name) const
+{
+    if (!m_initialized || !m_api)
+        return {};
+    char *raw = m_api->getPropertyString(m_mpv, name.toUtf8().constData());
+    if (!raw)
+        return {};
+    const QString value = QString::fromUtf8(raw);
+    m_api->freeString(raw);
+    return value;
+}
+
 void MpvClient::setLoopFile(bool enabled)
 {
     if (!m_initialized)

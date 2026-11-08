@@ -83,6 +83,11 @@ public:
 
     void setFeedUrl(const QUrl &url) { m_feedUrl = url; }
     void setDownloadDirOverride(const QString &dir) { m_downloadDirOverride = dir; }
+    // 更新通道：stable → latest.json，beta → latest-beta.json（同一发行仓库）。
+    // 只改写默认 GitHub 地址；测试/自定义 feed URL 不受影响。
+    void setChannel(const QString &channel);
+    QString channel() const { return m_channel; }
+    QUrl feedUrl() const { return m_feedUrl; }
     bool isDownloading() const;
 
 signals:
@@ -128,6 +133,7 @@ private:
 
     QUrl m_feedUrl;
     QString m_downloadDirOverride;
+    QString m_channel = QStringLiteral("stable");
     UpdateManifest m_manifest;
     QByteArray m_manifestBytes;
 

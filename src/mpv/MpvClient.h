@@ -63,6 +63,23 @@ public:
     Q_INVOKABLE void addSubtitleDelay(double delta);
     Q_INVOKABLE void setAudioTrack(int id);
     Q_INVOKABLE void setSubtitleTrack(int id); // -1 = 关闭字幕
+    // 诊断/自动化：读取 mpv 属性字符串（不存在返回空串）。
+    Q_INVOKABLE QString propertyString(const QString &name) const;
+    // 设置项（Preferences 调用）：均为 mpv 属性写入，可在播放中即时生效。
+    void setSubtitleStyle(int fontSize, const QString &color, double outline,
+                          int positionPercent);
+    void setSubtitleDelayAbsolute(double seconds);
+    void setSubtitleAutoLoad(bool enabled);
+    void setSubtitleEncoding(const QString &encoding);
+    Q_INVOKABLE void addSubtitleFile(const QString &path);
+    void setAudioDelay(double seconds);
+    void setAudioChannels(const QString &channels);
+    void setAudioDevice(const QString &device);
+    QVariantList audioDevices() const;
+    void setHwdecMode(const QString &mode);
+    void setCacheSeconds(int seconds);
+    void setToneMapping(bool enabled, int targetPeakNits);
+    void setDeinterlace(const QString &mode);
     // 长时压测用：循环播放避免样本先于压测时长结束（产品默认关闭）。
     void setLoopFile(bool enabled);
 
@@ -125,6 +142,8 @@ private:
     void updateVideoInfo();
     void clearVideoInfo();
     void refreshTrackList();
+    // 统一的属性写入入口：失败只告警，不影响播放。
+    bool setStringProperty(const char *name, const char *value);
     template <typename T>
     bool resolve(T &fn, const char *name);
 

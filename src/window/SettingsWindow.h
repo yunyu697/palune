@@ -44,6 +44,8 @@ public:
     bool isOpen() const { return isVisible(); }
 
     Q_INVOKABLE void requestClose() { closeSelf(); }
+    // 无边框设置窗没有系统标题栏，拖动必须由标题区域主动发起系统移动循环。
+    Q_INVOKABLE void startMove() { startSystemMove(); }
 
 protected:
     void showEvent(QShowEvent *event) override;

@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls.Basic
 import "shell"
 import "tokens"
 import "components"
@@ -17,8 +18,16 @@ Item {
 
     readonly property string errorMessage: typeof player !== "undefined" ? player.errorMessage : ""
     readonly property string themeId: typeof themeRegistry !== "undefined" ? themeRegistry.currentTheme : "A"
+    readonly property bool hasFile: typeof player !== "undefined" && player.filePath !== ""
+    readonly property bool compactUi: typeof compactMode !== "undefined" && compactMode.compact
     // 每个主题顶部可拖拽区的高度（A 浮动标题条 84 + 外边距，B 52，C 标题胶囊 40）。
     readonly property int dragStripHeight: root.themeId === "B" ? 52 : (root.themeId === "C" ? 44 : 94)
+    // 控制条所在整条区域的高度（含隐藏状态），用于悬停热区。
+    readonly property int controlZoneHeight: root.themeId === "A" ? (root.compactUi ? 64 : tokens.transportHeight)
+                                               : root.themeId === "B" ? (root.compactUi ? 64 : 82)
+                                               : (root.compactUi ? 44 : tokens.capsuleHeight)
+    readonly property int controlZoneMargin: root.themeId === "A" ? 10
+                                             : (root.themeId === "C" ? (root.compactUi ? 12 : 24) : 0)
 
     Tokens { id: tokens }
 
@@ -49,15 +58,79 @@ Item {
         anchors.fill: parent
     }
 
-    // 点击空白显示/隐藏控件；双击全屏。
-    // 必须位于 layoutSlot **之下**：旧版把它放在布局之后，整窗 MouseArea 盖住了所有按钮，
-    // 点击按钮只会切换控件显示（实机「按钮点不动 / 看不到」的原因之一）。
+    // 视频区鼠标定义（docs/MOUSE-INTERACTION.md）：
+    // 单击 = 播放/暂停；双击 = 全屏；右键 = 上下文菜单；滚轮 = 音量（Ctrl+滚轮 = seek ±10s）。
+    // 本层位于 layoutSlot **之下**：布局/控制条上的点击优先，不会穿透到视频。
     MouseArea {
         anchors.fill: parent
-        acceptedButtons: Qt.LeftButton
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
         enabled: root.overlayPanel === ""
-        onClicked: uiState.chromeVisible = !uiState.chromeVisible
-        onDoubleClicked: win.action("toggleFullscreen")
+        onClicked: function (mouse) {
+            if (mouse.button === Qt.RightButton) {
+                if (root.hasFile)
+                    contextMenu.popup()
+            } else if (root.hasFile) {
+                win.action("playPause")
+            }
+        }
+        onDoubleClicked: function (mouse) {
+            if (mouse.button === Qt.LeftButton && root.hasFile)
+                win.action("toggleFullscreen")
+        }
+        onWheel: function (wheel) {
+            if (wheel.modifiers & Qt.ControlModifier)
+                win.action("seekBy", wheel.angleDelta.y > 0 ? 10 : -10)
+            else
+                win.action("volumeBy", (wheel.angleDelta.y / 120) * 5)
+        }
+    }
+
+    Menu {
+        id: contextMenu
+        palette.text: "#e8eaee"
+        palette.windowText: "#e8eaee"
+        palette.window: "#0d0e11"
+        background: Rectangle {
+            color: "#f20d0e11"
+            radius: 10
+            border.width: 1
+            border.color: "#40ffffff"
+        }
+        MenuItem { text: qsTr("播放 / 暂停"); onTriggered: win.action("playPause") }
+        MenuItem { text: qsTr("全屏 / 还原"); onTriggered: win.action("toggleFullscreen") }
+        MenuItem { text: qsTr("打开文件…"); onTriggered: win.action("openFile") }
+        MenuItem { text: qsTr("媒体库"); onTriggered: win.action("openLibrary") }
+        MenuItem { text: qsTr("设置"); onTriggered: win.action("openSettings") }
+        MenuSeparator { contentItem: Rectangle { implicitHeight: 1; color: "#26ffffff" } }
+        MenuItem { text: qsTr("退出"); onTriggered: win.action("exit") }
+    }
+
+    // 控制条悬停热区：整条区域（含隐藏状态下该区域）进入即显示控制栏，
+    // 离开后按 2500ms 延迟隐藏；暂停态不自动隐藏。
+    // 用 HoverHandler 而不是 MouseArea：它只收悬停，不消费点击，隐藏态不会拦住视频点击。
+    Item {
+        anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+        height: root.controlZoneHeight + root.controlZoneMargin
+        HoverHandler {
+            id: controlHover
+            onHoveredChanged: {
+                if (hovered)
+                    uiState.chromeVisible = true
+            }
+        }
+    }
+
+    // 声明式驱动自动隐藏：只要「有文件 + 正在播放 + 控制栏可见 + 鼠标不在热区 + 无面板」
+    // 条件成立就开始 2500ms 倒计时，任一条件变化自动重置。
+    // 之前用 hoveredChanged 手动 restart，启动后从未进入热区时计时器根本不跑，
+    // 实机表现为控制栏永不隐藏（alpha10 复验发现，差分仅 4.6%）。
+    Timer {
+        id: chromeHideTimer
+        interval: 2500
+        repeat: false
+        running: root.hasFile && !player.paused && uiState.chromeVisible
+                 && !controlHover.hovered && root.overlayPanel === ""
+        onTriggered: uiState.chromeVisible = false
     }
 
     // 无边框窗口拖拽：走系统移动循环（startSystemMove），保留 Aero Snap 与跨 DPI 行为。

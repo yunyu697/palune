@@ -1,0 +1,99 @@
+{
+  "auto_hide_changed": [
+    4.67,
+    0.045
+  ],
+  "hover_changed_bottom": [
+    64.83,
+    0.687
+  ],
+  "playing_before_click": [
+    4.15,
+    0.045
+  ],
+  "paused_after_click": [
+    0.0,
+    0.0
+  ],
+  "chrome_retained_after_click": [
+    1.94,
+    0.019
+  ],
+  "settings_window": {
+    "hwnd": 2556928,
+    "title": "Palune 设置 - Palune",
+    "cls": "Qt683QWindowToolSaveBits",
+    "x": 898,
+    "y": 370,
+    "w": 2040,
+    "h": 1320
+  },
+  "settings_drag": {
+    "before": [
+      898,
+      370
+    ],
+    "after": [
+      1038,
+      450
+    ],
+    "moved": true
+  },
+  "settings_closed": true,
+  "layoutB_panel_rgb": [
+    12,
+    14,
+    18
+  ],
+  "layoutB_panel_uniform": true,
+  "paused_for_residual": true,
+  "residual_after_10_activation_cycles": [
+    [
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0
+    ]
+  ],
+  "residual_first": [
+    0.0,
+    0.0
+  ],
+  "residual_max": 0.0,
+  "foreground_player_cycles": 10,
+  "video_zorder_below_overlay_cycles": 10
+}

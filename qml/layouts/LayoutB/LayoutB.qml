@@ -30,6 +30,18 @@ Item {
         onOpenRequested: win.action("openFile")
     }
 
+    // 右列不透明底：B 的视频窗按检查器宽度向右内缩（dockWidth + 12），检查器上下留白
+    // 与底部的右列区域没有视频；而 topBar/techBar/controlBar 都是半透明玻璃，
+    // 桌面/上一个窗口会直接透上来（实机表现为「右侧变透明」）。
+    // 先在整个右列铺一层不透明底，宽度与 WindowController::setVideoInsets 的右内缩完全一致。
+    Rectangle {
+        id: sideBackdrop
+        visible: uiState.chromeVisible
+        anchors { top: parent.top; right: parent.right; bottom: parent.bottom }
+        width: layoutB.dockWidth + 12
+        color: "#ff0c0e12"
+    }
+
     // 顶部扁平栏
     Rectangle {
         id: topBar
@@ -119,11 +131,15 @@ Item {
             bottom: parent.bottom
             rightMargin: 12
             topMargin: layoutB.topBarHeight + 8
-            bottomMargin: layoutB.techBarHeight + layoutB.controlBarHeight + 12
+            bottomMargin: layoutB.techBarHeight + layoutB.controlBarHeight + 16
         }
-        color: "#f20c0e12"
+        // 不透明底：alpha 0xf2 会让视频透上来，实机表现为「点击后右栏变透明」。
+        color: "#ff0c0e12"
         border.width: 1
         border.color: tokens.border
+        // 显式压在控制条之上、且留 16px 安全间距，避免任何状态（主题切换/紧凑切换）
+        // 下与控制条重叠（alpha10 问题 4）。
+        z: 2
 
         ColumnLayout {
             anchors.fill: parent

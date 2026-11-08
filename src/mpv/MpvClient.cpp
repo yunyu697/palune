@@ -303,6 +303,19 @@ void MpvClient::seek(double seconds)
         Log::warn(QStringLiteral("seek 失败：%1").arg(seconds));
 }
 
+void MpvClient::refreshFrame()
+{
+    if (!m_initialized || m_filePath.isEmpty())
+        return;
+    // 暂停态不产生新帧：窗口被其它窗口遮挡后切回焦点，DWM 会保留遮挡期间的合成结果，
+    // 表现为上一个窗口的画面残留在播放器上。同位置精确 seek 会让 mpv 重新渲染当前帧，
+    // 时间戳不变（不会跳帧/前进），用于激活或最小化恢复时强制重绘。
+    const QByteArray value = QByteArray::number(m_position, 'f', 3);
+    const char *args[] = {"seek", value.constData(), "absolute+exact", nullptr};
+    if (m_api->command(m_mpv, args) < 0)
+        Log::warn(QStringLiteral("刷新帧失败（暂停态 seek %1s）").arg(m_position));
+}
+
 void MpvClient::setVolume(double volume)
 {
     if (!m_initialized)

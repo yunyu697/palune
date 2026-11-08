@@ -3,8 +3,49 @@
 > 自动推进的续跑点。每完成一个可验证节点更新本文件；撞到单轮上限时以本文件为准。
 
 更新时间：2026-11-08（Asia/Shanghai）
-当前里程碑：**alpha8 实机 UI 缺陷清理（在 M4 之前）**
-版本：`1.0.0-alpha8`
+当前里程碑：**alpha10 实机六项缺陷修复 + 里程碑复审（M4 之前）**
+版本：`1.0.0-alpha10`（进行中，alpha9 已收口）
+
+## 里程碑收口标准（长期纪律，之后每个里程碑按此执行）
+
+1. 逐条核对验收条目，**每条只能判 DONE 或经用户确认显式延后**；PARTIAL / NOT DONE / NOT_VERIFIED 一律不得计入收口。
+2. 禁止用"整体 PASS"覆盖单项缺失；禁止把 NOT DONE 写成 PARTIAL。此前误判必须单列并写清当时依据。
+3. 每个里程碑收口前必须做**真实窗口逐屏核对**；自渲染矩阵只作辅助。设计稿/DESIGN.md 缺失时，相关结论只能写 NOT_VERIFIED，不得写"已对齐"。
+4. 收口证据固定落盘：`docs/GAP-AUDIT.md`（里程碑复审）、`docs/SETTINGS-GAP.md`（设置核对）、`docs/evidence/UI-<版本>-COMPARISON.md`（逐屏对照）。
+5. 每条缺陷修复必须写清**根因（哪个对象、哪一层、什么机制）**与修复方式，不得只调参数遮现象。
+6. 版本 `1.0.0-alphaN` 自增；只本地打包、只本地打 tag，**不推送 tag、不建 Release、不推 palune-releases**。
+
+## alpha10：六项实机缺陷
+
+复审清单见 `docs/GAP-AUDIT.md` 与 `docs/SETTINGS-GAP.md`；鼠标定义见 `docs/MOUSE-INTERACTION.md`。
+
+| # | 现象 | 根因（对象/层/机制） | 修复 | 证据 |
+|---|---|---|---|---|
+| 1 | 设置窗口拖不动 | 设置窗是 `Qt::Tool` 无边框顶层窗，由 `SettingsWindow` 自绘，标题栏被 `SettingsPanel` 内容铺满；QML 没有任何一处发起系统移动循环，鼠标按下落进普通 Item 被吞 | `SettingsWindow` 暴露 `Q_INVOKABLE startMove()` → `QWindow::startSystemMove()`；`SettingsWindow.qml` 在面板之上叠标题行热区（右侧让出 112px 给关闭按钮） | `ui-alpha10-walkthrough.json`：`settings_drag` 898,370 → 1038,450，`moved=true` |
+| 2 | 主题只有名字没有预览 | 通用页只渲染 `Text(themeRegistry.themes)`，无缩略图 | `SettingsPanel.qml` 三张 108×66 线框示意图：A 顶部悬浮条+底部双行、B 顶部扁平栏+右侧常驻检查器+技术条、C 左上胶囊+右上圆点+底部悬浮胶囊；选中 accent 描边，点击 `win.action("setTheme")` | `05-settings-theme-preview.png`；三标签「布局 A/B/C」完整 |
+| 3 | 暂停切走再切回残留上一窗口 | 视频窗与覆盖窗是**同级顶层窗**；其它窗口被插到两者之间，重新激活只抬升覆盖窗，视频窗仍在下方，覆盖窗视频区透明 → 露出上一窗口。不是 DWM 快照或 backbuffer 未清 | ①`WindowController` 在覆盖窗 `activeChanged`/`visibilityChanged` 时 `syncVideoToOverlay()`（`SetWindowPos(video, overlay)`）把视频窗插回覆盖窗正下方；②暂停态 `MpvClient::refreshFrame()` 同位置 `seek absolute+exact` 强制解码器出新帧；③`OverlayWindow::scheduleRepaint()` 在 `WM_NCACTIVATE/WM_ACTIVATE/WM_SIZE/WM_SHOWWINDOW` 后 `update()+RedrawWindow` | 10 轮 alt-tab：`residual_max=0.0`、`foreground_player_cycles=10`、`video_zorder_below_overlay_cycles=10` |
+| 4 | 布局 B 点击后右栏透明、右栏压进度条 | `dock` 用 `#f20c0e12`（alpha 0xf2）且右列无视频垫底，桌面透上来；`dock` 未设 z 且 `bottomMargin` 只减去两条栏，玻璃控制条与其重叠 | `dock` 改 `#ff0c0e12`、`z:2`、`bottomMargin=techBar+controlBar+16`；新增 `sideBackdrop` 不透明底，宽度与 `setVideoInsets` 右内缩一致（`dockWidth+12`） | `07-layoutB-after-click.png`：面板 RGB (12,14,18)、`layoutB_panel_uniform=true` |
+| 5 | 鼠标语义不清晰 | 点击语义散落在各布局控件/旧 MouseArea，无统一定义文档 | `Main.qml` 视频层：单击播放/暂停、双击全屏、右键菜单、滚轮音量±5%、Ctrl+滚轮 seek±10s、控制条点击不穿透；键盘表按 `ActionRegistry` 实际键位写入 `docs/MOUSE-INTERACTION.md` | 单击后 `paused_after_click=[0.0,0.0]`（确认暂停）；`chrome_retained_after_click=[1.94,0.019]` |
+| 6 | 控制栏悬停热区不生效/不自动隐藏 | ①热区只在 `hoveredChanged` 里手动 `restart()` 计时器，启动后从未进入热区则计时器不跑 → 永不隐藏；②自动隐藏条件依赖 `hovered` 但无初始计时 | 热区高度改为整条控制栏区（`controlZoneHeight+margin`，含隐藏态）；`HoverHandler` 进入即 `chromeVisible=true`；`Timer.running` 改为声明式：`hasFile && !paused && chromeVisible && !hovered && overlayPanel==""`，条件变化自动重置，2.5s 后隐藏，暂停态不隐藏 | `03-chrome-autohidden.png` 无任何控制栏；`04-hover-shows-chrome.png` 底栏恢复，底部差分 `[64.83,0.687]` |
+
+单元测试 `ctest -C Release` 7/7 PASS。复验脚本 `qa/runtime/alpha10_walkthrough.py`，结果 `docs/evidence/ui-alpha10-walkthrough.json`，截图 `docs/evidence/shots/alpha10-ui/`。
+
+已知限制：本机 200% 单屏，跨屏 DPI 迁移与 100/150% 只能以 `QT_SCALE_FACTOR` 重启模拟；截图含第三方远控叠加层（左上 FPS 文本），非本应用绘制。
+
+### alpha10 收口记录
+
+| 项 | 值 |
+|---|---|
+| 安装包 | `dist/Palune-1.0.0-alpha10-win-x64.exe` |
+| 字节数 | 59,604,798 |
+| SHA-256 | `D7B64B8CD76BBADF6FA0E8F2720B686D593A8D41431863310D9621EC1D326465` |
+| 安装→启动→卸载 | `PASS`（`qa/runtime/alpha10/windows-install-evidence.json`、`install-launch.json`；版本 1.0.0-alpha10，windowReadyMs 2116） |
+| 单元测试 | 7/7 PASS |
+| 本地 tag | `1.0.0-alpha10`（仅本地，未推送） |
+
+## alpha9：应用图标（唯一 SVG 源）
+
+见 `docs/evidence/UI-ALPHA9-ICON.md`：`resources/brand/wave-clay-dark.svg` 为唯一源，导出 ICO（16/24/32/48/64/128/256）、ICNS（16/32/128/256/512 × 1x/2x）、PNG（16–1024），接入 exe 资源、NSIS 安装器/卸载项、快捷方式、窗口/任务栏、托盘、关于页、macOS Info.plist。本地包 `dist/Palune-1.0.0-alpha9-win-x64.exe`（59,601,594 B，SHA-256 `6E68FBD4F883D98D20D99BC92C6BB2F2472811C6532D0807A06A61F2FC66CA6F`），安装→启动→卸载 PASS，本地 tag `1.0.0-alpha9`（未推送）。
 
 ## alpha8：实机四条现象根因修复
 

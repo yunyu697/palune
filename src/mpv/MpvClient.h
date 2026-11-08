@@ -52,6 +52,8 @@ public:
     Q_INVOKABLE void togglePause();
     Q_INVOKABLE void setPaused(bool paused);
     Q_INVOKABLE void seek(double seconds);
+    // 暂停态下强制重绘当前帧（同位置 seek），用于失焦/最小化恢复时清除合成残留。
+    Q_INVOKABLE void refreshFrame();
     Q_INVOKABLE void setVolume(double volume);
     Q_INVOKABLE void toggleMute();
     Q_INVOKABLE void stop();

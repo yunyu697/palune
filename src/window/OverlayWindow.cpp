@@ -4,6 +4,7 @@
 
 #include <QCloseEvent>
 #include <QShowEvent>
+#include <QTimer>
 
 #if defined(Q_OS_WIN)
 #include <windows.h>
@@ -22,6 +23,36 @@ OverlayWindow::OverlayWindow(QObject *parent)
     setColor(Qt::transparent);
     setResizeMode(QQuickView::SizeRootObjectToView);
     setTitle(QStringLiteral("Palune"));
+
+    // 失焦/恢复时重新提交一帧。透明 QQuickView 的缓冲区在遮挡期间不会自动失效，
+    // 只靠 DWM 恢复会带回遮挡前的像素（暂停态尤其明显，因为没有新视频帧覆盖）。
+    connect(this, &QWindow::activeChanged, this, [this]() {
+        if (isActive())
+            scheduleRepaint();
+    });
+    connect(this, &QWindow::visibilityChanged, this, [this]() {
+        if (isVisible() && visibility() != QWindow::Minimized)
+            scheduleRepaint();
+    });
+}
+
+void OverlayWindow::scheduleRepaint()
+{
+    // 放到事件循环下一拍：避免在 WM_NCACTIVATE 等同步消息里重入 Qt 的渲染路径。
+    QTimer::singleShot(0, this, &OverlayWindow::forceRepaint);
+}
+
+void OverlayWindow::forceRepaint()
+{
+    if (!isVisible())
+        return;
+    update();
+#if defined(Q_OS_WIN)
+    HWND hwnd = reinterpret_cast<HWND>(winId());
+    if (hwnd)
+        RedrawWindow(hwnd, nullptr, nullptr,
+                     RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN);
+#endif
 }
 
 void OverlayWindow::showEvent(QShowEvent *event)
@@ -76,13 +107,23 @@ LRESULT CALLBACK OverlayWindow::nativeEventProc(HWND hwnd, UINT msg, WPARAM wPar
 {
     Q_UNUSED(lParam)
     Q_UNUSED(id)
-    Q_UNUSED(ref)
+    auto *self = reinterpret_cast<OverlayWindow *>(ref);
     if (msg == WM_NCCALCSIZE && wParam == TRUE)
         return 0; // 客户区 = 整窗，不留系统非客户区边框
     // 失焦时 Windows 会按 WS_THICKFRAME 重画一圈浅灰非客户区边框（实机表现为窗口外缘方框）。
-    // 不进入 DefWindowProc 的非客户区绘制路径，直接吞掉激活切换与非客户区绘制。
-    if (msg == WM_NCACTIVATE || msg == WM_NCPAINT)
+    // 不进入 DefWindowProc 的非客户区绘制路径，直接吞掉非客户区绘制；
+    // 但必须显式让客户区重绘，否则激活切换后客户端缓冲不失效，会残留上一窗口的合成快照。
+    if (msg == WM_NCACTIVATE) {
+        if (self)
+            self->scheduleRepaint();
         return TRUE;
+    }
+    if (msg == WM_NCPAINT)
+        return TRUE;
+    if (msg == WM_ACTIVATE || msg == WM_SIZE || msg == WM_SHOWWINDOW) {
+        if (self)
+            self->scheduleRepaint();
+    }
     return DefSubclassProc(hwnd, msg, wParam, lParam);
 }
 #endif

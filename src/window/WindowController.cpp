@@ -168,6 +168,26 @@ bool WindowController::start(int width, int height)
     connect(m_overlay, &QWindow::yChanged, this, &WindowController::syncVideoToOverlay);
     connect(m_overlay, &QWindow::widthChanged, this, &WindowController::syncVideoToOverlay);
     connect(m_overlay, &QWindow::heightChanged, this, &WindowController::syncVideoToOverlay);
+    // 失焦再获焦 / 最小化恢复：视频窗与覆盖窗是**两个同级顶层窗口**。
+    // 用户切到其它窗口时，那个窗口会被插到两者之间；切回播放器时只有覆盖窗被抬到最前，
+    // 视频窗仍留在其它窗口下面，而覆盖窗在视频区域是透明的 —— 于是「上一个窗口的画面
+    // 残留在播放器上」（暂停态最明显，因为画面不变）。
+    // 修复：每次重新激活时把视频窗重新插回覆盖窗正下方（SetWindowPos 的第二参数即 z 序锚点），
+    // 并补一次同位置 seek，确保暂停态的视频 swapchain 重新提交当前帧。
+    connect(m_overlay, &QWindow::activeChanged, this, [this]() {
+        if (!m_overlay || !m_overlay->isActive())
+            return;
+        syncVideoToOverlay();
+        if (m_player && m_player->paused())
+            m_player->refreshFrame();
+    });
+    connect(m_overlay, &QWindow::visibilityChanged, this, [this]() {
+        if (!m_overlay || !m_overlay->isVisible() || m_overlay->visibility() == QWindow::Minimized)
+            return;
+        syncVideoToOverlay();
+        if (m_player && m_player->paused())
+            m_player->refreshFrame();
+    });
     m_compactMode->feedWidth(m_overlay->width());
     if (m_settings && m_settings->windowMaximized())
         m_overlay->showMaximized();

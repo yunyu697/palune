@@ -66,7 +66,8 @@ Item {
         y: panelRoot.windowMode ? 0
            : (panelRoot.capsulePopup ? parent.height - height - 16 : (parent.height - height) / 2)
         radius: panelRoot.windowMode ? panelRoot.panelRadius : (panelRoot.narrow ? 8 : 18)
-        color: "#f20d0e11"
+        // 独立窗口模式下必须完全不透明：窗口本身是透明的，卡片用 0xf2 会让桌面/视频透上来。
+        color: panelRoot.windowMode ? "#ff0d0e11" : "#f20d0e11"
         border.width: 1
         border.color: panelRoot.lineColor
 
@@ -244,54 +245,116 @@ Item {
                             font.pixelSize: 14
                             font.weight: Font.DemiBold
                         }
-                        RowLayout {
-                            spacing: 12
-                            Text {
-                                text: qsTr("主题")
-                                color: panelRoot.mutedColor
-                                font.pixelSize: 12
-                            }
+                        Text {
+                            text: qsTr("主题")
+                            color: panelRoot.mutedColor
+                            font.pixelSize: 12
+                        }
+                        Item {
+                            // 标签「布局 X」比 108px 卡片宽，首卡标签会越过内容区左边界被 Flickable 裁掉
+                            // （实机显示为「局 A」）。外层留 16px 内边距，保证三张标签完整可见。
+                            Layout.preferredWidth: 364
+                            Layout.preferredHeight: 88
                             Row {
-                                spacing: 8
-                                Repeater {
-                                    model: typeof themeRegistry !== "undefined" ? themeRegistry.themes : []
-                                    delegate: Rectangle {
-                                        required property string modelData
-                                        width: 62
-                                        height: 30
-                                        radius: 8
-                                        color: (typeof themeRegistry !== "undefined"
-                                                && themeRegistry.currentTheme === modelData)
-                                               ? panelRoot.accent + "33" : "#10ffffff"
+                            x: 16
+                            spacing: 12
+                            // ColumnLayout 不会为 Repeater 生成的子项推导高度，显式给 Row 尺寸，
+                            // 否则后续分组会叠在预览卡上（实机出现过标签被「紧凑模式」覆盖）。
+                            width: 348
+                            height: 88
+                            Repeater {
+                                model: typeof themeRegistry !== "undefined" ? themeRegistry.themes : []
+                                delegate: Column {
+                                    required property string modelData
+                                    spacing: 4
+                                    readonly property bool selected: typeof themeRegistry !== "undefined"
+                                                                  && themeRegistry.currentTheme === modelData
+                                    // 布局示意图：必须与实际布局一致（控制条位置、侧栏形态、信息密度）。
+                                    Rectangle {
+                                        width: 108
+                                        height: 66
+                                        radius: 6
+                                        color: "#0b0c10"
                                         border.width: 1
-                                        border.color: (typeof themeRegistry !== "undefined"
-                                                       && themeRegistry.currentTheme === modelData)
-                                                      ? panelRoot.accent : panelRoot.lineColor
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: qsTr("布局 ") + modelData
-                                            color: panelRoot.textColor
-                                            font.pixelSize: 11
+                                        border.color: selected ? panelRoot.accent : panelRoot.lineColor
+
+                                        // A：悬浮标题条 + 底部双行控制栏，无侧栏，信息密度低
+                                        Rectangle {
+                                            visible: modelData === "A"
+                                            anchors { top: parent.top; left: parent.left; right: parent.right; margins: 5 }
+                                            height: 7; radius: 2; color: "#2affffff"
                                         }
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: {
-                                                if (panelRoot.hasWindow)
-                                                    win.action("setTheme", modelData)
+                                        Rectangle {
+                                            visible: modelData === "A"
+                                            anchors { bottom: parent.bottom; left: parent.left; right: parent.right; margins: 5 }
+                                            height: 15; radius: 3; color: "#33ffffff"
+                                            Rectangle { anchors { left: parent.left; right: parent.right; top: parent.top; margins: 3 } height: 2; radius: 1; color: panelRoot.accent }
+                                        }
+
+                                        // B：顶部扁平栏 + 右侧常驻检查器 + 底部技术条/控制条，信息密度高
+                                        Rectangle {
+                                            visible: modelData === "B"
+                                            anchors { top: parent.top; left: parent.left; right: parent.right }
+                                            height: 9; color: "#2affffff"
+                                        }
+                                        Rectangle {
+                                            visible: modelData === "B"
+                                            anchors { top: parent.top; right: parent.right; bottom: parent.bottom }
+                                            width: 28; color: "#40ffffff"
+                                        }
+                                        Rectangle {
+                                            visible: modelData === "B"
+                                            anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
+                                            height: 13; color: "#33ffffff"
+                                        }
+
+                                        // C：左上标题胶囊 + 右上窗口按钮 + 底部悬浮胶囊，无侧栏，信息密度最低
+                                        Rectangle {
+                                            visible: modelData === "C"
+                                            anchors { top: parent.top; left: parent.left; margins: 5 }
+                                            width: 30; height: 7; radius: 3.5; color: "#2affffff"
+                                        }
+                                        Row {
+                                            visible: modelData === "C"
+                                            anchors { top: parent.top; right: parent.right; margins: 5 }
+                                            spacing: 2
+                                            Repeater {
+                                                model: 3
+                                                Rectangle { width: 5; height: 5; radius: 2.5; color: "#2affffff" }
                                             }
+                                        }
+                                        Rectangle {
+                                            visible: modelData === "C"
+                                            anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 6 }
+                                            width: 68; height: 9; radius: 4.5; color: "#33ffffff"
+                                        }
+                                    }
+                                    Text {
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        text: qsTr("布局 ") + modelData
+                                        color: selected ? panelRoot.accent : panelRoot.textColor
+                                        font.pixelSize: 11
+                                    }
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            if (panelRoot.hasWindow)
+                                                win.action("setTheme", modelData)
                                         }
                                     }
                                 }
                             }
-                            Item { Layout.fillWidth: true }
-                            Text {
-                                visible: typeof themeRegistry !== "undefined"
-                                         && themeRegistry.fallbackReason !== ""
-                                text: typeof themeRegistry !== "undefined" ? themeRegistry.fallbackReason : ""
-                                color: panelRoot.accent
-                                font.pixelSize: 11
                             }
+                        }
+                        Text {
+                            visible: typeof themeRegistry !== "undefined"
+                                     && themeRegistry.fallbackReason !== ""
+                            text: typeof themeRegistry !== "undefined" ? themeRegistry.fallbackReason : ""
+                            color: panelRoot.accent
+                            font.pixelSize: 11
+                            wrapMode: Text.WordWrap
+                            Layout.fillWidth: true
                         }
                         Text {
                             text: qsTr("只提供 A / B / C 三套布局，不设皮肤或主题包入口。")

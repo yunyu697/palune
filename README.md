@@ -165,8 +165,8 @@ macOS / Linux 依赖：`tools/ci/fetch_deps.sh`（brew / apt / dnf / pacman）�
 | 项 | 值 |
 | --- | --- |
 | Release | [1.0.0-RC](https://github.com/yunyu697/palune/releases/tag/1.0.0-RC)，`prerelease=true`（2026-11-08 由旧仓迁入本仓） |
-| 资产 | `Palune-1.0.0-win-x64.exe`（**59,755,761 B**，SHA-256 `E7DA60D5ABAAACCDE9ADC1EB80A1C4D42B25C55FD7AAAF05F26BC2FE10845ACF`，含安装器落盘自检）、`latest.json`、`SHA256SUMS`、`windows-install-evidence.json`、`install-launch.json`、`build-record.json` |
-| 重发记录 | 2026-11-13 重写说明并替换全部资产（旧包 59,725,136 B 已下线）；上传后远端资产 digest 与本地 `SHA256SUMS` 逐条一致，`releases/latest` 替换前后均为 **404**，`prerelease=true` 未变 |
+| 资产 | `Palune-1.0.0-win-x64.exe`（**59,757,564 B**，SHA-256 `6ABCB7DB0EC814969727938EAD5B0AE6FD70E398C0F8F0EC533CE8B893F74278`，含 2026-11-14 的启动预检修复）、`latest.json`、`SHA256SUMS`、`windows-install-evidence.json`、`install-launch.json`、`build-record.json` |
+| 重发记录 | 2026-11-13 重写说明并替换资产；2026-11-14 再次替换为上述新包：修掉启动前 Qt 英文弹框（外部 `QT_QPA_PLATFORM` 指向不存在的平台插件、插件存在但加载失败两类），并在 DLL 搜索、`qt.conf`、安装器自检（`qt.conf`/CRT）上收口。两次替换后远端 digest 与本地 `SHA256SUMS` 逐条一致，`releases/latest` 前后均为 **404**，`prerelease=true` 未变 |
 | 清单 | `--channel stable`、`version 1.0.0`、`keyId palune-test`；用 `resources/trust/update.pub` 独立验签 PASS（`docs/evidence/release-1.0.0-rc/manifest-verify.json`） |
 | 更新主链 | 本仓 `releases/latest` 当前 **404**（本仓全部 Release 均为 prerelease，尚无正式版；alpha6 的 Latest 标记留在已归档旧仓，不参与本仓主链） |
 | 历史 tag 补发 | `1.0.0-alpha8/9/10` 已按原资产、原哈希迁入本仓，均为 prerelease；`1.0.0` 仍只在本地 |

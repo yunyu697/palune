@@ -4,15 +4,18 @@
 
 当前版本：**1.0.0-RC**（`VERSION` = `1.0.0`；功能冻结候选，**尚未收口**，见「已知限制」；对外不得称正式版）。
 
-已实现主线（截至 2026-11-08）：
+已实现主线（截至 2026-11-13）：
 
 | 能力 | 状态 | 入口 |
 | --- | --- | --- |
 | 三主题 A/B/C + 四层主题架构 | 已实现 | `qml/layouts/*`、`src/theme/*` |
 | 本地媒体库（扫描 / 索引 / 缩略图 / 海报墙 + 列表） | 已实现 | `src/media/MediaLibraryService.*`、`qml/LibraryPanel.qml` |
-| 媒体服务器（认证 / 列表 / 取流 / 上报 / 能力五组接口） | **仅接口抽象，无任何适配器实现** | `src/media/MediaServerAdapter.h` |
+| 媒体服务器 | **Jellyfin / Emby 已可用**（连接表单、测试连接、保存/删除、重启回填、拉库与进度上报）；极空间、飞牛选「其他 Jellyfin」；**Plex 未完成**（仅骨架，未验证，设置页暂无入口） | 设置 → 媒体库 → 媒体服务器；`src/media/JellyfinAdapter.*`、`PlexAdapter.*` |
+| 凭据存储 | token/密码走系统凭据存储（Windows Credential Manager；macOS Keychain / Linux libsecret 同接口），旧明文自动迁移并删除 | `src/core/CredentialStore.*` |
 | 更新机制（清单签名 + 产物签名 + 镜像回退 + 断点续传） | 已实现（测试密钥） | `src/update/*` |
-| 设置八页（通用/播放/字幕/音频/快捷键/媒体库/存储/关于） | 已实现 | `qml/SettingsPanel.qml`、`src/settings/Preferences.*` |
+| 设置（8 页：通用 / 播放 / 字幕 / 音频 / 快捷键 / 媒体库〔含媒体服务器〕/ 存储 / 关于） | 已实现，独立顶层设置窗 | `qml/SettingsPanel.qml`、`src/settings/Preferences.*` |
+| 自绘窗口（无边框主窗 + 独立设置窗，单一任务栏/Alt-Tab 入口） | 已实现 | `src/window/*` |
+| Windows 安装包自检 | 安装器落盘自检 + 打包前置门禁（缺 `platforms/qwindows.dll` 等直接失败） | `CMakeLists.txt`、`tools/release/*` |
 
 ## 已完成（M1）
 
@@ -80,6 +83,32 @@
 - 版本号校验脚本接入 CI；三平台构建与常规检查
 - macOS / Linux：渲染路径只保留接口与配置分支（`MpvClient::backendDescription()` / `#if defined(Q_OS_MACOS)`），**未在本机验证**
 
+## 安装与首次使用（Windows）
+
+### 安装
+
+1. 从 [Releases](https://github.com/yunyu697/palune/releases) 下载 `Palune-<版本>-win-x64.exe` 运行。安装包自带 Qt 运行时与 `platforms\qwindows.dll`，不需要另装 Qt 或 VC 运行库。
+2. 安装器在结束前做落盘自检：关键组件缺失时弹中文提示、写出 `install-check.log`、退出码为 3。最常见原因是安全软件拦截了写入，把安装目录加入信任列表后重装即可。
+3. 从开始菜单「Palune」或桌面快捷方式启动；卸载走「设置 → 应用」或开始菜单里的卸载项。
+
+### 连接媒体服务器（Jellyfin / Emby）
+
+设置 →「媒体库」页 →「媒体服务器」区块：
+
+1. 类型选 `Jellyfin` 或 `Emby`；极空间、飞牛等兼容 Jellyfin 协议的设备选「其他 Jellyfin（极空间 / 飞牛）」。
+2. 登录方式二选一：用户名 + 密码，或 API Key（Jellyfin 控制台 → 高级 → API 密钥）。
+3. 填服务器地址（如 `http://192.168.1.10:8096`），先点「测试连接」确认可达，再点「保存并连接」；保存成功后立即拉取媒体库。
+4. 密码 / token / API Key 只写入系统凭据存储（Windows 凭据管理器、macOS 钥匙串、Linux libsecret），不落 `settings.toml`；重启后自动回填账号。「删除连接」同时删除系统凭据。
+5. Plex 暂无入口：适配器只有骨架，未验证（见「已知限制」）。
+
+### 设置本地媒体库目录
+
+设置 →「媒体库」页 →「添加目录…」选择视频所在文件夹，随后自动递归扫描并生成缩略图（格式过滤，跳过不可读与符号链接；扫描在工作线程，不阻塞播放）。
+
+- 索引默认在 `%APPDATA%\Palune\library\index.json`，缩略图在同级 `thumbs\`；索引损坏会自动重建
+- 「重新扫描」用于目录内容变化后刷新；「默认视图」在 海报墙 / 列表 之间切换（`[library] viewMode`）
+- 根目录失效或文件被删除后，条目会在下次扫描时清理
+
 ## 构建（Windows）
 
 前置：Qt 6.8+（本机验证用 6.8.3 MSVC 2022 64 位）、CMake ≥ 3.21、Visual Studio 2022+。
@@ -96,9 +125,11 @@ cmake --build build --config Release --parallel
 ctest --test-dir build -C Release --output-on-failure
 ```
 
-产物：`build/Release/Palune.exe`（同目录需有 `libmpv-2.dll`、`libsodium.dll`）。
+产物：`build/Release/Palune.exe`（同目录需有 `libmpv-2.dll`、`libsodium.dll`）。POST_BUILD 会跑 `windeployqt`，构建树自带 Qt 运行时与 `platforms\`，可直接双击运行，不再依赖外部 Qt 前缀。
 
 macOS / Linux 依赖：`tools/ci/fetch_deps.sh`（brew / apt / dnf / pacman）。Qt 与 libmpv 均为动态链接，**禁止静态链接**。
+
+第三方二进制（libmpv、libsodium、CRT、Qt 部署文件）的来源、版本与校验值见 [third_party/MANIFEST.md](third_party/MANIFEST.md)。
 
 ## CI
 
@@ -129,12 +160,13 @@ macOS / Linux 依赖：`tools/ci/fetch_deps.sh`（brew / apt / dnf / pacman）�
 - 预发布（alpha / beta / RC）按 **tag 后缀** 判定：一律 `prerelease=true`，**不接管** `releases/latest`；只有正式版 tag（如 `1.0.0`）才发普通 Release
 - 最新发布页：https://github.com/yunyu697/palune/releases
 
-### 1.0.0-RC 当前发布状态（2026-11-08）
+### 1.0.0-RC 当前发布状态（2026-11-13 核对）
 
 | 项 | 值 |
 | --- | --- |
-| Release | [1.0.0-RC](https://github.com/yunyu697/palune/releases/tag/1.0.0-RC)，`prerelease=true`（2026-11-08 由旧仓原样迁入本仓） |
-| 资产 | `Palune-1.0.0-win-x64.exe`（59,649,289 B，SHA-256 `4f1cb5ca…b82c`）、`latest.json`、`SHA256SUMS`、`windows-install-evidence.json`、`install-launch.json` |
+| Release | [1.0.0-RC](https://github.com/yunyu697/palune/releases/tag/1.0.0-RC)，`prerelease=true`（2026-11-08 由旧仓迁入本仓） |
+| 资产 | `Palune-1.0.0-win-x64.exe`（59,725,136 B，SHA-256 `D2131369038AAFF596217392641026CA3152E8A059A264B515A6B5F85A7320A3`）、`latest.json`、`SHA256SUMS`、`windows-install-evidence.json`、`install-launch.json`、`build-record.json` |
+| 本地更新包 | `dist\Palune-1.0.0-win-x64.exe`（59,755,761 B，SHA-256 `E7DA60D5…10845ACF`，含本轮安装器自检修复）**尚未上传**到 Release；上传前 Release 资产与本节数字不一致属已知状态 |
 | 清单 | `--channel stable`、`version 1.0.0`、`keyId palune-test`；用 `resources/trust/update.pub` 独立验签 PASS（`docs/evidence/release-1.0.0-rc/manifest-verify.json`） |
 | 更新主链 | 本仓 `releases/latest` 当前 **404**（本仓全部 Release 均为 prerelease，尚无正式版；alpha6 的 Latest 标记留在已归档旧仓，不参与本仓主链） |
 | 历史 tag 补发 | `1.0.0-alpha8/9/10` 已按原资产、原哈希迁入本仓，均为 prerelease；`1.0.0` 仍只在本地 |
@@ -210,8 +242,8 @@ src/mpv/        libmpv 动态加载封装
 src/settings/   settings.toml 读写、窗口几何、最近文件
 src/theme/      ThemeRegistry（主题选择/回退/持久化）+ LayoutHost（布局子树重建）
 src/ui/         UiStateStore（滚动、选中、面板宽度、chrome 可见性）
-src/media/      内容源抽象（接口、Item/UserState、适配器注册表）
-src/core/       路径、启动计时、进程内存指标
+src/media/      MediaLibraryService（扫描/索引/缩略图）+ 内容源接口 + Jellyfin/Emby/Plex 适配器与 MediaServerHttp
+src/core/       路径、启动计时、进程内存指标、CredentialStore（系统凭据存储）
 src/diag/       日志与崩溃面包屑
 src/update/     版本号、更新清单信封、签名与哈希校验、下载/安装状态机
 src/m0/         M0 自测（全屏/DPI/Alt-Tab/Snap/命中）
@@ -223,14 +255,14 @@ docs/evidence/  实测报告与截图
 
 ## 已知限制（1.0.0-RC）
 
-- **媒体服务器**：只有五组接口抽象，注册表内没有任何适配器，设置页账户区明确写「本地模式，1.1 后显式延后」
+- **媒体服务器**：Jellyfin / Emby 已可用（Windows 真机完成连接 → 拉库 → 播放 → 进度回写）；**Plex 未完成**（仅适配器骨架，无设置入口，未验证）；极空间 / 飞牛只能走「其他 Jellyfin」，未在真机验证；macOS Keychain / Linux libsecret 代码路径已实现，未实机验证
 - **HDR/色调映射曲线**：设置页不画 BT.2390 曲线（缺真实数据源），只显示“曲线预览不可用”，不是占位图
-- **英文界面**：`en_US` 覆盖历史文案；本轮新增的 P0 设置文案在英文下回退中文（PARTIAL）
+- **英文界面**：`en_US` 覆盖历史文案；本轮新增的设置文案在英文下回退中文（PARTIAL）
 - **设置行为取证**：十项中 8 项 DONE，3 项 NOT_VERIFIED（下载真实落盘位置、外部许可查看器打开、beta manifest 真实拉取），见 `docs/SETTINGS-GAP.md` §10.2
-- **平台**：macOS/Linux 只有 CI 构建与冒烟，未在真机安装运行；MSI 未产出（本机无 WiX）；生产签名未轮换（`update.pub` 与测试私钥同对）
+- **平台**：macOS/Linux 只有 CI 构建与冒烟，**未在真机安装运行**；MSI 未产出（本机无 WiX）；**签名使用测试密钥**（`update.pub` 与测试私钥同对，不是生产签名）
 - **跨屏 DPI**：单显示器环境，跨屏拖动与运行时 DPI 切换只能模拟
 - **冷启动**：安装包实测 1878ms，高于 800ms 基线（P3，未修）
-- **更新链（504 出口限制）**：`releases/latest/download/*` 在本机与独立出口均返回 GitHub 边缘 504（alpha6 历史资产同样如此），**受影响出口上直连更新链不可用**。客户端已加清单与安装包多源回退（直连 → `ghfast.top`），镜像可用时可完成检查与下载；但该镜像对 tag 定点 RC 清单同样 504，且属第三方服务，镜像不可达时更新链仍不可用。是否全球影响 **NOT_VERIFIED**：GitHub 状态页显示 All Systems Operational 且无相关事故，未提供旁证（见 `docs/evidence/release-1.0.0-rc/feed-504-diagnosis.json`）
+- **更新链（504 出口限制）**：`releases/latest/download/*` 在本机与独立出口均返回 GitHub 边缘 504（alpha6 历史资产同样如此），**受影响出口上直连更新链不可用，只能依赖第三方镜像 `ghfast.top`**。客户端已加清单与安装包多源回退（直连 → `ghfast.top`）；但该镜像对 tag 定点 RC 清单同样 504，镜像不可达时更新链仍不可用。是否全球影响 **NOT_VERIFIED**：GitHub 状态页显示 All Systems Operational 且无相关事故，未提供旁证（见 `docs/evidence/release-1.0.0-rc/feed-504-diagnosis.json`）
 - **源码仓 tag / 发行仓 Release**：源码仓 alpha1/4/5/7/8/9/10 已在远端；发行仓 alpha8/9/10 已手动补发 prerelease（不接管 `releases/latest`）；`1.0.0` 暂留本地，等 RC 收口后按正式通道处理（历史 tag 的提交带旧工作流，推送时须先停用 Release 工作流）
 
 ## 明确不做（M0 与文档排除项）

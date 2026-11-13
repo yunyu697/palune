@@ -67,10 +67,12 @@ def main() -> None:
             text = path.read_text(encoding="utf-8", errors="ignore")
         except OSError:
             continue
-        for m2 in re.finditer(r"alpha(\d+)", text):
+        # 先屏蔽 IPv4 地址（如 192.168.1.10）：否则会被下面的三段版本号正则误判成越界版本。
+        scan_text = re.sub(r"(?<![\d.])\d{1,3}(?:\.\d{1,3}){3}(?![\d.])", " ", text)
+        for m2 in re.finditer(r"alpha(\d+)", scan_text):
             if int(m2.group(1)) > 10:
                 offenders.append(f"{rel}: {m2.group(0)}")
-        for m2 in re.finditer(r"\b([0-9]+)\.([0-9]+)\.([0-9]+)", text):
+        for m2 in re.finditer(r"\b([0-9]+)\.([0-9]+)\.([0-9]+)", scan_text):
             if int(m2.group(2)) > 10 or int(m2.group(3)) > 10:
                 offenders.append(f"{rel}: {m2.group(0)}")
     if offenders:

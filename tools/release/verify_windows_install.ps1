@@ -70,6 +70,7 @@ $required = @(
     "bin\Qt6Quick.dll",
     "bin\Qt6QuickControls2.dll",
     "bin\platforms\qwindows.dll",
+    "bin\qt.conf",
     "bin\vcruntime140.dll",
     "bin\msvcp140.dll",
     "bin\libmpv-2.dll",
@@ -83,6 +84,8 @@ foreach ($rel in $required) {
 }
 $qmlDir = Join-Path $InstallDir "bin\qml"
 $evidence.files["bin\qml"] = (Test-Path $qmlDir) -and @(Get-ChildItem $qmlDir -Recurse -File -ErrorAction SilentlyContinue).Count -gt 0
+# 安装器的落盘自检通过时不写这个文件；出现即表示安装不完整（通常是被安全软件拦截）。
+$evidence.files["installCheckLogAbsent"] = -not (Test-Path (Join-Path $InstallDir "install-check.log"))
 
 $evidence.shortcuts["startMenuExe"] = Link-Target $startExe
 $evidence.shortcuts["startMenuUninstall"] = Link-Target $startUninstall

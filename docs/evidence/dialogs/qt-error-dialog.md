@@ -84,6 +84,8 @@ Note that Qt no longer ships fonts. Deploy some (from https://dejavu-fonts.githu
 
 注意“Qt 插件前缀”现在是应用目录下的 `plugins`，证明部署版 Qt 已不再回落到开发机的 `C:\Qt\…`。
 
+对照：修正自检口径**之前**，同一用例（`dialog-probe-pkg-missing-plugin.json`）在装了 Qt 的开发机上会被 `QLibraryInfo` 前缀“骗过”自检，仍然弹出 Qt 的英文框——这条旧证据保留下来，用于说明为什么自检只能认应用目录。
+
 ## 5. 原本会弹的那个错误现在去哪了
 
 | 触发 | 修复前 | 修复后 |

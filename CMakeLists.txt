@@ -190,6 +190,16 @@ endfunction()
 
 palune_copy_runtime_libs(Palune)
 
+# 构建树也必须是“可直接双击启动”的部署树：日常运行走的就是 build/Release/Palune.exe，
+# 没有 app-local platforms/qwindows.dll 时 Qt 会在 QApplication 构造前 qFatal，
+# 用户只看到一个英文弹框（docs/evidence/dialogs）。
+if(WIN32 AND WINDEPLOYQT_EXECUTABLE)
+    add_custom_command(TARGET Palune POST_BUILD
+        COMMAND "${WINDEPLOYQT_EXECUTABLE}" --qmldir "${CMAKE_CURRENT_SOURCE_DIR}/qml"
+                --no-compiler-runtime --dir "$<TARGET_FILE_DIR:Palune>" "$<TARGET_FILE:Palune>"
+        COMMENT "windeployqt：让构建树自带 Qt 运行时与 platforms 插件")
+endif()
+
 # ---------------------------------------------------------------------------
 # 安装与打包（release 工作流使用：Windows NSIS/MSI、macOS dmg、Linux AppImage/deb/rpm）
 # ---------------------------------------------------------------------------
@@ -207,6 +217,8 @@ install(FILES
 )
 # 许可说明里承诺「安装目录下的 NOTICE.md」，所以 bin 旁也放一份。
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/NOTICE.md" DESTINATION "${CMAKE_INSTALL_BINDIR}")
+# qt.conf 与 exe 同目录：把 Qt 的插件/QML/翻译路径钉死在安装目录，不再受外部 Qt 前缀影响。
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/packaging/qt.conf" DESTINATION "${CMAKE_INSTALL_BINDIR}")
 
 # MSVC 运行时 vcruntime140 / msvcp140 必须随包安装，否则干净机器双击 0xC0000135。
 # windeployqt 的 --compiler-runtime 只部署 vc_redist.x64.exe（还要再跑一次安装器），
@@ -284,7 +296,15 @@ endif()
 # Windows：windeployqt 一次补齐 Qt DLL、platforms 插件与 QML 模块。
 # MSVC 运行时由上面的 install(FILES) 直接部署；这里用 --no-compiler-runtime 避免
 # 把 vc_redist.x64.exe 塞进 bin。--qmldir 让 QtQuick.Controls.Basic 等 QML 模块进安装树。
-if(WIN32 AND WINDEPLOYQT_EXECUTABLE)
+#
+# 找不到 windeployqt 时必须直接失败：以前这里静默跳过，会打出一个没有 Qt 运行时/
+# 平台插件的安装包——用户装完只会看到 Qt 的英文弹框，且没有任何线索。
+if(WIN32)
+    if(NOT WINDEPLOYQT_EXECUTABLE)
+        message(FATAL_ERROR
+            "找不到 windeployqt：Windows 安装包必须随包部署 Qt 运行时与 platforms/qwindows.dll。"
+            "请确认 Qt 工具链完整（<Qt>/msvc2022_64/bin/windeployqt.exe）。")
+    endif()
     install(CODE "
         set(_palune_bin \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}\")
         message(STATUS \"windeployqt --qmldir -> \${_palune_bin}\")
@@ -295,6 +315,18 @@ if(WIN32 AND WINDEPLOYQT_EXECUTABLE)
         if(NOT _palune_wdq_result EQUAL 0)
             message(FATAL_ERROR \"windeployqt 部署 QML 模块失败：\${_palune_wdq_result}\")
         endif()
+        # 安装树自检：缺了这些文件就打不出可启动的包，必须在这里失败而不是交给用户。
+        foreach(_req
+                \"\${_palune_bin}/Palune.exe\"
+                \"\${_palune_bin}/Qt6Core.dll\"
+                \"\${_palune_bin}/Qt6Gui.dll\"
+                \"\${_palune_bin}/platforms/qwindows.dll\"
+                \"\${_palune_bin}/qt.conf\"
+                \"\${_palune_bin}/qml/QtQuick/qmldir\")
+            if(NOT EXISTS \"\${_req}\")
+                message(FATAL_ERROR \"安装树缺少必要文件：\${_req}\")
+            endif()
+        endforeach()
     ")
 endif()
 
@@ -330,6 +362,34 @@ CreateShortCut '$DESKTOP\\\\Palune.lnk' '$INSTDIR\\\\bin\\\\Palune.exe'")
 Delete '$SMPROGRAMS\\\\Palune\\\\Uninstall Palune.lnk'
 RMDir '$SMPROGRAMS\\\\Palune'
 Delete '$DESKTOP\\\\Palune.lnk'")
+    # 安装后自检：文件全部落盘后确认关键组件在。安全软件拦截、磁盘写入失败都会让
+    # platforms/qwindows.dll 缺失，用户随后只会看到 Qt 的英文弹框；这里在安装器里
+    # 就把话说清楚，并留下 install-check.log 供支持人员定位。
+    set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS [=[
+StrCpy $R0 ''
+IfFileExists '$INSTDIR\\bin\\Palune.exe' palune_ck_exe
+  StrCpy $R0 '$R0Palune.exe; '
+palune_ck_exe:
+IfFileExists '$INSTDIR\\bin\\Qt6Core.dll' palune_ck_core
+  StrCpy $R0 '$R0Qt6Core.dll; '
+palune_ck_core:
+IfFileExists '$INSTDIR\\bin\\Qt6Gui.dll' palune_ck_gui
+  StrCpy $R0 '$R0Qt6Gui.dll; '
+palune_ck_gui:
+IfFileExists '$INSTDIR\\bin\\platforms\\qwindows.dll' palune_ck_qwin
+  StrCpy $R0 '$R0platforms/qwindows.dll; '
+palune_ck_qwin:
+IfFileExists '$INSTDIR\\bin\\libmpv-2.dll' palune_ck_mpv
+  StrCpy $R0 '$R0libmpv-2.dll; '
+palune_ck_mpv:
+StrCmp $R0 '' palune_ck_ok
+  FileOpen $R1 '$INSTDIR\\install-check.log' w
+  FileWrite $R1 'Palune installation check failed. Missing: $R0'
+  FileClose $R1
+  SetErrorLevel 3
+  MessageBox MB_ICONSTOP|MB_OK 'Palune 安装不完整：缺少运行所需组件（$R0）。$\r$\n常见原因是安全软件拦截了安装过程；请把安装目录加入信任列表后重新安装。'
+palune_ck_ok:
+]=])
     # MSI 的 ProductVersion 必须是纯数字版本，alpha 后缀交给文件名表达。
     set(CPACK_WIX_PRODUCT_GUID "5B0D3C11-7E10-4E1C-9A46-2C6C2C0A0F01")
     set(CPACK_WIX_UPGRADE_GUID "9E3A2D41-1B3F-4E57-8C2B-6F0A7D1C2E34")

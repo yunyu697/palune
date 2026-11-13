@@ -54,6 +54,22 @@ if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }
 if ($LASTEXITCODE -ne 0) { throw "安装暂存失败（退出码 $LASTEXITCODE）" }
 $binDir = Join-Path $stage "bin"
 
+# 打包门禁：安装树里缺任何一个运行时组件，装到用户机器上就是“Qt 平台插件初始化失败”
+# 的英文弹框。这里直接失败，不产出安装包。
+$requiredRuntime = @(
+    "Palune.exe", "Qt6Core.dll", "Qt6Gui.dll", "platforms\qwindows.dll", "qt.conf",
+    "libmpv-2.dll", "libsodium.dll", "vcruntime140.dll", "msvcp140.dll",
+    "qml\QtQuick\qmldir"
+)
+$missing = @()
+foreach ($rel in $requiredRuntime) {
+    if (-not (Test-Path (Join-Path $binDir $rel))) { $missing += $rel }
+}
+if ($missing.Count -gt 0) {
+    throw ("安装树缺少必要文件，拒绝出包：" + ($missing -join ", "))
+}
+Write-Output ("安装树自检通过：{0} 项运行时组件齐全" -f $requiredRuntime.Count)
+
 $crtNames = @("vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll",
               "msvcp140_1.dll", "msvcp140_2.dll", "concrt140.dll")
 $redistRoots = @(Get-ChildItem "$env:ProgramFiles\Microsoft Visual Studio\*\*\VC\Redist\MSVC" `

@@ -1,5 +1,5 @@
 {
-  "dir": "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\palune\\dist\\release-1.0.0-rc",
+  "dir": "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\palune\\dist\\release-1.0.0-rc-20261113",
   "expectedVersion": "1.0.0",
   "trustKeys": {
     "update.pub": "1ef63fe4ede6e6a5e7a4e7e3551f42d8ddbadc383092ce8a4fc2ecb0221b9e88",
@@ -8,7 +8,7 @@
   "manifest": {
     "version": "1.0.0",
     "channel": "stable",
-    "publishedAt": "2026-11-08T09:13:24Z",
+    "publishedAt": "2026-11-13T10:33:02Z",
     "keyId": "palune-test",
     "signaturePresent": true,
     "artifactCount": 1,
@@ -17,12 +17,12 @@
   "artifacts": [
     {
       "name": "Palune-1.0.0-win-x64.exe",
-      "url": "https://github.com/yunyu697/palune-releases/releases/download/1.0.0-RC/Palune-1.0.0-win-x64.exe",
+      "url": "https://github.com/yunyu697/palune/releases/download/1.0.0-RC/Palune-1.0.0-win-x64.exe",
       "platform": "windows",
       "installer": "nsis",
-      "size": 59649289,
+      "size": 59755761,
       "sizeMatches": true,
-      "sha256": "4f1cb5cadf4aa304ab2c53c7404ec984b38cdc532d57af8c6a16bde43917b82c",
+      "sha256": "e7da60d5abaaaccde9adc1eb80a1c4d42b25c55fd7aaaf05f26bc2fe10845acf",
       "sha256Matches": true,
       "signaturePresent": true,
       "artifactSignature": true

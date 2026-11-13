@@ -9,7 +9,9 @@
 #include <QApplication>
 #include <QCoreApplication>
 #include <QDir>
+#include <QFileInfo>
 #include <QIcon>
+#include <QLibraryInfo>
 #include <QLocale>
 #include <QTranslator>
 #include <QUrlQuery>
@@ -75,6 +77,65 @@ void registerUrlScheme()
 }
 #endif
 
+#if defined(Q_OS_WIN)
+// QApplication 还没构造，applicationDirPath() 不可用；直接问 Win32。
+QString executableDir()
+{
+    wchar_t buffer[MAX_PATH] = {};
+    const DWORD length = GetModuleFileNameW(nullptr, buffer, MAX_PATH);
+    if (length == 0 || length >= MAX_PATH)
+        return {};
+    const QString path = QString::fromWCharArray(buffer, int(length));
+    return QDir::cleanPath(path + QStringLiteral("/.."));
+}
+
+// 部署版只信任自己目录里的平台插件。外部环境（其他 Qt 应用、开发终端）留下的
+// 插件路径可能指向另一套 Qt，版本不匹配时 QApplication 构造阶段直接 qFatal，
+// 用户只会看到一个英文报错框。这里先清理外部变量。
+void preparePlatformPlugins(const QString &appDir)
+{
+    if (QFileInfo::exists(appDir + QStringLiteral("/platforms/qwindows.dll"))) {
+        qputenv("QT_PLUGIN_PATH", appDir.toLocal8Bit());
+        qunsetenv("QT_QPA_PLATFORM_PLUGIN_PATH");
+    } else if (QFileInfo::exists(appDir + QStringLiteral("/plugins/platforms/qwindows.dll"))) {
+        qputenv("QT_PLUGIN_PATH", (appDir + QStringLiteral("/plugins")).toLocal8Bit());
+        qunsetenv("QT_QPA_PLATFORM_PLUGIN_PATH");
+    }
+}
+
+// 只认应用目录里的插件。部署版的 Qt6Core.dll 就在 exe 旁边，Qt 的插件前缀由
+// 这个 DLL 的位置推导（= exe 目录），不会再去找开发机上 C:\Qt 那套；把
+// QLibraryInfo 前缀也算作“可用”会让自检在开发机上撒谎，真正启动时才 qFatal。
+bool platformPluginAvailable(const QString &appDir)
+{
+    const QStringList candidates = {
+        appDir + QStringLiteral("/platforms/qwindows.dll"),
+        appDir + QStringLiteral("/plugins/platforms/qwindows.dll"),
+    };
+    for (const QString &path : candidates) {
+        if (QFileInfo::exists(path))
+            return true;
+    }
+    return false;
+}
+
+// 启动前自检失败：Qt 自己的英文弹窗会先于业务代码出现，这里用一句中文替代它，
+// 只给可执行的下一步；插件路径等内部信息只写日志。
+void reportMissingPlatform(const QString &logPath, const QString &appDir)
+{
+    // 此时 Log 还没初始化，先落到同一个日志文件；细节只进日志，对话框只说人话。
+    Log::init(logPath);
+    Log::error(QStringLiteral("启动自检失败：找不到平台插件 qwindows.dll；"
+                              "应用目录：%1；Qt 插件前缀：%2")
+                   .arg(appDir, QLibraryInfo::path(QLibraryInfo::PluginsPath)));
+    MessageBoxW(nullptr,
+                L"Palune 缺少运行所需的组件，无法启动。\n"
+                L"请重新安装 Palune；如果装了安全软件，请先把安装目录加入信任列表。\n"
+                L"仍然无法启动时，请把日志文件发给支持人员。",
+                L"Palune", MB_OK | MB_ICONERROR);
+}
+#endif
+
 // palune://play?url=... —— 只接受一个 url 参数，交给正常播放入口。
 QString resolveProtocolUrl(const QString &path)
 {
@@ -115,6 +176,20 @@ int main(int argc, char *argv[])
     }
 #endif
 
+    // 测试与自动化可以用 PALUNE_CONFIG_DIR 把配置、日志、崩溃目录重定向到临时目录。
+    const QString configOverride = qEnvironmentVariable("PALUNE_CONFIG_DIR");
+    if (!configOverride.isEmpty())
+        AppPaths::setConfigDirOverride(configOverride);
+
+#if defined(Q_OS_WIN)
+    const QString appDir = executableDir();
+    preparePlatformPlugins(appDir);
+    if (!platformPluginAvailable(appDir)) {
+        reportMissingPlatform(AppPaths::logFile(), appDir);
+        return 1;
+    }
+#endif
+
     QApplication app(argc, argv);
     // libmpv 要求 LC_NUMERIC 为 C；QApplication 构造时可能按系统环境重设 locale，
     // 因此必须在其之后固定。Qt 的格式化走 QLocale，不受这里影响。
@@ -126,15 +201,13 @@ int main(int argc, char *argv[])
     app.setWindowIcon(QIcon(QStringLiteral(":/packaging/palune-256.png")));
 
     // 测试与自动化可以用 PALUNE_CONFIG_DIR 把配置、日志、崩溃目录重定向到临时目录。
-    const QString configOverride = qEnvironmentVariable("PALUNE_CONFIG_DIR");
-    if (!configOverride.isEmpty())
-        AppPaths::setConfigDirOverride(configOverride);
-
     Settings settings;
     QString settingsError;
     settings.load(&settingsError);
 
     Log::init(AppPaths::logFile());
+    // Qt 自身的告警（QML 绑定、插件、字体）一律进日志，不弹窗。
+    Log::installQtHandler();
     if (!settingsError.isEmpty())
         Log::warn(settingsError);
     if (!Log::setMinimumLevelName(settings.rawLogLevel()))

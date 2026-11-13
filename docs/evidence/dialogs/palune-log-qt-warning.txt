@@ -1,0 +1,2 @@
+2026-11-13T17:14:57.447 [WARN] QFontDatabase: Cannot find font directory C:/Qt/6.8.3/msvc2022_64/lib/fonts.
+Note that Qt no longer ships fonts. Deploy some (from https://dejavu-fonts.github.io/ for example) or switch to fontconfig.

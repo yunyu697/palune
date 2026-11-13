@@ -6,6 +6,8 @@
 #include <QMutexLocker>
 #include <QStandardPaths>
 
+#include <cstdlib>
+
 namespace palune {
 
 QMutex Log::s_mutex;
@@ -89,6 +91,31 @@ QString Log::filePath()
 {
     QMutexLocker lock(&s_mutex);
     return s_path;
+}
+
+void Log::installQtHandler()
+{
+    qInstallMessageHandler([](QtMsgType type, const QMessageLogContext &context,
+                              const QString &message) {
+        Level level = Info;
+        switch (type) {
+        case QtDebugMsg: level = Debug; break;
+        case QtInfoMsg: level = Info; break;
+        case QtWarningMsg: level = Warn; break;
+        case QtCriticalMsg:
+        case QtFatalMsg: level = Error; break;
+        }
+        QString text = message;
+        // 告警/错误附带来源文件与行号，方便定位，但只写日志、不进界面。
+        if (level >= Warn && context.file) {
+            text += QStringLiteral(" (%1:%2)")
+                        .arg(QFileInfo(QString::fromUtf8(context.file)).fileName())
+                        .arg(context.line);
+        }
+        Log::write(level, text);
+        if (type == QtFatalMsg)
+            std::abort();
+    });
 }
 
 } // namespace palune

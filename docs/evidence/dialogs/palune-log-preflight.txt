@@ -1,0 +1,1 @@
+2026-11-13T17:14:37.599 [ERROR] 启动自检失败：找不到平台插件 qwindows.dll；应用目录：C:/Users/TYLERZ~1/AppData/Local/Temp/palune-preflight；Qt 插件前缀：C:/Users/TYLERZ~1/AppData/Local/Temp/palune-preflight/plugins

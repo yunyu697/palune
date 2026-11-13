@@ -17,6 +17,10 @@ public:
     static void write(Level level, const QString &message);
     static QString filePath();
 
+    // 接管 Qt 自己的消息（QML 绑定告警、插件/字体告警等）：一律写日志，绝不弹窗。
+    // qFatal 仍然终止进程，但终止前会先落盘。
+    static void installQtHandler();
+
     static void setMinimumLevel(Level level);
     static Level minimumLevel();
     // 接受 debug / info / warn / error（大小写不敏感），非法值返回 false。

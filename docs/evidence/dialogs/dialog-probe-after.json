@@ -1,0 +1,37 @@
+{
+  "exe": "C:\\Users\\TYLERZ~1\\AppData\\Local\\Temp\\palune-preflight\\Palune.exe",
+  "seconds": 5.0,
+  "dialogs": [
+    {
+      "class": "#32770",
+      "title": "Palune",
+      "children": [
+        {
+          "class": "Button",
+          "text": "确定"
+        },
+        {
+          "class": "Static",
+          "text": ""
+        },
+        {
+          "class": "Static",
+          "text": "Palune 缺少运行所需的组件，无法启动。\n请重新安装 Palune；如果仍然无法启动，请把日志文件发给支持人员。"
+        }
+      ],
+      "screenshot": "dialog-after-1.png",
+      "at": 1794561278.2
+    }
+  ],
+  "topLevelWindows": [
+    {
+      "class": "#32770",
+      "title": "Palune",
+      "size": [
+        932,
+        358
+      ]
+    }
+  ],
+  "stderr": ""
+}

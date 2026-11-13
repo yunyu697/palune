@@ -1,0 +1,24 @@
+{
+  "exe": "C:\\Users\\TYLERZ~1\\AppData\\Local\\Temp\\palune-pkg-old\\bin\\Palune.exe",
+  "seconds": 6.0,
+  "dialogs": [],
+  "topLevelWindows": [
+    {
+      "class": "Qt683QWindowIcon",
+      "title": "Palune",
+      "size": [
+        2360,
+        1400
+      ]
+    },
+    {
+      "class": "Qt683QWindowIcon",
+      "title": "Palune Video Surface - Palune",
+      "size": [
+        2360,
+        1400
+      ]
+    }
+  ],
+  "stderr": "qrc:/qml/SettingsPanel.qml:269:43: QML Column: Cannot specify top, bottom, verticalCenter, fill or centerIn anchors for items inside Column. Column will not function.\nqrc:/qml/SettingsPanel.qml:269:43: QML Column: Cannot specify top, bottom, verticalCenter, fill or centerIn anchors for items inside Column. Column will not function.\nqrc:/qml/SettingsPanel.qml:269:43: QML Column: Cannot specify top, bottom, verticalCenter, fill or centerIn anchors for items inside Column. Column will not function.\nqrc:/qml/SettingsPanel.qml:269:43: QML Column: Cannot specify top, bottom, verticalCenter, fill or centerIn anchors for items inside Column. Column will not function.\nqrc:/qml/SettingsPanel.qml:269:43: QML Column: Cannot specify top, bottom, verticalCenter, fill or centerIn anchors for items inside Column. Column will not function.\nqrc:/qml/SettingsPanel.qml:269:43: QML Column: Cannot specify top, bottom, verticalCenter, fill or centerIn anchors for items inside Column. Column will not function.\n"
+}

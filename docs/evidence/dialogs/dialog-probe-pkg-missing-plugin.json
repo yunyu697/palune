@@ -1,0 +1,37 @@
+{
+  "exe": "C:\\Users\\TYLERZ~1\\AppData\\Local\\Temp\\palune-pkg-noplugins\\bin\\Palune.exe",
+  "seconds": 6.0,
+  "dialogs": [
+    {
+      "class": "#32770",
+      "title": "Palune",
+      "children": [
+        {
+          "class": "Button",
+          "text": "确定"
+        },
+        {
+          "class": "Static",
+          "text": ""
+        },
+        {
+          "class": "Static",
+          "text": "This application failed to start because no Qt platform plugin could be initialized. Reinstalling the application may fix this problem.\n"
+        }
+      ],
+      "screenshot": "dialog-pkg-missing-plugin-1.png",
+      "at": 1794562149.8
+    }
+  ],
+  "topLevelWindows": [
+    {
+      "class": "#32770",
+      "title": "Palune",
+      "size": [
+        980,
+        358
+      ]
+    }
+  ],
+  "stderr": "qt.qpa.plugin: Could not find the Qt platform plugin \"windows\" in \"\"\n"
+}

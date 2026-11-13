@@ -11,7 +11,13 @@
 namespace palune {
 namespace {
 
-constexpr auto kPlexTv = "https://plex.tv";
+// PIN 与资源发现固定访问 plex.tv。自动化测试通过 PALUNE_PLEX_TV_BASE 指向本机
+// 回环 mock；生产环境不设置该变量，行为与直连 plex.tv 完全一致。
+QString plexTvBase()
+{
+    const QString injected = qEnvironmentVariable("PALUNE_PLEX_TV_BASE");
+    return injected.isEmpty() ? QStringLiteral("https://plex.tv") : injected;
+}
 
 http::Headers plexHeaders()
 {
@@ -72,7 +78,7 @@ PlexAdapter::Pin PlexAdapter::createPin() const
     Pin pin;
     const http::Headers headers = plexHeaders();
     const auto resp = http::request(
-        "POST", QUrl(QStringLiteral("%1/api/v2/pins?strong=true").arg(kPlexTv)), headers);
+        "POST", QUrl(QStringLiteral("%1/api/v2/pins?strong=true").arg(plexTvBase())), headers);
     if (!resp.ok()) {
         pin.error = resp.error.isEmpty()
                         ? QStringLiteral("创建 PIN 失败（HTTP %1）").arg(resp.status)
@@ -96,7 +102,7 @@ PlexAdapter::Pin PlexAdapter::createPin() const
 QString PlexAdapter::pollPin(qint64 pinId, const QString &code, QString *error) const
 {
     const QUrl url(QStringLiteral("%1/api/v2/pins/%2?X-Plex-Token=%3")
-                       .arg(kPlexTv, QString::number(pinId), code));
+                       .arg(plexTvBase(), QString::number(pinId), code));
     const auto resp = http::request("GET", url, plexHeaders());
     if (!resp.ok()) {
         if (error)
@@ -117,7 +123,7 @@ QList<PlexAdapter::ServerResource> PlexAdapter::listServers(const QString &accou
 {
     QList<ServerResource> out;
     const QUrl url(QStringLiteral("%1/api/v2/resources?includeHttps=1&includeRelay=1")
-                       .arg(kPlexTv));
+                       .arg(plexTvBase()));
     http::Headers headers = plexHeaders();
     headers.append({"X-Plex-Token", accountToken.toUtf8()});
     const auto resp = http::request("GET", url, headers);

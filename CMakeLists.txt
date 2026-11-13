@@ -445,3 +445,9 @@ add_executable(tst_preferences tests/unit/tst_preferences.cpp)
 target_link_libraries(tst_preferences PRIVATE palune_core Qt6::Test)
 palune_copy_runtime_libs(tst_preferences)
 add_test(NAME preferences COMMAND tst_preferences)
+
+# 媒体服务器适配器与媒体库服务：只连 127.0.0.1 回环 mock，不访问外网。
+add_executable(tst_media_server tests/unit/tst_media_server.cpp)
+target_link_libraries(tst_media_server PRIVATE palune_core Qt6::Test)
+palune_copy_runtime_libs(tst_media_server)
+add_test(NAME media_server COMMAND tst_media_server)

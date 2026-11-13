@@ -1,0 +1,18 @@
+{
+  "target": "B",
+  "clicked": true,
+  "themeAfter": "B",
+  "settingsBefore": {
+    "w": 2040,
+    "h": 1320,
+    "title": "Palune 设置 - Palune"
+  },
+  "settingsAfter": {
+    "w": 2040,
+    "h": 1320
+  },
+  "main": {
+    "w": 2360,
+    "h": 1400
+  }
+}

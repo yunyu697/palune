@@ -42,14 +42,14 @@ SettingsWindow::SettingsWindow(WindowController *controller,
     m_theme = theme;
     m_owner = owner;
 
-    // 真正的顶层窗口：不属于主窗的 QObject 父子链，也不参与主窗的 QML 裁剪。
-    // Tool + 瞬态父窗保证：不占任务栏、始终在主窗与视频子窗之上、主窗关闭时随之关闭。
-    setFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint);
+    // 真正的独立顶层窗口：不设瞬态父窗、不使用 Qt::Tool。
+    // 早期用 Tool + setTransientParent 会让设置窗在系统层面从属于主窗：主窗最小化/切走时
+    // 设置窗跟着被盖住，用户没法“只开设置窗调参数”。现在它是普通顶层窗口，
+    // 仅通过原生 WS_EX_TOOLWINDOW 隐藏任务栏条目，位置不再跟随主窗。
+    setFlags(Qt::Window | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint);
     setColor(Qt::transparent);
     setResizeMode(QQuickView::SizeRootObjectToView);
     setTitle(QStringLiteral("Palune 设置"));
-    if (owner)
-        setTransientParent(owner);
 
     QQmlContext *ctx = engine()->rootContext();
     ctx->setContextProperty(QStringLiteral("win"), controller);
@@ -96,20 +96,18 @@ void SettingsWindow::open(const QRect &ownerLogical)
 
 void SettingsWindow::reposition(const QRect &ownerLogical)
 {
+    Q_UNUSED(ownerLogical);
     if (!isVisible())
         return;
     const QSize target = sizeForTheme(m_theme->currentTheme());
-    QRect rect;
-    if (m_theme->currentTheme() == QLatin1String("C"))
-        rect = QRect(ownerLogical.right() - target.width() - 15,
-                     ownerLogical.bottom() - target.height() - 15,
-                     target.width(), target.height());
-    else
-        rect = QRect(ownerLogical.x() + (ownerLogical.width() - target.width()) / 2,
-                     ownerLogical.y() + (ownerLogical.height() - target.height()) / 2,
-                     target.width(), target.height());
-
     QScreen *scr = m_owner ? m_owner->screen() : screen();
+    // 独立窗口：只按当前屏幕居中一次，不再贴着主窗右下角或随主窗移动。
+    QRect rect = scr ? scr->availableGeometry() : QRect(0, 0, target.width(), target.height());
+    rect = QRect(rect.x() + (rect.width() - target.width()) / 2,
+                 rect.y() + (rect.height() - target.height()) / 2,
+                 target.width(), target.height());
+
+
     if (scr) {
         const QRect available = scr->availableGeometry();
         if (rect.right() > available.right())

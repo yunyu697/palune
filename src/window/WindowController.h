@@ -102,7 +102,6 @@ public:
     // 设置是独立顶层窗口，不进入主窗 QML 层，避免被主窗 Region 裁剪或被视频子窗压住。
     void openSettingsWindow();
     void closeSettingsWindow();
-    void repositionSettingsWindow();
     SettingsWindow *settingsWindow() const { return m_settingsWindow; }
 
     qintptr overlayHandle() const;

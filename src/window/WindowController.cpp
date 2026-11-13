@@ -223,11 +223,7 @@ bool WindowController::start(int width, int height)
     if (m_preferences)
         m_preferences->applyAll();
 
-    // 设置窗跟随主窗位置/尺寸，并在主题切换时换尺寸与圆角。
-    connect(m_overlay, &QWindow::xChanged, this, &WindowController::repositionSettingsWindow);
-    connect(m_overlay, &QWindow::yChanged, this, &WindowController::repositionSettingsWindow);
-    connect(m_overlay, &QWindow::widthChanged, this, &WindowController::repositionSettingsWindow);
-    connect(m_overlay, &QWindow::heightChanged, this, &WindowController::repositionSettingsWindow);
+    // 设置窗是独立顶层窗口：不再随主窗移动/缩放（只在切换主题时换自身尺寸与圆角）。
     if (m_themeRegistry) {
         connect(m_themeRegistry, &ThemeRegistry::currentThemeChanged, this, [this]() {
             if (m_settingsWindow && m_settingsWindow->isOpen() && m_overlay)
@@ -959,7 +955,7 @@ void WindowController::openSettingsWindow()
     if (!m_settingsWindow) {
         m_settingsWindow = new SettingsWindow(this, m_themeRegistry, m_player, m_updater,
                                               m_settings, m_compactMode, m_overlay);
-        // 交给 QObject 树管理生命周期（窗口层级仍由 transient parent 决定，互不裁剪）。
+        // 仅交给 QObject 树管理生命周期；窗口层级由独立的顶层窗口决定，不做瞬态从属。
         static_cast<QObject *>(m_settingsWindow)->setParent(this);
     }
     m_settingsWindow->open(m_overlay->geometry());
@@ -972,12 +968,6 @@ void WindowController::closeSettingsWindow()
     m_settingsWindow->hide();
     if (m_overlay)
         m_overlay->requestActivate();
-}
-
-void WindowController::repositionSettingsWindow()
-{
-    if (m_settingsWindow && m_settingsWindow->isOpen() && m_overlay)
-        m_settingsWindow->reposition(m_overlay->geometry());
 }
 
 void WindowController::playSibling(int delta)

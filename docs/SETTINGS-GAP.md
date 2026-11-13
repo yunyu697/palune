@@ -221,3 +221,14 @@
 | 英文翻译覆盖 | **PARTIAL** | — | 新增 P0 文案（媒体库/存储/账户说明）尚未写入 `palune_en_US.ts/.qm`，en_US 下回退中文；旧 6 页英文仍有效 |
 
 > 版本口径：以上闭合后，设置三块 P0 与预览联动已补齐；剩余未验证项仅“下载真实落盘、外部查看器、beta manifest 真实拉取”。对外仍只写 **1.0.0-RC**，M2-10 在 GAP-AUDIT 中可改为 DONE（保留上述 NOT_VERIFIED 备注）。
+
+### 12.1 2026-11-09 复核修正（与上表冲突处以本节为准）
+
+上表有四处与代码/实机不符，已修正并重新取证，详见 `docs/evidence/rc-ui-fixes.md`：
+
+| 项 | 上表写法 | 实际情况 | 现在的结论 |
+|---|---|---|---|
+| 字幕描边预览 | `sub.outline` 0–6px 绑定 | 播放器侧是 `sub-border-size = outline × 2`，预览侧却直接用 `outline`，实机 4px / 预览 1px | 预览改为 `outline × 2`，`OutlinedText` 上限提到 12；`outline=2` → mpv `sub-border-size=4.0` 且截图「描边 4.0px」，DONE |
+| BT.2390 曲线 | NOT DONE（降级为无预览） | 已实现 PQ OETF/EOTF + BT.2390 EETF 实算 Canvas，指标由同一组函数反推 | DONE，`subtitle-outline-4px-peak600.png`：600 nits 拐点 / 10000→600 |
+| 界面语言 | 默认 system，重启生效 | 与实际一致（`Preferences::setLanguage` 注释即“需重启才生效”） | DONE，但需明确：**重启生效**，不是即时重译 |
+| 英文翻译覆盖 | PARTIAL（新增 P0 文案未进 ts） | 已补 9 条 `SettingsPanel` + 3 条 `ThemeRegistry`，C++ 回退提示改为 `tr()` | DONE，`check_i18n.py` 通过；`lang-en-B.png` 全英文 |

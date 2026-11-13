@@ -308,6 +308,20 @@ Item {
         function onErrorMessageChanged() { root.errorDismissed = false }
     }
 
+    // 覆盖面板存在时屏蔽窗口热区：面板背景是普通 Rectangle，本身不消费鼠标，
+    // 之前点击设置/媒体库页面空白处会落到下层 dragStrip，把整个窗口拖走。
+    // 这一层只吃事件、不画东西，位于 dragStrip 之上、各面板之下。
+    Item {
+        objectName: "overlayBlocker"
+        anchors.fill: parent
+        visible: root.overlayPanel !== ""
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.AllButtons
+            onWheel: function (wheel) { wheel.accepted = true }
+        }
+    }
+
     SettingsPanel {
         objectName: "settingsPanel"
         anchors.fill: parent

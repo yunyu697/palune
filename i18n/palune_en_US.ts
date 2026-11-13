@@ -2,6 +2,21 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="en_US">
 <context>
+    <name>ThemeRegistry</name>
+    <message>
+        <source>缺少 [ui] theme，已回退到布局 A</source>
+        <translation>[ui] theme is missing; fell back to layout A</translation>
+    </message>
+    <message>
+        <source>非法主题值 "%1"，已回退到布局 A</source>
+        <translation>Invalid theme value "%1"; fell back to layout A</translation>
+    </message>
+    <message>
+        <source>主题 %1 资源缺失，已回退到布局 A</source>
+        <translation>Resources for theme %1 are missing; fell back to layout A</translation>
+    </message>
+</context>
+<context>
     <name>EmptyState</name>
     <message>
         <source>媒体库</source>
@@ -663,6 +678,42 @@
 </context>
 <context>
     <name>SettingsPanel</name>
+    <message>
+        <source>经典</source>
+        <translation>Classic</translation>
+    </message>
+    <message>
+        <source>工作台</source>
+        <translation>Workbench</translation>
+    </message>
+    <message>
+        <source>沉浸</source>
+        <translation>Immersive</translation>
+    </message>
+    <message>
+        <source>经典：顶部悬浮标题条 + 底部双行控制栏，无侧栏</source>
+        <translation>Classic: floating title strip on top and a two-row control bar at the bottom, no side panel</translation>
+    </message>
+    <message>
+        <source>工作台：顶部扁平栏 + 右侧常驻检查器，信息密度最高</source>
+        <translation>Workbench: flat top bar plus a persistent inspector on the right; highest information density</translation>
+    </message>
+    <message>
+        <source>沉浸：左上标题胶囊 + 底部悬浮胶囊，最少干扰</source>
+        <translation>Immersive: title capsule at top left and a floating control capsule at the bottom; minimal distraction</translation>
+    </message>
+    <message>
+        <source>[sub] outline，默认 1.0（播放器实际描边 2px = outline × 2，预览同口径），即时生效</source>
+        <translation>[sub] outline, default 1.0 (the player actually uses 2px = outline × 2, and the preview follows the same rule); applies immediately</translation>
+    </message>
+    <message>
+        <source>输入 0–10000 nits（虚线=不压缩）</source>
+        <translation>Input 0–10000 nits (dashed = no compression)</translation>
+    </message>
+    <message>
+        <source>拐点 ≈ %1 nits · 10000 nits 输入映射到 %2 nits</source>
+        <translation>Knee ≈ %1 nits · 10000 nits input maps to %2 nits</translation>
+    </message>
     <message>
         <source> / </source>
         <translation> / </translation>

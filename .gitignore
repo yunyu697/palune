@@ -36,3 +36,7 @@ qa/coverage/
 .idea/
 Thumbs.db
 .DS_Store
+
+# 本地取证用的临时配置/feed/旧包，不入库
+_scratch/
+

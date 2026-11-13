@@ -1,0 +1,114 @@
+{
+  "generatedAt": "2026-11-09T01:12:33",
+  "build": "build/Release/Palune.exe",
+  "windowSize": {
+    "w": 2360,
+    "h": 1400,
+    "dpr": 2.0
+  },
+  "titleDrag": {
+    "before": {
+      "x": 738,
+      "y": 330,
+      "w": 2360,
+      "h": 1400
+    },
+    "after": {
+      "x": 978,
+      "y": 410,
+      "w": 2360,
+      "h": 1400
+    },
+    "dx": 240,
+    "dy": 80,
+    "moved": true
+  },
+  "controlDrag": {
+    "before": {
+      "x": 978,
+      "y": 410,
+      "w": 2360,
+      "h": 1400
+    },
+    "after": {
+      "x": 978,
+      "y": 410,
+      "w": 2360,
+      "h": 1400
+    },
+    "dx": 0,
+    "dy": 0,
+    "moved": false
+  },
+  "maximize": {
+    "zoomed": false,
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "w": 3840,
+      "h": 2064
+    }
+  },
+  "restore": {
+    "zoomed": false,
+    "rect": {
+      "x": 978,
+      "y": 410,
+      "w": 2360,
+      "h": 1400
+    }
+  },
+  "minimize": {
+    "iconic": true
+  },
+  "settingsIndependent": {
+    "title": "Palune 设置 - Palune",
+    "ownerHandle": 0,
+    "exStyle": "0x80080",
+    "toolwindow": true,
+    "before": {
+      "x": 900,
+      "y": 372,
+      "w": 2040,
+      "h": 1320
+    },
+    "afterMainMoved": {
+      "x": 900,
+      "y": 372,
+      "w": 2040,
+      "h": 1320
+    },
+    "samePosition": true
+  },
+  "libraryOverlayDrag": {
+    "before": {
+      "x": 738,
+      "y": 330,
+      "w": 2360,
+      "h": 1400
+    },
+    "after": {
+      "x": 738,
+      "y": 330,
+      "w": 2360,
+      "h": 1400
+    },
+    "dx": 0,
+    "dy": 0,
+    "moved": false
+  },
+  "buttonsCrops": {
+    "A": {
+      "size": "300x220",
+      "file": "buttons-A.png"
+    },
+    "B": {
+      "size": "300x220",
+      "file": "buttons-B.png"
+    },
+    "C": {
+      "size": "300x220",
+      "file": "buttons-C.png"
+    }
+  }
+}

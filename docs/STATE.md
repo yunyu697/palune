@@ -2,7 +2,7 @@
 
 > 自动推进的续跑点。每完成一个可验证节点更新本文件；撞到单轮上限时以本文件为准。
 
-更新时间：2026-11-08（Asia/Shanghai）
+更新时间：2026-11-09（Asia/Shanghai）
 当前里程碑：**M4 本地媒体库完成（扫描/索引/缩略图/海报墙/列表），待 M5**
 版本：`1.0.0`（**功能冻结候选 RC**，未收口；alpha 段已到上限，按纪律转正式号，但不等于缺口闭合）
 
@@ -95,6 +95,23 @@
 | 工作流改动 | `publish` 按通道加 `--prerelease`；`assert-public-feed` 预发布改断 tag 定点 URL |
 | alpha8/9/10 补发 | 2026-11-08 手动 `gh release create --prerelease` 挂本地产物（不改旧提交、不跑 CI）；三者均不接管 `releases/latest`，见 `docs/evidence/release-1.0.0-rc/token-and-alpha-release-audit.json` |
 | 未做 | `1.0.0` tag 推送、mac/Linux 产物、MSI、生产签名 |
+
+## 1.0.0-RC：六条 UI 修复 + 设置 P0 五组（2026-11-09）
+
+复审依据：`docs/evidence/rc-ui-fixes.md`（逐条根因/改法/证据）、`docs/evidence/rc-ui-probe.json`、`docs/evidence/settings-probe-rc.json`、`docs/evidence/settings-ten-items.json`。
+
+| # | 条目 | 根因 | 结论 |
+|---|---|---|---|
+| 1 | 窗口按钮图标不统一 | `WindowButtons.qml` 用字符字形（`—`/`⍐`/`□`/`✕`）当图标，宽度/基线随字体变，且无还原态图形 | 改矢量几何（10×10、1px 描边、最大化后换双框），三主题同形；`buttons-A/B/C.png` + 真实点击最大化 3840×2064 / 还原 2360×1400 / 最小化 `IsIconic=true` |
+| 2 | 标题栏与控制栏热区未分离 | 拖动 `MouseArea` 与控制栏热区高度口径混用、在矮窗下叠加，按下事件被拖动层先吃 | `dragStrip` 按主题只占顶部（94/52/44），控制栏 hover 改 `HoverHandler` 不吃点击；实测 y≈40 拖动位移 240/80，y≈645 拖动位移 0 |
+| 3 | 布局 B/C 点了不生效 | 主题卡 delegate 是 `Column`，子 `MouseArea` 用 `anchors.fill` 被 positioner 接管 → 命中区 0×0 | 外层 `Item` 定尺寸 + `Column` 填充 + `MouseArea` 兄弟铺满；真实点击 B/C 后 `themeAfter=B/C`，设置窗随 C 缩到 1120×904。名称改「A·经典 / B·工作台 / C·沉浸」 |
+| 4 | 滚动条遮挡内容 | 内容列宽 = `Flickable.width`，8px 悬浮滚动条压在内容右缘 | `contentColumn.width = width - 12`，滚动条独占右侧；`settings-B-keys-scroll.png` |
+| 5 | 「打开主页」是死链 | 写死 `https://palune.app/`，该域名无服务 | 改 `https://github.com/yunyu697/palune`；`homepage-link.json`：github HEAD 200，palune.app TLS 失败 |
+| 6 | 设置窗不是独立窗口 | `Qt::Tool` + `setTransientParent` + 主窗几何四连跟随 | 改 `Qt::Window`、去瞬态父窗、只居中一次、删跟随连接；`ownerHandle=0`，主窗移动后设置窗位置不变 |
+
+设置 P0 五组：存储整组（上限 2000MB/保留 14 天/导出导入/重建索引，探针 115.3MB→57.7MB、旧日志清除、索引重建、导入恢复 `ui.autoPlay`）、界面语言（`ui.language` 三选一，重启生效，中英两次启动截图 + ts/qm 补齐）、媒体库入口（设置第 6 页可添加目录/重扫/打开媒体库/改默认视图）、字幕描边预览（`outline × 2` 与 mpv `sub-border-size` 同口径，实测 4.0px）、B 第三栏（PQ + BT.2390 实算曲线，600 nits 拐点/10000→600）。十项行为取证中 8 项 DONE、`betaChannel` 为 URL 级 DONE、`openLicense` 仍 PARTIAL、代理只验证失败链路。
+
+出包记录：`dist/build-record.json`（VC Redist 14.52 的六个 CRT 字节数与 SHA-256、Qt 6.8.3、libmpv/libsodium 哈希）。**P0 未闭合前不称收口**，版本仍是 `1.0.0-RC`。
 
 ## alpha10：六项实机缺陷
 

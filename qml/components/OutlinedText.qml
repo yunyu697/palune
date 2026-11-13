@@ -12,7 +12,8 @@ Item {
     property int horizontalAlignment: Text.AlignHCenter
     property int wrapMode: Text.WordWrap
 
-    readonly property real outlineWidth: Math.max(0, Math.min(6, outline))
+    // 传入的是播放器实际 sub-border-size（0–12px），不是 [sub] outline 设置值。
+    readonly property real outlineWidth: Math.max(0, Math.min(12, outline))
 
     implicitWidth: measure.implicitWidth
     implicitHeight: foreground.height

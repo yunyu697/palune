@@ -226,13 +226,17 @@ Item {
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
                     ScrollBar.vertical: ScrollBar {
+                        width: 8
                         policy: contentFlick.contentHeight > contentFlick.height
                                 ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
                     }
 
                     ColumnLayout {
                         id: contentColumn
-                        width: contentFlick.width
+                        // 滚动条是浮在右边缘的 overlay（不参与 Flickable 布局），
+                        // 内容若铺满 width 会被它压住最右侧 8px（下拉框/开关/说明文字尾部）。
+                        // 这里主动让出 12px，滚动条出现与否都不遮挡内容。
+                        width: contentFlick.width - 12
                         spacing: 0
 
                     // 0 通用
@@ -266,11 +270,20 @@ Item {
                             height: 88
                             Repeater {
                                 model: typeof themeRegistry !== "undefined" ? themeRegistry.themes : []
-                                delegate: Column {
+                                // 用 Item 包住「示意图 + 名称」，再让 MouseArea 铺满整块。
+                                // 之前 delegate 直接是 Column，MouseArea 作为 Column 子项写 anchors.fill: parent，
+                                // 位置器与锚点冲突导致命中区被算成 0 尺寸——点卡片完全不响应，
+                                // 这也是“布局 B/C 点了没反应”的直接原因。
+                                delegate: Item {
+                                    id: themeCardItem
                                     required property string modelData
-                                    spacing: 4
+                                    width: 108
+                                    height: 88
                                     readonly property bool selected: typeof themeRegistry !== "undefined"
                                                                   && themeRegistry.currentTheme === modelData
+                                    Column {
+                                        anchors.fill: parent
+                                        spacing: 4
                                     // 布局示意图：必须与实际布局一致（控制条位置、侧栏形态、信息密度）。
                                     Rectangle {
                                         width: 108
@@ -333,17 +346,30 @@ Item {
                                     }
                                     Text {
                                         anchors.horizontalCenter: parent.horizontalCenter
-                                        text: qsTr("布局 ") + modelData
+                                        // 只写「布局 A/B/C」用户不知道差别，补上设计稿里的真实名称。
+                                        text: modelData + " · " + (modelData === "A" ? qsTr("经典")
+                                                              : modelData === "B" ? qsTr("工作台")
+                                                              : qsTr("沉浸"))
                                         color: selected ? panelRoot.accent : panelRoot.textColor
                                         font.pixelSize: 11
                                     }
+                                    } // Column
                                     MouseArea {
+                                        id: themeCardHit
                                         anchors.fill: parent
+                                        hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: {
                                             if (panelRoot.hasWindow)
                                                 win.action("setTheme", modelData)
                                         }
+                                        ToolTip.visible: hovered
+                                        ToolTip.delay: 600
+                                        ToolTip.text: modelData === "A"
+                                                      ? qsTr("经典：顶部悬浮标题条 + 底部双行控制栏，无侧栏")
+                                                      : modelData === "B"
+                                                        ? qsTr("工作台：顶部扁平栏 + 右侧常驻检查器，信息密度最高")
+                                                        : qsTr("沉浸：左上标题胶囊 + 底部悬浮胶囊，最少干扰")
                                     }
                                 }
                             }
@@ -688,7 +714,7 @@ Item {
                         }
                         SettingRow {
                             label: qsTr("描边")
-                            hint: qsTr("[sub] outline，默认 1.0px，即时生效")
+                            hint: qsTr("[sub] outline，默认 1.0（播放器实际描边 2px = outline × 2，预览同口径），即时生效")
                             SettingStepper {
                                 value: prefs.subtitleOutline
                                 minimum: 0
@@ -758,7 +784,9 @@ Item {
                             border.width: 1
                             border.color: panelRoot.lineColor
                             clip: true
-                            // 预览与实际设置联动：字号、颜色、描边（0–6px）、底部位置。
+                            // 预览与实际设置联动：字号、颜色、描边、底部位置。
+                            // 注意单位换算：播放器拿到的 sub-border-size = outline × 2（见 MpvClient），
+                            // 预览必须用同一个「实际描边像素」值，否则设置 2.0 时实机 4px、预览只有 2px。
                             OutlinedText {
                                 width: parent.width - 24
                                 anchors.horizontalCenter: parent.horizontalCenter
@@ -766,7 +794,7 @@ Item {
                                 text: qsTr("字幕预览：字号、颜色、描边、位置按左侧设置实时变化")
                                 pixelSize: prefs.subtitleFontSize
                                 textColor: prefs.subtitleColor
-                                outline: prefs.subtitleOutline
+                                outline: prefs.subtitleOutline * 2
                                 horizontalAlignment: Text.AlignHCenter
                             }
                         }
@@ -1347,14 +1375,15 @@ Item {
                             text: qsTr("这是一行用于校准字号与描边的字幕预览")
                             pixelSize: prefs.subtitleFontSize
                             textColor: prefs.subtitleColor
-                            outline: prefs.subtitleOutline
+                            // 与播放器 sub-border-size 同口径（outline × 2），预览即实机。
+                            outline: prefs.subtitleOutline * 2
                             horizontalAlignment: Text.AlignHCenter
                         }
                     }
                     Text {
                         text: qsTr("字号 %1 · 描边 %2px · 底部安全距 %3%")
                               .arg(prefs.subtitleFontSize)
-                              .arg(prefs.subtitleOutline.toFixed(1))
+                              .arg((prefs.subtitleOutline * 2).toFixed(1))
                               .arg(prefs.subtitlePosition)
                         color: panelRoot.mutedColor
                         font.pixelSize: 11
@@ -1374,22 +1403,119 @@ Item {
                         wrapMode: Text.WordWrap
                         Layout.fillWidth: true
                     }
+                    // BT.2390 EETF 曲线：按 ITU-R BT.2390 的 Hermite 分段公式实时计算，
+                    // 输入取 PQ 全量程 10000 nits，输出受目标峰值约束。曲线不是静态图，
+                    // 目标峰值一变就重算（原先这里是「曲线预览不可用」的说明文字）。
                     Rectangle {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 72
+                        Layout.preferredHeight: 96
                         radius: 8
                         color: "#0b0c10"
                         border.width: 1
                         border.color: panelRoot.lineColor
-                        Text {
-                            anchors.centerIn: parent
-                            width: parent.width - 24
-                            horizontalAlignment: Text.AlignHCenter
-                            text: qsTr("曲线预览不可用\n缺少真实 BT.2390 数据源，1.0 不提供图形曲线（非占位图）")
-                            color: panelRoot.mutedColor
-                            font.pixelSize: 10
-                            wrapMode: Text.WordWrap
+                        clip: true
+
+                        readonly property int targetNits: prefs.targetPeakNits
+
+                        Canvas {
+                            id: curve
+                            anchors.fill: parent
+                            anchors.margins: 8
+                            // 目标峰值变化即重绘。
+                            property int targetNits: parent.targetNits
+                            onTargetNitsChanged: requestPaint()
+
+                            // PQ OETF：nits(0–10000) → 归一化码值 0–1
+                            function pqOetf(nits) {
+                                const m1 = 0.1593017578125, m2 = 78.84375
+                                const c1 = 0.8359375, c2 = 18.8515625, c3 = 18.6875
+                                const y = Math.max(0, Math.min(10000, nits)) / 10000
+                                const p = Math.pow(y, m1)
+                                return Math.pow((c1 + c2 * p) / (1 + c3 * p), m2)
+                            }
+                            // PQ EOTF：码值 0–1 → nits
+                            function pqEotf(ep) {
+                                const m1 = 0.1593017578125, m2 = 78.84375
+                                const c1 = 0.8359375, c2 = 18.8515625, c3 = 18.6875
+                                const p = Math.pow(Math.max(0, Math.min(1, ep)), 1 / m2)
+                                const den = c2 - c3 * p
+                                if (den <= 0)
+                                    return 10000
+                                return 10000 * Math.pow(Math.max(p - c1, 0) / den, 1 / m1)
+                            }
+                            // BT.2390 EETF：输入码值 E1、显示峰值码值 maxLum，返回映射后码值
+                            function eetf(E1, maxLum) {
+                                if (maxLum <= 1.0)
+                                    return E1 * maxLum
+                                const KS = 1.5 * maxLum - 0.5
+                                if (E1 <= KS)
+                                    return E1
+                                const T = (E1 - KS) / (1 - KS)
+                                const T2 = T * T, T3 = T2 * T
+                                return (2 * T3 - 3 * T2 + 1) * KS
+                                    + (T3 - 2 * T2 + T) * (1 - KS)
+                                    + (-2 * T3 + 3 * T2) * maxLum
+                            }
+                            // 拐点（码值 KS 对应的输入 nits）
+                            readonly property real kneeNits: {
+                                const maxLum = pqOetf(targetNits)
+                                return maxLum <= 1.0 ? targetNits : pqEotf(1.5 * maxLum - 0.5)
+                            }
+
+                            onPaint: {
+                                const ctx = getContext("2d")
+                                const w = width, h = height
+                                ctx.clearRect(0, 0, w, h)
+                                const target = Math.max(1, targetNits)
+                                const maxLum = pqOetf(target)
+
+                                // 参考线：不压缩时的 y=x（按目标峰值截断），虚线用手工短段绘制。
+                                ctx.strokeStyle = "#3affffff"
+                                ctx.lineWidth = 1
+                                for (let i = 0; i < w; i += 6) {
+                                    const x0 = i / w * 10000
+                                    const y0 = Math.min(x0, target) / target
+                                    const x1 = Math.min(i + 3, w) / w * 10000
+                                    const y1 = Math.min(x1, target) / target
+                                    ctx.beginPath()
+                                    ctx.moveTo(i, h - y0 * h)
+                                    ctx.lineTo(Math.min(i + 3, w), h - y1 * h)
+                                    ctx.stroke()
+                                }
+
+                                // 实际 EETF 曲线
+                                ctx.strokeStyle = "#e7b27c"
+                                ctx.lineWidth = 1.5
+                                ctx.beginPath()
+                                for (let i = 0; i <= w; i += 1) {
+                                    const inn = i / w * 10000
+                                    const outNits = Math.min(target, pqEotf(eetf(pqOetf(inn), maxLum)))
+                                    const y = h - Math.min(1, outNits / target) * h
+                                    if (i === 0)
+                                        ctx.moveTo(i, y)
+                                    else
+                                        ctx.lineTo(i, y)
+                                }
+                                ctx.stroke()
+                            }
                         }
+                        Text {
+                            anchors { left: parent.left; bottom: parent.bottom; margins: 6 }
+                            text: qsTr("输入 0–10000 nits（虚线=不压缩）")
+                            color: panelRoot.mutedColor
+                            font.pixelSize: 9
+                        }
+                    }
+                    Text {
+                        text: qsTr("拐点 ≈ %1 nits · 10000 nits 输入映射到 %2 nits")
+                              .arg(Math.round(curve.kneeNits))
+                              .arg(Math.round(curve.pqEotf(
+                                   curve.eetf(curve.pqOetf(10000),
+                                              curve.pqOetf(prefs.targetPeakNits)))))
+                        color: panelRoot.mutedColor
+                        font.pixelSize: 10
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
                     }
                     Text {
                         text: qsTr("提示：目标峰值来自播放页的「目标峰值」，修改后立即作用于 mpv。")

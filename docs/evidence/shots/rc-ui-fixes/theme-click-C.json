@@ -1,0 +1,18 @@
+{
+  "target": "C",
+  "clicked": true,
+  "themeAfter": "C",
+  "settingsBefore": {
+    "w": 2040,
+    "h": 1320,
+    "title": "Palune 设置 - Palune"
+  },
+  "settingsAfter": {
+    "w": 1120,
+    "h": 904
+  },
+  "main": {
+    "w": 2360,
+    "h": 1400
+  }
+}

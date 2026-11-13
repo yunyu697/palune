@@ -1,0 +1,65 @@
+{
+    "actualSha256": "576fda153af27b2bdb0abb026d95c1510efa4f54e81aefaefb60c28340bfe048",
+    "availableVersion": "1.0.0",
+    "currentVersion": "1.0.0-alpha10",
+    "downloadDir": "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\palune\\_scratch\\e2e-dir\\downloads",
+    "downloadedPath": "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\palune\\_scratch\\e2e-dir\\downloads/Palune-1.0.0-win-x64.exe",
+    "errorCode": "",
+    "errorMessage": "",
+    "expectedSha256": "576fda153af27b2bdb0abb026d95c1510efa4f54e81aefaefb60c28340bfe048",
+    "feed": "http://127.0.0.1:8765/latest.json",
+    "generatedAt": "2026-11-09T00:34:57",
+    "logPath": "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\palune\\_scratch\\e2e-dir\\cfg/logs/palune.log",
+    "manifestAttempts": [
+        {
+            "bytes": 946,
+            "detail": "签名校验通过",
+            "elapsedMs": 25,
+            "httpStatus": 200,
+            "index": 0,
+            "name": "直连（官方源）",
+            "outcome": "ok",
+            "sha256": "c4e8d68b69b4e13f57f44393e308256eae961c6aaf18c6d14d4c8ded5adfa90f",
+            "url": "http://127.0.0.1:8765/latest.json"
+        }
+    ],
+    "manifestSource": "直连（官方源）",
+    "manifestSourceUrl": "http://127.0.0.1:8765/latest.json",
+    "mirror": "直连",
+    "mirrorIndex": 0,
+    "mode": "update-e2e:download-only",
+    "restartMarker": "",
+    "state": "installing",
+    "transitions": [
+        {
+            "at": "2026-11-09T00:34:56.941",
+            "mirror": "直连",
+            "progress": 0,
+            "state": "checking"
+        },
+        {
+            "at": "2026-11-09T00:34:56.972",
+            "mirror": "直连",
+            "progress": 0,
+            "state": "available"
+        },
+        {
+            "at": "2026-11-09T00:34:57.033",
+            "mirror": "直连",
+            "progress": 0,
+            "state": "downloading"
+        },
+        {
+            "at": "2026-11-09T00:34:57.063",
+            "mirror": "直连",
+            "progress": 100,
+            "state": "downloaded"
+        },
+        {
+            "at": "2026-11-09T00:34:57.065",
+            "mirror": "直连",
+            "progress": 100,
+            "state": "installing"
+        }
+    ]
+}

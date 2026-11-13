@@ -1,0 +1,21 @@
+{
+  "generatedAt": "2026-11-09T01:2:00",
+  "purpose": "验证「打开主页」改到真实地址：旧地址无服务，新地址可达",
+  "code": "src/update/UpdateService.cpp: openHomePage → QDesktopServices::openUrl(...)",
+  "results": [
+    {
+      "url": "https://github.com/yunyu697/palune",
+      "method": "HEAD",
+      "result": "PASS",
+      "httpStatus": 200,
+      "note": "本仓公开地址，仓库与 Releases 同源"
+    },
+    {
+      "url": "https://palune.app",
+      "method": "HEAD",
+      "result": "FAIL",
+      "error": "The SSL connection could not be established, see inner exception.",
+      "note": "旧实现指向该域名，域名无服务，点开必失败"
+    }
+  ]
+}

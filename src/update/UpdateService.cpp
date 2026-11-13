@@ -906,7 +906,8 @@ void UpdateService::retry()
 
 void UpdateService::openHomePage()
 {
-    QDesktopServices::openUrl(QUrl(QStringLiteral("https://palune.app/")));
+    // 主页即本仓公开地址；此前指向的 palune.app 并不存在，点开是空页面。
+    QDesktopServices::openUrl(QUrl(QStringLiteral("https://github.com/yunyu697/palune")));
 }
 
 void UpdateService::recordLastCheck()

@@ -1,24 +1,103 @@
 {
-    "date": "2026-11-08",
+    "date": "2026-11-09",
     "scope": "SETTINGS-GAP §10.2 十项设置的行为级取证（真实窗口/播放器/网络，不是只读键值）",
-    "build": "build/Release/Palune.exe (Release, Qt 6.8.3, Windows)",
-    "method": "PALUNE_PREFS_PROBE 在真实进程内执行；窗口态由 PALUNE_WINDOW_STATE_PROBE 单独冷启动两次；代理用不可达端点触发真实请求",
+    "build": "build/Release/Palune.exe (Release, Qt 6.8.3, MSVC 19.52, Windows, DPR 200%)",
+    "method": "PALUNE_PREFS_PROBE 在真实进程内执行；窗口态由 PALUNE_WINDOW_STATE_PROBE 单独冷启动；更新链路用本地签名 feed（Ed25519，keyId palune-test）跑真实下载；代理用不可达端点触发真实请求",
     "items": [
-        { "id": "closeToTray", "key": "ui.closeToTray", "status": "DONE", "observed": { "visibleBefore": true, "visibleAfter": false, "processAlive": true } },
-        { "id": "minimizeToTray", "key": "ui.minimizeToTray", "status": "DONE", "observed": { "visibleAfter": false } },
-        { "id": "confirmExit", "key": "ui.confirmExit", "status": "DONE", "observed": { "dialogShown": true, "dialogText": "确定要退出 Palune 吗？", "cancelKeptAlive": true } },
-        { "id": "startMaximized", "key": "ui.startMaximized", "status": "DONE", "observed": { "trueRun": { "maximized": true, "size": "1920x1032" }, "falseRun": { "maximized": false, "size": "1180x700" } }, "defect_fixed": "applyGeometry 在 showMaximized 之后执行会把窗口改回普通尺寸；同时补 m_maximized/m_restoreGeometry 同步，避免启动最大化后无法还原" },
-        { "id": "audioDevice", "key": "audio.device", "status": "DONE", "observed": { "devices": 5, "chosen": "wasapi/{067ff86b-2cb2-4511-a750-06670fe28df9}", "readBack": "wasapi/{067ff86b-2cb2-4511-a750-06670fe28df9}" } },
-        { "id": "autoCheckUpdates", "key": "update.autoCheck", "status": "DONE", "observed": { "defaultTrueStateAtProbe": "checking", "seededFalseStateAtProbe": "unchecked" } },
-        { "id": "betaChannel", "key": "update.channel", "status": "DONE_URL_LEVEL", "observed": { "feed": "https://github.com/yunyu697/palune-releases/releases/latest/download/latest-beta.json" }, "not_verified": "beta manifest 的真实拉取（网络环境）" },
-        { "id": "updateProxy", "key": "update.proxy", "status": "DONE", "observed": { "state": "error", "errorCode": "UPD-001", "errorMessage": "网络不可达或请求超时，请检查网络后重试（Connection refused）" } },
-        { "id": "downloadDir", "key": "update.downloadDir", "status": "NOT_VERIFIED", "observed": { "effective": "qa/runtime/p0-behavior2/appdata/Palune/probe-downloads", "isolated": true }, "reason": "缺少可用更新包与签名，无法验证真实下载落盘位置" },
-        { "id": "openLicense", "status": "PARTIAL", "observed": { "licenseFileExists": true, "actionInvoked": true }, "reason": "外部查看器是否成功打开无法自动断言；已验证文件存在与 openLicense 分支调用" }
+        {
+            "id": "closeToTray",
+            "key": "ui.closeToTray",
+            "status": "DONE",
+            "observed": { "visibleBefore": true, "visibleAfter": false, "processAlive": true }
+        },
+        {
+            "id": "minimizeToTray",
+            "key": "ui.minimizeToTray",
+            "status": "DONE",
+            "observed": { "visibleAfter": false }
+        },
+        {
+            "id": "confirmExit",
+            "key": "ui.confirmExit",
+            "status": "DONE",
+            "observed": { "dialogShown": true, "dialogText": "确定要退出 Palune 吗？", "cancelKeptAlive": true }
+        },
+        {
+            "id": "startMaximized",
+            "key": "ui.startMaximized",
+            "status": "DONE",
+            "observed": {
+                "trueRun": { "maximized": true, "size": "1920x1032" },
+                "falseRun": { "maximized": false, "size": "1180x700" }
+            },
+            "defect_fixed": "applyGeometry 在 showMaximized 之后执行会把窗口改回普通尺寸；同时补 m_maximized/m_restoreGeometry 同步，避免启动最大化后无法还原"
+        },
+        {
+            "id": "audioDevice",
+            "key": "audio.device",
+            "status": "DONE",
+            "observed": {
+                "devices": 5,
+                "chosen": "wasapi/{067ff86b-2cb2-4511-a750-06670fe28df9}",
+                "readBack": "wasapi/{067ff86b-2cb2-4511-a750-06670fe28df9}"
+            }
+        },
+        {
+            "id": "autoCheckUpdates",
+            "key": "update.autoCheck",
+            "status": "DONE",
+            "observed": { "autoCheckFired": true, "stateAtProbe": "checking", "seededFalseStateAtProbe": "unchecked" }
+        },
+        {
+            "id": "betaChannel",
+            "key": "update.channel",
+            "status": "DONE_URL_LEVEL",
+            "observed": {
+                "feed": "https://github.com/yunyu697/palune/releases/latest/download/latest-beta.json",
+                "betaFeedIsBeta": true,
+                "switchIsInProcess": true
+            },
+            "not_verified": "beta 清单的真实网络拉取（本机对 github 的匿名主链此前 504），只验证到通道切换确实改写了请求 URL"
+        },
+        {
+            "id": "updateProxy",
+            "key": "update.proxy",
+            "status": "DONE",
+            "observed": {
+                "state": "error",
+                "errorCode": "UPD-001",
+                "errorMessage": "网络不可达或请求超时，请检查网络后重试（直连（官方源）：Connection refused）"
+            },
+            "note": "指向不可达代理后，真实请求失败并回落到「直连」重试，最终以 UPD-001 报错，说明代理配置参与了实际链路"
+        },
+        {
+            "id": "downloadDir",
+            "key": "update.downloadDir",
+            "status": "DONE",
+            "observed": {
+                "downloadDir": "_scratch/e2e-dir/downloads",
+                "downloadedPath": "_scratch/e2e-dir/downloads/Palune-1.0.0-win-x64.exe",
+                "actualSha256": "576fda153af27b2bdb0abb026d95c1510efa4f54e81aefaefb60c28340bfe048",
+                "expectedSha256": "576fda153af27b2bdb0abb026d95c1510efa4f54e81aefaefb60c28340bfe048",
+                "signature": "签名校验通过",
+                "transitions": "checking→available→downloading→downloaded→installing"
+            },
+            "evidence": "docs/evidence/report-e2e-download-dir.json",
+            "note": "本地签名 feed（Ed25519/keyId palune-test）+ 真实 HTTP 下载；为让清单版本高于客户端版本，取证时临时把客户端构建标记为 1.0.0-alpha10，取证后已还原 VERSION=1.0.0 并重新构建，交付包不含该临时标记"
+        },
+        {
+            "id": "openLicense",
+            "status": "PARTIAL",
+            "observed": { "licenseFileExists": true, "actionInvoked": true },
+            "reason": "外部查看器是否成功打开无法自动断言；已验证许可文件存在与 openLicense 分支真实调用"
+        }
     ],
     "raw": [
+        "docs/evidence/settings-probe-rc.json",
         "docs/evidence/settings-behavior-probe-autocheck.json",
         "docs/evidence/settings-behavior-probe.json",
         "docs/evidence/window-state-startmax.json",
-        "docs/evidence/window-state-normal.json"
+        "docs/evidence/window-state-normal.json",
+        "docs/evidence/report-e2e-download-dir.json"
     ]
 }

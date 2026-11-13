@@ -63,19 +63,19 @@ void ThemeRegistry::resolveInitialTheme()
     const QString raw = m_settings ? m_settings->rawTheme() : QString();
     if (raw.isEmpty()) {
         m_currentTheme = kFallbackTheme;
-        m_fallbackReason = QStringLiteral("缺少 [ui] theme，已回退到布局 A");
+        m_fallbackReason = tr("缺少 [ui] theme，已回退到布局 A");
         Log::warn(QStringLiteral("主题：%1").arg(m_fallbackReason));
         return;
     }
     if (!isValidTheme(raw)) {
         m_currentTheme = kFallbackTheme;
-        m_fallbackReason = QStringLiteral("非法主题值 \"%1\"，已回退到布局 A").arg(raw);
+        m_fallbackReason = tr("非法主题值 \"%1\"，已回退到布局 A").arg(raw);
         Log::warn(QStringLiteral("主题：%1").arg(m_fallbackReason));
         return;
     }
     if (!resourceExists(raw)) {
         m_currentTheme = kFallbackTheme;
-        m_fallbackReason = QStringLiteral("主题 %1 资源缺失，已回退到布局 A").arg(raw);
+        m_fallbackReason = tr("主题 %1 资源缺失，已回退到布局 A").arg(raw);
         Log::warn(QStringLiteral("主题：%1").arg(m_fallbackReason));
         return;
     }

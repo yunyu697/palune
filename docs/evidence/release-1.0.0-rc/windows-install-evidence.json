@@ -1,0 +1,60 @@
+{
+  "installer": "dist/Palune-1.0.0-win-x64.exe",
+  "installerBytes": 59725407,
+  "installerSha256": "e9c27fa7ae851be9bc9facfedc3247737a452d8681e77f2ba0e19d0108378fd4",
+  "installDir": "C:\\Temp\\palune-rc-install",
+  "installArgs": "/S /D=C:\\Temp\\palune-rc-install",
+  "installExitCode": 0,
+  "files": {
+    "bin\\Palune.exe": true,
+    "bin\\Qt6Core.dll": true,
+    "bin\\Qt6Gui.dll": true,
+    "bin\\Qt6Qml.dll": true,
+    "bin\\Qt6Quick.dll": true,
+    "bin\\Qt6QuickControls2.dll": true,
+    "bin\\platforms\\qwindows.dll": true,
+    "bin\\vcruntime140.dll": true,
+    "bin\\msvcp140.dll": true,
+    "bin\\libmpv-2.dll": true,
+    "bin\\libsodium.dll": true,
+    "bin\\NOTICE.md": true,
+    "Uninstall.exe": true,
+    "bin\\qml": true
+  },
+  "shortcuts": {
+    "startMenuDirExists": true,
+    "startMenuExe": true,
+    "desktop": true
+  },
+  "uninstallEntry": {
+    "registryKey": "HKLM:\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Palune",
+    "exists": true
+  },
+  "launch": {
+    "exitCode": 0,
+    "report": {
+      "configDir": "C:\\Temp\\palune-rc-cfg",
+      "fallbackReason": "缺少 [ui] theme，已回退到布局 A",
+      "generatedAt": "2026-11-13T15:05:09",
+      "mode": "m2-config-check",
+      "played": false,
+      "playerAvailable": true,
+      "settingsParseFailed": false,
+      "theme": "A",
+      "verdict": "PASS",
+      "version": "1.0.0",
+      "windowReadyMs": 524,
+      "windowReadyWithin800ms": true
+    },
+    "ok": true
+  },
+  "uninstall": {
+    "exitCode": 0,
+    "installDirGone": true,
+    "startMenuGone": true,
+    "desktopGone": true,
+    "registryGone": true
+  },
+  "verdict": "PASS",
+  "generatedAt": "2026-11-13T15:06:00"
+}

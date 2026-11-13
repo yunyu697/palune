@@ -1,0 +1,14 @@
+{
+    "configDir": "C:\\Temp\\palune-rc-cfg",
+    "fallbackReason": "缺少 [ui] theme，已回退到布局 A",
+    "generatedAt": "2026-11-13T15:05:09",
+    "mode": "m2-config-check",
+    "played": false,
+    "playerAvailable": true,
+    "settingsParseFailed": false,
+    "theme": "A",
+    "verdict": "PASS",
+    "version": "1.0.0",
+    "windowReadyMs": 524,
+    "windowReadyWithin800ms": true
+}

@@ -785,7 +785,7 @@ Item {
                             border.color: panelRoot.lineColor
                             clip: true
                             // 预览与实际设置联动：字号、颜色、描边、底部位置。
-                            // 注意单位换算：播放器拿到的 sub-border-size = outline × 2（见 MpvClient），
+                            // 注意单位换算：播放器拿到的 sub-border-size = outline × 2（见播放器适配层），
                             // 预览必须用同一个「实际描边像素」值，否则设置 2.0 时实机 4px、预览只有 2px。
                             OutlinedText {
                                 width: parent.width - 24

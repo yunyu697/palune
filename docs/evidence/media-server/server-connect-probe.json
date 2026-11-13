@@ -1,0 +1,87 @@
+{
+  "server": {
+    "url": "http://127.0.0.1:8096",
+    "user": "paluneui"
+  },
+  "steps": {
+    "empty": {
+      "status": {
+        "textPixels": 1065,
+        "warmPixels": 92
+      }
+    },
+    "test": {
+      "status": {
+        "textPixels": 3629,
+        "warmPixels": 903
+      }
+    },
+    "save": {
+      "status": {
+        "textPixels": 2659,
+        "warmPixels": 901
+      },
+      "configKind": true,
+      "configUrl": true,
+      "configUserId": true,
+      "configAuthMode": true,
+      "configHasPlaintextToken": false,
+      "credentialPresent": true,
+      "logFetch": [
+        "媒体服务器媒体库：3 项（jellyfin）"
+      ],
+      "config": "# Palune 配置文件（M1 起格式冻结，未知键会保留）\n[media.server]\nauthMode = \"password\"\nkind = \"jellyfin\"\nurl = \"http://127.0.0.1:8096\"\nuser = \"paluneui\"\nuserId = \"0070896ea60148c6b389ac2268938e0b\"\n\n[ui]\nlanguage = \"zh_CN\"\ntheme = \"B\"\n"
+    },
+    "restart": {
+      "status": {
+        "textPixels": 1946,
+        "warmPixels": 199
+      },
+      "logFetch": [
+        "媒体服务器媒体库：3 项（jellyfin）",
+        "媒体服务器媒体库：3 项（jellyfin）"
+      ],
+      "configHasPlaintextToken": false
+    },
+    "delete": {
+      "status": {
+        "textPixels": 1683,
+        "warmPixels": 698
+      },
+      "configHasServer": false,
+      "credentialPresent": false
+    },
+    "unreachable": {
+      "status": {
+        "textPixels": 4019,
+        "warmPixels": 3108
+      }
+    },
+    "badPassword": {
+      "status": {
+        "textPixels": 4733,
+        "warmPixels": 3599
+      }
+    },
+    "migration": {
+      "beforeHasPlaintextToken": true,
+      "afterHasPlaintextToken": false,
+      "migrationLogged": true,
+      "credentialPresent": true,
+      "libraryLoaded": true,
+      "logLines": [
+        "媒体服务器 token 已迁移至系统凭据存储，并从 settings.toml 删除",
+        "媒体服务器媒体库：3 项（jellyfin）"
+      ],
+      "before": "[ui]\ntheme = \"B\"\nlanguage = \"zh_CN\"\n\n[media.server]\nkind = \"jellyfin\"\nurl = \"http://127.0.0.1:8096\"\nuserId = \"2ed679c08a5740ef87089ae13f32fed6\"\nauthMode = \"password\"\ntoken = \"a016e9705058477bb2e9b16c96a6a6a8\"\n",
+      "after": "# Palune 配置文件（M1 起格式冻结，未知键会保留）\n[media.server]\nauthMode = \"password\"\nkind = \"jellyfin\"\nurl = \"http://127.0.0.1:8096\"\nuserId = \"2ed679c08a5740ef87089ae13f32fed6\"\n\n[ui]\nlanguage = \"zh_CN\"\ntheme = \"B\"\n",
+      "status": {
+        "textPixels": 0,
+        "warmPixels": 0
+      }
+    }
+  },
+  "credentialBackup": {
+    "existed": true
+  }
+}

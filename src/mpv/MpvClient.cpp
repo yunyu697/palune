@@ -258,8 +258,10 @@ bool MpvClient::openFile(const QString &path)
         m_loadError = QCoreApplication::translate("Palune", "mpv 尚未初始化");
         return false;
     }
-    QFileInfo fi(path);
-    const QString absolute = fi.absoluteFilePath();
+    // 网络地址（http/https 等）必须原样交给 mpv；QFileInfo 会把它改写成
+    // 工作目录下的本地路径（http:\127.0.0.1\...），导致 loadfile 打不开。
+    const bool remote = path.contains(QStringLiteral("://"));
+    const QString absolute = remote ? path : QFileInfo(path).absoluteFilePath();
     const QByteArray fileUtf8 = absolute.toUtf8();
     const char *args[] = {"loadfile", fileUtf8.constData(), "replace", nullptr};
     const int rc = m_api->command(m_mpv, args);

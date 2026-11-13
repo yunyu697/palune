@@ -162,6 +162,7 @@ private:
     bool m_ready = false;
     double m_pendingResume = -1.0;
     qint64 m_lastResumeSaveMs = 0;
+    qint64 m_lastRemoteReportMs = 0;
     bool m_fullscreen = false;
     bool m_minimized = false;
     bool m_maximized = false;

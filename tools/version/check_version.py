@@ -53,12 +53,12 @@ def main() -> None:
         rel = path.relative_to(ROOT)
         if rel.as_posix() == "tools/version/check_version.py":
             continue
-        # 证据目录里的原始响应头/Cookie 不是版本来源，跳过（如 GitHub Set-Cookie 的 GH1.x.y）。
-        if rel.as_posix().startswith("docs/evidence/") and path.name.endswith(".log.txt"):
+        # 证据目录是历史输出（含第三方软件/服务端版本号，如 Jellyfin 10.11.11），不是版本来源。
+        if rel.as_posix().startswith("docs/evidence/"):
             continue
         # 本地构建目录（build*、dist）与依赖目录不是版本号来源，跳过；
         # 否则 CMakeCache 里的编译器版本会被当成越界版本字面量。
-        skip_parts = {".git", "third_party", "qa", "tests", "tools", "dist"}
+        skip_parts = {".git", "third_party", "qa", "tests", "tools", "dist", "_scratch"}
         if any(part in skip_parts or part.startswith("build") for part in rel.parts):
             continue
         if path.suffix.lower() not in {".txt", ".md", ".json", ".yml", ".yaml", ".cmake", ".py", ".cpp", ".h", ".qml"}:

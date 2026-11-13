@@ -1,9 +1,11 @@
 #pragma once
 
 #include <QCoreApplication>
+#include <QHash>
 #include <QList>
 #include <QObject>
 #include <QStringList>
+#include <QUrl>
 #include <QVariantList>
 
 #include <memory>
@@ -33,6 +35,14 @@ class MediaLibraryService : public QObject
     Q_PROPERTY(QString viewMode READ viewMode WRITE setViewMode NOTIFY viewModeChanged)
     Q_PROPERTY(QString indexFile READ indexFile CONSTANT)
     Q_PROPERTY(QString scanStatus READ scanStatus NOTIFY scanStatusChanged)
+    Q_PROPERTY(QString serverStatus READ serverStatus NOTIFY serverStatusChanged)
+    Q_PROPERTY(QString serverKind READ serverKind NOTIFY serverStatusChanged)
+    Q_PROPERTY(QString serverUrl READ serverUrl NOTIFY serverStatusChanged)
+    Q_PROPERTY(QString serverUser READ serverUser NOTIFY serverStatusChanged)
+    Q_PROPERTY(QString serverAccount READ serverAccount NOTIFY serverStatusChanged)
+    Q_PROPERTY(QString serverAuthMode READ serverAuthMode NOTIFY serverStatusChanged)
+    Q_PROPERTY(bool serverConnected READ serverConnected NOTIFY serverStatusChanged)
+    Q_PROPERTY(bool serverFailed READ serverFailed NOTIFY serverStatusChanged)
 
 public:
     explicit MediaLibraryService(QObject *parent = nullptr);
@@ -62,6 +72,34 @@ public:
     QString viewMode() const { return m_viewMode; }
     QString indexFile() const;
     QString scanStatus() const { return m_scanStatus; }
+    QString serverStatus() const { return m_serverStatus; }
+    QString serverKind() const { return m_serverKind; }
+    QString serverUrl() const { return m_serverUrl; }
+    QString serverUser() const { return m_serverUser; }
+    // 登录名（表单回填用）；serverUser 是 Jellyfin 的 userId，两者不能混用。
+    QString serverAccount() const { return m_serverAccount; }
+    QString serverAuthMode() const { return m_serverAuthMode; }
+    bool serverConnected() const { return static_cast<bool>(m_server); }
+    bool serverFailed() const { return m_serverFailed; }
+
+    // 媒体服务器（Jellyfin 协议族）：认证成功后保存会话并拉取媒体库。
+    // kind 取 jellyfin / emby / jellyfin-compat（极空间、飞牛）的稳定 id；
+    // authMode 取 password（用户名+密码）或 apikey（Jellyfin 控制台生成的密钥）。
+    bool connectServer(const QUrl &baseUrl, const QString &kind, const QString &user,
+                       const QString &secret, const QString &authMode, QString *error = nullptr);
+    void disconnectServer();
+
+    // 设置页表单入口：测试不落盘；保存会写凭据存储并立即拉库；删除清空配置与会话。
+    Q_INVOKABLE bool testServerConnection(const QString &kind, const QString &url,
+                                          const QString &user, const QString &secret,
+                                          const QString &authMode);
+    Q_INVOKABLE bool saveServerConnection(const QString &kind, const QString &url,
+                                          const QString &user, const QString &secret,
+                                          const QString &authMode);
+    Q_INVOKABLE void removeServerConnection();
+    // 播放进度回写：path 为条目播放地址；stopped 为真时发送停止事件。
+    Q_INVOKABLE bool reportRemoteProgress(const QString &path, double positionSeconds,
+                                          bool stopped = false);
 
     Q_INVOKABLE void refresh();
     Q_INVOKABLE void addRoot();
@@ -84,15 +122,35 @@ signals:
     void rootsChanged();
     void viewModeChanged();
     void scanStatusChanged();
+    void serverStatusChanged();
 
 private:
     void scanInBackground();
     void persistIndex(const QVariantList &items) const;
     void setScanning(bool scanning);
     void setScanStatus(const QString &status);
+    void setServerStatus(const QString &status);
+    void setServerFailure(const QString &error);
     QString thumbDir() const;
 
+    // 远端条目与本地索引合并；本地扫描完成时复用同一入口。
+    void rebuildItems();
+    void refreshServer();
+    QVariantMap mapRemoteItem(const MediaItem &item) const;
+
     QList<std::shared_ptr<MediaServerAdapter>> m_adapters;
+    QVariantList m_localItems;
+    QVariantList m_remoteItems;
+    QList<MediaItem> m_serverItems;
+    QHash<QString, QString> m_playSessions;
+    std::shared_ptr<MediaServerAdapter> m_server;
+    QString m_serverStatus;
+    QString m_serverKind;
+    QString m_serverUrl;
+    QString m_serverUser;
+    QString m_serverAccount;
+    QString m_serverAuthMode = QStringLiteral("password");
+    bool m_serverFailed = false;
     QVariantList m_libraries;
     QVariantList m_items;
     QStringList m_roots;

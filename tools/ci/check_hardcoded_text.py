@@ -23,6 +23,8 @@ WHITELIST = {
     "PALUNE", "Palune ", "Qt ", "-10s", "+10s", "-10", "+10", "x", "%", "",
     "—", "−", "\\u2014", "\\u2715", "×", "  · ",
     "600 nits", "800 nits", "1000 nits", "UTF-8", "GB18030", "English",
+    # 产品名与示例地址不参与翻译。
+    "Jellyfin", "Emby", "http://jellyfin.local:8096",
 }
 NEUTRAL = re.compile(r"^[0-9+\-.,:%/ ]*$")
 COLOR = re.compile(r"^#[0-9a-fA-F]{3,8}$")

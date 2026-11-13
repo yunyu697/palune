@@ -363,7 +363,7 @@ Item {
                                             if (panelRoot.hasWindow)
                                                 win.action("setTheme", modelData)
                                         }
-                                        ToolTip.visible: hovered
+                                        ToolTip.visible: themeCardHit.containsMouse
                                         ToolTip.delay: 600
                                         ToolTip.text: modelData === "A"
                                                       ? qsTr("经典：顶部悬浮标题条 + 底部双行控制栏，无侧栏")
@@ -1027,9 +1027,35 @@ Item {
 
                     // 5 媒体库（账户状态 + 根目录管理；P0 补齐设置页入口）
                     ColumnLayout {
+                        id: serverForm
                         Layout.fillWidth: true
                         visible: panelRoot.page === 5
                         spacing: 12
+
+                        // 表单状态挂在 serverForm 上，子项必须用 serverForm.xxx 访问：
+                        // QML 的作用域只到「本对象 + 组件根对象 + id」，中间对象的属性对后代不可见。
+                        property string serverKindValue: "jellyfin"
+                        property string serverAuthValue: "password"
+                        property string serverBusyText: ""
+                        // 只在明确是 API Key 模式时才切明文输入，其余一律按密码掩码。
+                        readonly property bool apiKeyMode: serverAuthValue === "apikey"
+
+                        function syncServerForm() {
+                            if (library.serverUrl !== "")
+                                serverUrlField.text = library.serverUrl
+                            if (library.serverAccount !== "")
+                                serverUserField.text = library.serverAccount
+                            var kind = library.serverKind
+                            if (kind === "zhispace" || kind === "feiniu")
+                                kind = "jellyfin-compat"
+                            // 存储里可能是空串或缺省值：必须落回受支持的稳定 id，
+                            // 否则会把 undefined 传给服务层，认证前就被判为「不支持的类型」。
+                            serverKindValue = (kind === "jellyfin" || kind === "emby"
+                                               || kind === "jellyfin-compat") ? kind : "jellyfin"
+                            serverAuthValue = library.serverAuthMode === "apikey" ? "apikey" : "password"
+                        }
+                        onVisibleChanged: if (visible) syncServerForm()
+                        Component.onCompleted: if (visible) syncServerForm()
 
                         Text { text: qsTr("账户"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
                         Text {
@@ -1038,6 +1064,178 @@ Item {
                             font.pixelSize: 11
                             wrapMode: Text.WordWrap
                             Layout.fillWidth: true
+                        }
+
+                        Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
+
+                        // 媒体服务器连接表单：认证成功后立即拉库；token 只进系统凭据存储。
+                        Text { text: qsTr("媒体服务器（Jellyfin / Emby）"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text {
+                            text: qsTr("极空间、飞牛等兼容 Jellyfin 协议的设备请选「其他 Jellyfin」。密码或 API Key 保存在系统凭据存储（Windows 凭据管理器 / macOS 钥匙串 / libsecret），不写入配置文件。")
+                            color: panelRoot.mutedColor
+                            font.pixelSize: 11
+                            wrapMode: Text.WordWrap
+                            Layout.fillWidth: true
+                        }
+
+                        RowLayout {
+                            spacing: 10
+                            Text { text: qsTr("类型"); color: panelRoot.mutedColor; font.pixelSize: 12; Layout.preferredWidth: 56 }
+                            SettingCycle {
+                                id: serverKindCycle
+                                current: serverForm.serverKindValue
+                                options: [
+                                    { label: "Jellyfin", value: "jellyfin" },
+                                    { label: "Emby", value: "emby" },
+                                    { label: qsTr("其他 Jellyfin（极空间 / 飞牛）"), value: "jellyfin-compat" }
+                                ]
+                                onPicked: function(value) { serverForm.serverKindValue = value }
+                            }
+                            Item { Layout.fillWidth: true }
+                            Text {
+                                text: qsTr("登录方式")
+                                color: panelRoot.mutedColor
+                                font.pixelSize: 12
+                            }
+                            SettingCycle {
+                                id: serverAuthCycle
+                                current: serverForm.serverAuthValue
+                                options: [
+                                    { label: qsTr("用户名 + 密码"), value: "password" },
+                                    { label: qsTr("API Key"), value: "apikey" }
+                                ]
+                                onPicked: function(value) { serverForm.serverAuthValue = value }
+                            }
+                        }
+
+                        RowLayout {
+                            spacing: 10
+                            Text { text: qsTr("服务器地址"); color: panelRoot.mutedColor; font.pixelSize: 12; Layout.preferredWidth: 56 }
+                            TextField {
+                                id: serverUrlField
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 30
+                                placeholderText: "http://jellyfin.local:8096"
+                                placeholderTextColor: "#6b7178"
+                                color: panelRoot.textColor
+                                font.pixelSize: 12
+                                selectByMouse: true
+                                leftPadding: 8
+                                rightPadding: 8
+                                background: Rectangle {
+                                    radius: 8
+                                    color: "#14ffffff"
+                                    border.width: 1
+                                    border.color: serverUrlField.activeFocus ? panelRoot.accent : panelRoot.lineColor
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            spacing: 10
+                            visible: serverForm.serverAuthValue !== "apikey"
+                            Text { text: qsTr("用户名"); color: panelRoot.mutedColor; font.pixelSize: 12; Layout.preferredWidth: 56 }
+                            TextField {
+                                id: serverUserField
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 30
+                                placeholderText: qsTr("Jellyfin 用户名")
+                                placeholderTextColor: "#6b7178"
+                                color: panelRoot.textColor
+                                font.pixelSize: 12
+                                selectByMouse: true
+                                leftPadding: 8
+                                rightPadding: 8
+                                background: Rectangle {
+                                    radius: 8
+                                    color: "#14ffffff"
+                                    border.width: 1
+                                    border.color: serverUserField.activeFocus ? panelRoot.accent : panelRoot.lineColor
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            spacing: 10
+                            Text {
+                                text: serverForm.apiKeyMode ? qsTr("API Key") : qsTr("密码")
+                                color: panelRoot.mutedColor
+                                font.pixelSize: 12
+                                Layout.preferredWidth: 56
+                            }
+                            TextField {
+                                id: serverSecretField
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 30
+                                placeholderText: serverForm.apiKeyMode
+                                                 ? qsTr("控制台 → 高级 → API 密钥")
+                                                 : qsTr("密码")
+                                placeholderTextColor: "#6b7178"
+                                color: panelRoot.textColor
+                                font.pixelSize: 12
+                                echoMode: serverForm.apiKeyMode ? TextField.Normal : TextField.Password
+                                selectByMouse: true
+                                leftPadding: 8
+                                rightPadding: 8
+                                background: Rectangle {
+                                    radius: 8
+                                    color: "#14ffffff"
+                                    border.width: 1
+                                    border.color: serverSecretField.activeFocus ? panelRoot.accent : panelRoot.lineColor
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            PillButton {
+                                label: qsTr("测试连接")
+                                onClicked: {
+                                    serverForm.serverBusyText = qsTr("正在测试连接…")
+                                    Qt.callLater(function() {
+                                        library.testServerConnection(serverForm.serverKindValue, serverUrlField.text,
+                                                                     serverUserField.text, serverSecretField.text,
+                                                                     serverForm.serverAuthValue)
+                                        serverForm.serverBusyText = ""
+                                    })
+                                }
+                            }
+                            PillButton {
+                                label: qsTr("保存并连接")
+                                onClicked: {
+                                    serverForm.serverBusyText = qsTr("正在保存并拉取媒体库…")
+                                    Qt.callLater(function() {
+                                        var ok = library.saveServerConnection(serverForm.serverKindValue, serverUrlField.text,
+                                                                              serverUserField.text, serverSecretField.text,
+                                                                              serverForm.serverAuthValue)
+                                        serverForm.serverBusyText = ""
+                                        if (ok) {
+                                            serverSecretField.text = ""
+                                            serverUserField.text = library.serverAccount
+                                        }
+                                    })
+                                }
+                            }
+                            PillButton {
+                                label: qsTr("删除连接")
+                                onClicked: {
+                                    library.removeServerConnection()
+                                    serverSecretField.text = ""
+                                }
+                            }
+                            Item { Layout.fillWidth: true }
+                        }
+
+                        // 状态单独占一行：与按钮同排时会被 RowLayout 压成 0 宽而不显示。
+                        Text {
+                            id: serverStatusText
+                            Layout.fillWidth: true
+                            text: qsTr("状态：") + (serverForm.serverBusyText !== "" ? serverForm.serverBusyText
+                                          : (library.serverStatus === "" ? qsTr("未连接") : library.serverStatus))
+                            color: library.serverFailed && serverForm.serverBusyText === "" ? "#e08a8a" : panelRoot.mutedColor
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
                         }
 
                         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }

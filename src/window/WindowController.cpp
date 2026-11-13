@@ -118,6 +118,12 @@ WindowController::WindowController(MpvClient *player,
                 return;
             m_lastResumeSaveMs = now;
             saveResumePosition();
+            // 媒体服务器条目：每 10 秒把播放位置回写给服务器。
+            if (m_library && m_player->filePath().contains(QStringLiteral("://"))
+                && now - m_lastRemoteReportMs >= 10000) {
+                m_lastRemoteReportMs = now;
+                m_library->reportRemoteProgress(m_player->filePath(), pos);
+            }
         });
     }
 }
@@ -135,6 +141,11 @@ void WindowController::saveResumePosition()
 
 WindowController::~WindowController()
 {
+    // 退出时给远端条目补停止事件，服务器才能落下最终播放位置。
+    if (m_library && m_player && !m_player->filePath().isEmpty()
+        && m_player->filePath().contains(QStringLiteral("://"))) {
+        m_library->reportRemoteProgress(m_player->filePath(), m_player->position(), true);
+    }
     delete m_settingsWindow;
     m_settingsWindow = nullptr;
     delete m_overlay;
@@ -959,6 +970,14 @@ void WindowController::openSettingsWindow()
         static_cast<QObject *>(m_settingsWindow)->setParent(this);
     }
     m_settingsWindow->open(m_overlay->geometry());
+    // 自动化与手工排查：直接落到指定设置页（例如 PALUNE_SETTINGS_PAGE=5 打开媒体库页）。
+    const QString pageText = qEnvironmentVariable("PALUNE_SETTINGS_PAGE");
+    if (!pageText.isEmpty()) {
+        bool ok = false;
+        const int page = pageText.toInt(&ok);
+        if (ok)
+            m_settingsWindow->setPage(page);
+    }
 }
 
 void WindowController::closeSettingsWindow()
@@ -1009,6 +1028,12 @@ void WindowController::openFile(const QUrl &url)
         return;
     // 切文件前先记住当前文件的进度。
     saveResumePosition();
+    // 远端条目切换时补一条停止事件，服务器据此落最终位置。
+    {
+        const QString previous = m_player->filePath();
+        if (m_library && !previous.isEmpty() && previous.contains(QStringLiteral("://")))
+            m_library->reportRemoteProgress(previous, m_player->position(), true);
+    }
     m_pendingResume = m_settings ? m_settings->resumePosition(path) : -1.0;
     if (m_preferences && !m_preferences->resumePlayback())
         m_pendingResume = -1.0;

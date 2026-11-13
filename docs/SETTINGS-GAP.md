@@ -149,8 +149,9 @@
 | 用户复审点名 · 账户 | **有入口，功能显式延后** | 设置「媒体库」页顶部写明“本地模式：不提供账户、登录与云端同步；账户体系 1.1 之后显式延后”。无键、无后端 |
 | 用户复审点名 · 媒体库 → 根目录管理 | **有（设置页）** | 显示根目录列表 + 移除；添加目录、重新扫描、打开媒体库、打开索引目录；复用 `library.roots`；默认空 |
 | 用户复审点名 · 媒体库 → 设置页入口 | **有**（第 6 页「媒体库」） | 默认视图 `library.viewMode`（poster/list）即时生效并持久化；条目数/扫描状态/索引路径可见 |
+| 媒体库 → 连接媒体服务器 | **有**（第 6 页「媒体库」表单） | 地址、类型（Jellyfin / Emby / 其他 Jellyfin）、登录方式（用户名密码 / API Key）、测试连接、保存、删除、状态（已连接 / 认证失败 / 不可达）；保存后立即拉库，重启回填。token 只写系统凭据存储，`settings.toml` 无明文；旧明文 token 启动时迁移并删除 |
 
-> 证据：`docs/evidence/shots/p0-settings/settings-page5-zh.png`（预置 1 个根目录，显示“条目 1 · 根目录 1 · 已索引 1 项”、索引路径、移除按钮）。
+> 证据：`docs/evidence/shots/p0-settings/settings-page5-zh.png`（预置 1 个根目录，显示“条目 1 · 根目录 1 · 已索引 1 项”、索引路径、移除按钮）。连接表单：`docs/evidence/media-server/server-connect-probe.json` 与 `server-form-empty/filled/test-ok/saved/restart-prefilled/deleted/fail-*.png`。
 
 ## 10. 只有入口没有功能 / 运行时未验证 汇总
 
@@ -176,8 +177,8 @@
 | 自动检查更新 | `update.autoCheck` | **DONE** 默认 true 启动后 updater 离开 `unchecked`；预置 false 时保持 `unchecked`（对照） | `settings-behavior-probe-autocheck.json` / 上式 |
 | beta 通道 | `update.channel` | **DONE（URL 级）** 切 beta 后 feed 变为 `.../latest-beta.json`；beta manifest 真实拉取未验证（网络环境） | `settings-behavior-probe.json` |
 | 网络代理 | `update.proxy` | **DONE** `manual:127.0.0.1:1` + 不可达 feed → `error` / `UPD-001 Connection refused` | 同上 |
-| 下载目录 | `update.downloadDir` | **PARTIAL / NOT_VERIFIED** 配置与有效路径已写入更新服务；真实更新包落盘未验证（无可用包与签名） | 同上 |
-| 许可打开 | — | **PARTIAL** `NOTICE.md` 存在且 `openLicense` 分支被真实调用；外部查看器是否成功打开不做断言（NOT_VERIFIED） | 同上 |
+| 下载目录 | `update.downloadDir` | **DONE** 配置与有效路径写入更新服务；另用本地签名 feed 跑通真实下载，落盘路径与 SHA-256 一致 | 同上；`report-e2e-download-dir.json` |
+| 许可打开 | — | **DONE（应用侧）** `licensePath()` 解析出 `NOTICE.md` 真实存在，探针走真实 `openLicense` 分支并落日志「打开许可文件：…」；**外部查看器是否成功拉起无法自动断言，已列入人工验收** `docs/manual-acceptance.md` §1 | `settings-behavior-probe-20261113.json` |
 
 > `settings-probe.json` 已真实覆盖并重读成功：字幕字号/颜色/描边/位置/延迟、自动加载/编码、音频延迟/声道、硬解/缓存、HDR/去隔行、音量/静音、紧凑断点、改键、beta feed 字符串、重启保持。上表之外仍以值级证据为准。
 
@@ -189,7 +190,7 @@
 2. **界面语言入口（P0）**：“通用”页把静态文案替换为语言选择（跟随系统/简体中文/English），键建议 `ui.language`，默认“跟随系统”，重启或即时重建翻译均可；同时删除“只提供中文 UI”的错误文案（中英 i18n 已存在）。
 3. **预览联动整组（P3，但属“改了没反应”）**：字幕预览描边宽度绑定 `sub.outline`；B 第三栏字幕预览改为绑定真实 prefs；BT.2390 曲线与“目标 nits”绑定 `playback.targetPeakNits`，不再写死。
 4. **账户/媒体库入口整组（P3）**：设置页加“媒体库”分组（根目录增删、重新扫描、索引路径），或明确从 IA 中删除该入口；账户当前无后端，**显式延后并在文档写明**。
-5. **设置运行时取证整组（P0）**：§10.2 十项已跑真实进程；8 项 DONE，2 项（下载落盘、外部查看器）标 NOT_VERIFIED 并写明原因。证据在 `docs/evidence/settings-behavior-probe*.json`、`window-state-*.json`。
+5. **设置运行时取证整组（P0）**：§10.2 十项已跑真实进程；9 项 DONE，beta 通道为 DONE（URL 级，清单真实拉取受网络环境限制）；外部查看器拉起属人工清单，见 `docs/manual-acceptance.md`。证据在 `docs/evidence/settings-behavior-probe*.json`、`window-state-*.json`、`report-e2e-download-dir.json`。
 
 ### 11.2 建议显式延后
 

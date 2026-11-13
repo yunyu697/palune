@@ -17,6 +17,8 @@ qt_standard_project_setup()
 add_library(palune_core STATIC
     src/core/AppPaths.cpp
     src/core/AppPaths.h
+    src/core/CredentialStore.cpp
+    src/core/CredentialStore.h
     src/core/ProcessMetrics.cpp
     src/core/ProcessMetrics.h
     src/core/StartupClock.cpp
@@ -44,6 +46,12 @@ add_library(palune_core STATIC
     src/media/ThumbnailProvider.cpp
     src/media/ThumbnailProvider.h
     src/media/MediaServerAdapter.h
+    src/media/MediaServerHttp.cpp
+    src/media/MediaServerHttp.h
+    src/media/JellyfinAdapter.cpp
+    src/media/JellyfinAdapter.h
+    src/media/PlexAdapter.cpp
+    src/media/PlexAdapter.h
     src/media/Types.h
     src/update/UpdateManifest.cpp
     src/update/UpdateManifest.h
@@ -73,7 +81,8 @@ target_compile_definitions(palune_core PUBLIC
 )
 if(WIN32)
     # ole32：ThumbnailProvider 用 IShellItemImageFactory（SHCreateItemFromParsingName）。
-    target_link_libraries(palune_core PUBLIC user32 dwmapi shell32 psapi ole32)
+    # advapi32：CredentialStore 用 CredWriteW / CredReadW / CredDeleteW。
+    target_link_libraries(palune_core PUBLIC user32 dwmapi shell32 psapi ole32 advapi32)
 endif()
 
 qt_add_executable(Palune
@@ -364,6 +373,12 @@ add_test(NAME core COMMAND tst_core)
 add_executable(tst_actions tests/unit/tst_actions.cpp)
 target_link_libraries(tst_actions PRIVATE palune_core Qt6::Test)
 add_test(NAME actions COMMAND tst_actions)
+
+# 适配器真机联调：未设置 PALUNE_LIVE_JELLYFIN_* 时自动跳过，不依赖网络。
+add_executable(tst_adapter_live tests/unit/tst_adapter_live.cpp)
+target_link_libraries(tst_adapter_live PRIVATE palune_core Qt6::Test)
+palune_copy_runtime_libs(tst_adapter_live)
+add_test(NAME adapter_live COMMAND tst_adapter_live)
 
 # Preferences 是配置持久化的唯一入口（QML 改设置 → 立即落盘）。
 add_executable(tst_preferences tests/unit/tst_preferences.cpp)

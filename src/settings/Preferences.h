@@ -173,6 +173,8 @@ public:
     Q_INVOKABLE void chooseDownloadDir();
     Q_INVOKABLE void chooseSubtitleFile();
     Q_INVOKABLE void openLicense();
+    // 解析到的许可文件绝对路径（空表示没找到）；自动化据此断言文件存在。
+    Q_INVOKABLE QString licensePath() const;
     Q_INVOKABLE void openConfigDir();
     Q_INVOKABLE void openCrashDir();
     Q_INVOKABLE QString downloadDirEffective() const;

@@ -1,0 +1,30 @@
+{
+    "probe": "POST https://plex.tv/api/v2/pins?strong=true",
+    "date": "2026-11-13T16:12:25+08:00",
+    "httpStatus": 201,
+    "requestHeaders": {
+        "X-Plex-Product": "Palune",
+        "X-Plex-Version": "1.0.0",
+        "X-Plex-Client-Identifier": "palune-desktop-1",
+        "X-Plex-Platform": "Windows",
+        "X-Plex-Device": "Desktop",
+        "Accept": "application/json"
+    },
+    "response": {
+        "id": 1334938708,
+        "code": "<redacted>",
+        "product": "Palune",
+        "trusted": false,
+        "clientIdentifier": "palune-desktop-1",
+        "expiresIn": 1800,
+        "createdAt": "2026-11-13T08:12:25Z",
+        "expiresAt": "2026-11-13T08:42:25Z",
+        "authToken": null
+    },
+    "poll": {
+        "probe": "GET https://plex.tv/api/v2/pins/1334938708?X-Plex-Token=<code>",
+        "httpStatus": 200,
+        "authToken": null,
+        "note": "尚未在浏览器完成授权，authToken 为空，与 pollPin() 的「尚未在浏览器完成授权」分支一致"
+    }
+}

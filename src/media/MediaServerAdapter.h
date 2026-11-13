@@ -18,6 +18,8 @@ public:
         Plex,
         ZhiSpace,
         FeiNiu,
+        // 设置页的「其他 Jellyfin」桶：极空间、飞牛等兼容 Jellyfin 协议的设备。
+        OtherJellyfin,
     };
 
     struct AuthResult {

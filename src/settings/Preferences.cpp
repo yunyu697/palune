@@ -717,20 +717,28 @@ void Preferences::chooseSubtitleFile()
     m_player->addSubtitleFile(file);
 }
 
-void Preferences::openLicense()
+QString Preferences::licensePath() const
 {
     const QStringList candidates = {
         QCoreApplication::applicationDirPath() + QStringLiteral("/NOTICE.md"),
         QCoreApplication::applicationDirPath() + QStringLiteral("/../share/palune/NOTICE.md"),
     };
     for (const QString &path : candidates) {
-        if (QFileInfo::exists(path)) {
-            Log::info(QStringLiteral("打开许可文件：%1").arg(path));
-            QDesktopServices::openUrl(QUrl::fromLocalFile(path));
-            return;
-        }
+        if (QFileInfo::exists(path))
+            return path;
     }
-    Log::warn(QStringLiteral("未找到 NOTICE.md，无法打开许可说明"));
+    return {};
+}
+
+void Preferences::openLicense()
+{
+    const QString path = licensePath();
+    if (path.isEmpty()) {
+        Log::warn(QStringLiteral("未找到 NOTICE.md，无法打开许可说明"));
+        return;
+    }
+    Log::info(QStringLiteral("打开许可文件：%1").arg(path));
+    QDesktopServices::openUrl(QUrl::fromLocalFile(path));
 }
 
 void Preferences::openConfigDir()

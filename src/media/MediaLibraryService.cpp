@@ -1,7 +1,9 @@
 #include "media/MediaLibraryService.h"
 
 #include "core/AppPaths.h"
+#include "core/CredentialStore.h"
 #include "diag/Log.h"
+#include "media/JellyfinAdapter.h"
 #include "media/ThumbnailProvider.h"
 #include "settings/Settings.h"
 
@@ -30,6 +32,41 @@
 namespace palune {
 
 namespace {
+
+// 系统凭据存储里的固定条目：同一安装只保存一台媒体服务器的会话。
+const QString kCredentialService = QStringLiteral("Palune");
+const QString kCredentialAccount = QStringLiteral("media-server");
+
+MediaServerAdapter::Kind kindFromId(const QString &kind)
+{
+    if (kind == QLatin1String("emby"))
+        return MediaServerAdapter::Kind::Emby;
+    if (kind == QLatin1String("zhispace"))
+        return MediaServerAdapter::Kind::ZhiSpace;
+    if (kind == QLatin1String("feiniu"))
+        return MediaServerAdapter::Kind::FeiNiu;
+    if (kind == QLatin1String("jellyfin-compat"))
+        return MediaServerAdapter::Kind::OtherJellyfin;
+    return MediaServerAdapter::Kind::Jellyfin;
+}
+
+bool kindSupported(const QString &kind)
+{
+    return kind == QLatin1String("jellyfin") || kind == QLatin1String("emby")
+        || kind == QLatin1String("jellyfin-compat") || kind == QLatin1String("zhispace")
+        || kind == QLatin1String("feiniu");
+}
+
+// 设置页状态口径：认证失败与不可达分开显示，避免「密码错」被说成「连不上」。
+QString failureText(const QString &error)
+{
+    if (error.startsWith(QStringLiteral("认证失败")))
+        return error;
+    if (error.contains(QStringLiteral("HTTP 401")) || error.contains(QStringLiteral("HTTP 403"))
+        || error.contains(QStringLiteral("API Key")))
+        return QStringLiteral("认证失败：%1").arg(error);
+    return QStringLiteral("无法连接（不可达）：%1").arg(error);
+}
 
 // 扫描上限：索引不至于无限增长，海报墙一次也不会取上万张贴图。
 constexpr int kMaxItems = 2000;
@@ -185,14 +222,337 @@ void MediaLibraryService::load()
     emit rootsChanged();
     emit viewModeChanged();
 
-    m_items = readIndexFile(indexFile());
-    emit itemsChanged();
+    m_localItems = readIndexFile(indexFile());
+    rebuildItems();
     emit libraryChanged();
+
+    // 已保存的服务器会话：启动后延后一拍拉取，避免拖慢首帧。
+    if (m_settings) {
+        m_serverKind = m_settings->value(QStringLiteral("media.server.kind")).toString();
+        m_serverUrl = m_settings->value(QStringLiteral("media.server.url")).toString();
+        m_serverUser = m_settings->value(QStringLiteral("media.server.userId")).toString();
+        m_serverAccount = m_settings->value(QStringLiteral("media.server.user")).toString();
+        m_serverAuthMode = m_settings->value(QStringLiteral("media.server.authMode")).toString();
+        if (m_serverAuthMode.isEmpty())
+            m_serverAuthMode = QStringLiteral("password");
+
+        // token 只从系统凭据存储读取；旧版本的明文键迁移后立即从 settings.toml 删除。
+        QString token = credential::read(kCredentialService, kCredentialAccount);
+        const QString legacyToken = m_settings->value(QStringLiteral("media.server.token")).toString();
+        if (!legacyToken.isEmpty()) {
+            QString credentialError;
+            if (credential::write(kCredentialService, kCredentialAccount, legacyToken,
+                                  &credentialError)) {
+                m_settings->removeValue(QStringLiteral("media.server.token"));
+                m_settings->save();
+                Log::info(QStringLiteral("媒体服务器 token 已迁移至系统凭据存储，"
+                                         "并从 settings.toml 删除"));
+            } else {
+                Log::warn(QStringLiteral("媒体服务器 token 迁移失败（%1），"
+                                         "本次仍使用旧值，明文键暂不删除")
+                              .arg(credentialError));
+            }
+            token = legacyToken;
+        }
+
+        if (!m_serverKind.isEmpty() && !m_serverUrl.isEmpty() && !token.isEmpty()) {
+            auto adapter = std::make_shared<JellyfinAdapter>(kindFromId(m_serverKind));
+            bool ready = true;
+            if (m_serverUser.isEmpty()) {
+                // 旧配置缺 userId（例如只保存了 API Key）：用 /Users/Me 补查。
+                const auto auth = adapter->authenticateWithApiKey(QUrl(m_serverUrl), token);
+                if (!auth.ok) {
+                    setServerFailure(auth.error);
+                    ready = false;
+                } else {
+                    m_serverUser = auth.userId;
+                    m_settings->setValue(QStringLiteral("media.server.userId"), m_serverUser);
+                    m_settings->save();
+                }
+            } else {
+                adapter->restoreSession(QUrl(m_serverUrl), m_serverUser, token);
+            }
+            if (ready) {
+                m_server = adapter;
+                m_serverFailed = false;
+                setServerStatus(QStringLiteral("已连接 %1").arg(adapter->displayName()));
+                QTimer::singleShot(800, this, [this]() { refreshServer(); });
+            }
+            emit serverStatusChanged();
+        } else {
+            m_serverFailed = false;
+            emit serverStatusChanged();
+        }
+    }
 
     if (!m_roots.isEmpty()) {
         // 启动后的首轮扫描延后一拍，不抢窗口创建与首帧的 I/O。
         QTimer::singleShot(600, this, [this]() { scanInBackground(); });
     }
+}
+
+void MediaLibraryService::rebuildItems()
+{
+    QVariantList merged = m_localItems;
+    merged.append(m_remoteItems);
+    m_items = merged;
+    emit itemsChanged();
+}
+
+void MediaLibraryService::setServerStatus(const QString &status)
+{
+    if (m_serverStatus == status)
+        return;
+    m_serverStatus = status;
+    emit serverStatusChanged();
+}
+
+void MediaLibraryService::setServerFailure(const QString &error)
+{
+    m_serverFailed = true;
+    setServerStatus(failureText(error));
+}
+
+bool MediaLibraryService::connectServer(const QUrl &baseUrl, const QString &kind,
+                                        const QString &user, const QString &secret,
+                                        const QString &authMode, QString *error)
+{
+    if (!kindSupported(kind)) {
+        const QString message = QStringLiteral("不支持的服务器类型：%1").arg(kind);
+        m_serverFailed = true;
+        setServerStatus(message);
+        if (error)
+            *error = message;
+        return false;
+    }
+    auto adapter = std::make_shared<JellyfinAdapter>(kindFromId(kind));
+    const bool apiKey = authMode == QLatin1String("apikey");
+    const auto auth = apiKey ? adapter->authenticateWithApiKey(baseUrl, secret)
+                             : adapter->authenticate(baseUrl, user, secret);
+    if (!auth.ok) {
+        setServerFailure(auth.error);
+        if (error)
+            *error = auth.error;
+        return false;
+    }
+
+    // 先落系统凭据存储；写入失败就不改配置，避免出现「配置有、token 丢」的半截状态。
+    QString credentialError;
+    if (!credential::write(kCredentialService, kCredentialAccount, auth.token, &credentialError)) {
+        const QString message =
+            QStringLiteral("保存失败：系统凭据存储不可用（%1）").arg(credentialError);
+        m_serverFailed = true;
+        setServerStatus(message);
+        if (error)
+            *error = message;
+        return false;
+    }
+
+    m_server = adapter;
+    m_serverKind = kind;
+    m_serverUrl = baseUrl.toString();
+    m_serverUser = auth.userId;
+    m_serverAccount = apiKey ? QString() : user;
+    m_serverAuthMode = apiKey ? QStringLiteral("apikey") : QStringLiteral("password");
+    if (m_settings) {
+        m_settings->setValue(QStringLiteral("media.server.kind"), m_serverKind);
+        m_settings->setValue(QStringLiteral("media.server.url"), m_serverUrl);
+        m_settings->setValue(QStringLiteral("media.server.userId"), m_serverUser);
+        m_settings->setValue(QStringLiteral("media.server.authMode"), m_serverAuthMode);
+        if (m_serverAccount.isEmpty())
+            m_settings->removeValue(QStringLiteral("media.server.user"));
+        else
+            m_settings->setValue(QStringLiteral("media.server.user"), m_serverAccount);
+        // 明文键必须消失：token 只在系统凭据存储里。
+        m_settings->removeValue(QStringLiteral("media.server.token"));
+        m_settings->save();
+    }
+    setServerStatus(QStringLiteral("已连接 %1 %2")
+                        .arg(adapter->displayName(), adapter->capabilities().serverVersion));
+    m_serverFailed = false;
+    emit serverStatusChanged();
+    refreshServer();
+    return true;
+}
+
+bool MediaLibraryService::testServerConnection(const QString &kind, const QString &url,
+                                               const QString &user, const QString &secret,
+                                               const QString &authMode)
+{
+    if (!kindSupported(kind)) {
+        m_serverFailed = true;
+        setServerStatus(QStringLiteral("不支持的服务器类型：%1").arg(kind));
+        return false;
+    }
+    auto adapter = std::make_shared<JellyfinAdapter>(kindFromId(kind));
+    const auto auth = authMode == QLatin1String("apikey")
+                          ? adapter->authenticateWithApiKey(QUrl(url), secret)
+                          : adapter->authenticate(QUrl(url), user, secret);
+    if (!auth.ok) {
+        setServerFailure(auth.error);
+        return false;
+    }
+    m_serverFailed = false;
+    setServerStatus(QStringLiteral("连接成功：%1 %2（未保存）")
+                        .arg(adapter->displayName(), adapter->capabilities().serverVersion));
+    return true;
+}
+
+bool MediaLibraryService::saveServerConnection(const QString &kind, const QString &url,
+                                               const QString &user, const QString &secret,
+                                               const QString &authMode)
+{
+    QString error;
+    return connectServer(QUrl(url), kind, user, secret, authMode, &error);
+}
+
+void MediaLibraryService::removeServerConnection()
+{
+    disconnectServer();
+}
+
+void MediaLibraryService::disconnectServer()
+{
+    m_server.reset();
+    m_serverItems.clear();
+    m_remoteItems.clear();
+    m_playSessions.clear();
+    QString credentialError;
+    if (!credential::remove(kCredentialService, kCredentialAccount, &credentialError))
+        Log::warn(QStringLiteral("删除系统凭据失败：%1").arg(credentialError));
+    m_serverKind.clear();
+    m_serverUrl.clear();
+    m_serverUser.clear();
+    m_serverAccount.clear();
+    m_serverAuthMode = QStringLiteral("password");
+    if (m_settings) {
+        m_settings->removeValue(QStringLiteral("media.server.kind"));
+        m_settings->removeValue(QStringLiteral("media.server.url"));
+        m_settings->removeValue(QStringLiteral("media.server.userId"));
+        m_settings->removeValue(QStringLiteral("media.server.user"));
+        m_settings->removeValue(QStringLiteral("media.server.authMode"));
+        m_settings->removeValue(QStringLiteral("media.server.token"));
+        m_settings->save();
+    }
+    setServerStatus(QString());
+    m_serverFailed = false;
+    emit serverStatusChanged();
+    rebuildItems();
+    emit libraryChanged();
+}
+
+void MediaLibraryService::refreshServer()
+{
+    if (!m_server) {
+        m_serverFailed = false;
+        setServerStatus(QStringLiteral("未连接媒体服务器"));
+        return;
+    }
+    QList<MediaItem> all;
+    int offset = 0;
+    bool hasMore = true;
+    QString failure;
+    while (hasMore && all.size() < kMaxItems) {
+        const auto page = m_server->fetchItems(QString(), offset, 200);
+        if (!page.error.isEmpty()) {
+            failure = page.error;
+            break;
+        }
+        all.append(page.items);
+        offset += page.items.size();
+        hasMore = page.hasMore && !page.items.isEmpty();
+    }
+    if (!failure.isEmpty()) {
+        m_serverFailed = true;
+        setServerStatus(QStringLiteral("拉取媒体库失败：%1").arg(failure));
+        Log::warn(QStringLiteral("媒体服务器拉取失败：%1").arg(failure));
+        return;
+    }
+
+    m_serverItems = all;
+    m_remoteItems.clear();
+    for (const MediaItem &item : all)
+        m_remoteItems << mapRemoteItem(item);
+    rebuildItems();
+    emit libraryChanged();
+    m_serverFailed = false;
+    setServerStatus(QStringLiteral("已连接 %1 · %2 项")
+                        .arg(m_server->displayName())
+                        .arg(all.size()));
+    Log::info(QStringLiteral("媒体服务器媒体库：%1 项（%2）")
+                  .arg(all.size()).arg(m_server->id()));
+}
+
+QVariantMap MediaLibraryService::mapRemoteItem(const MediaItem &item) const
+{
+    const QString stream = item.streamUrl.toString();
+    QString title = item.name;
+    if (item.type == QLatin1String("episode") && !item.seriesName.isEmpty()) {
+        title = QStringLiteral("%1 S%2E%3 — %4")
+                    .arg(item.seriesName)
+                    .arg(item.season, 2, 10, QLatin1Char('0'))
+                    .arg(item.episode, 2, 10, QLatin1Char('0'))
+                    .arg(item.name);
+    }
+    const int totalSeconds = static_cast<int>(item.durationSeconds);
+    QVariantMap map;
+    map.insert(QStringLiteral("id"), item.id);
+    map.insert(QStringLiteral("title"), title);
+    map.insert(QStringLiteral("fileName"), item.name);
+    map.insert(QStringLiteral("path"), stream);
+    map.insert(QStringLiteral("url"), item.posterUrl.toString());
+    map.insert(QStringLiteral("folder"), m_server ? m_server->displayName() : QString());
+    map.insert(QStringLiteral("suffix"),
+               item.container.isEmpty() ? QStringLiteral("stream") : item.container);
+    map.insert(QStringLiteral("size"), qint64{0});
+    map.insert(QStringLiteral("sizeText"),
+               QStringLiteral("%1:%2").arg(totalSeconds / 60).arg(totalSeconds % 60, 2, 10,
+                                                                 QLatin1Char('0')));
+    map.insert(QStringLiteral("modified"), QString());
+    map.insert(QStringLiteral("modifiedText"), QString());
+    map.insert(QStringLiteral("thumb"), QString());
+    map.insert(QStringLiteral("poster"), item.posterUrl.toString());
+    map.insert(QStringLiteral("remote"), true);
+    map.insert(QStringLiteral("durationSeconds"), item.durationSeconds);
+    map.insert(QStringLiteral("videoCodec"), item.videoCodec);
+    map.insert(QStringLiteral("audioCodec"), item.audioCodec);
+    return map;
+}
+
+bool MediaLibraryService::reportRemoteProgress(const QString &path, double positionSeconds,
+                                               bool stopped)
+{
+    if (!m_server || path.isEmpty() || positionSeconds <= 0.0)
+        return false;
+    for (const MediaItem &item : m_serverItems) {
+        if (item.streamUrl.toString() != path)
+            continue;
+        QString &sessionId = m_playSessions[path];
+        if (sessionId.isEmpty()) {
+            sessionId = QStringLiteral("palune-%1-%2")
+                            .arg(item.id)
+                            .arg(QDateTime::currentMSecsSinceEpoch());
+        }
+        UserState state;
+        state.itemId = item.id;
+        state.positionSeconds = positionSeconds;
+        state.played = stopped;
+        const auto result = m_server->reportProgress(sessionId, item, state);
+        if (stopped)
+            m_playSessions.remove(path);
+        if (result.ok) {
+            Log::info(QStringLiteral("播放进度回写：%1s（%2）")
+                          .arg(positionSeconds, 0, 'f', 1)
+                          .arg(stopped ? QStringLiteral("stop") : QStringLiteral("progress")));
+        } else {
+            Log::warn(QStringLiteral("播放进度回写失败：%1").arg(result.error));
+        }
+        return result.ok;
+    }
+    if (m_serverItems.isEmpty())
+        return false; // 还在拉库或已在退出流程中拆除
+    Log::warn(QStringLiteral("播放进度回写：未匹配到服务器条目 %1").arg(path));
+    return false;
 }
 
 void MediaLibraryService::registerAdapter(std::shared_ptr<MediaServerAdapter> adapter)
@@ -223,6 +583,8 @@ void MediaLibraryService::unregisterAdapter(const QString &id)
 
 void MediaLibraryService::refresh()
 {
+    if (m_server)
+        refreshServer();
     if (m_roots.isEmpty()) {
         emit libraryChanged();
         return;
@@ -289,6 +651,8 @@ void MediaLibraryService::clearThumbCache()
     // 索引里的 poster 指向已删除的文件，先清空，避免 QML 继续显示失效图片。
     for (QVariant &entry : m_items) {
         QVariantMap item = entry.toMap();
+        if (item.value(QStringLiteral("remote")).toBool())
+            continue;
         item.insert(QStringLiteral("poster"), QString());
         entry = item;
     }
@@ -303,8 +667,8 @@ void MediaLibraryService::rebuildLibraryIndex()
 {
     QFile::remove(indexFile());
     clearDirectory(thumbDir());
-    m_items.clear();
-    emit itemsChanged();
+    m_localItems.clear();
+    rebuildItems();
     emit libraryChanged();
     setScanStatus(QStringLiteral("索引已删除，正在重新扫描…"));
     Log::info(QStringLiteral("媒体库索引已重建：%1").arg(indexFile()));
@@ -435,9 +799,9 @@ void MediaLibraryService::scanInBackground()
         QMetaObject::invokeMethod(
             this,
             [this, scanned, status]() {
-                m_items = scanned;
+                m_localItems = scanned;
                 persistIndex(scanned);
-                emit itemsChanged();
+                rebuildItems();
                 emit libraryChanged();
                 setScanStatus(status);
                 setScanning(false);

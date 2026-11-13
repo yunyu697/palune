@@ -1,0 +1,49 @@
+{
+  "library": {
+    "window": "Palune",
+    "client": [
+      2360,
+      1400
+    ],
+    "serverItemsLogged": true
+  },
+  "click": {
+    "x": 331.0,
+    "y": 196.6,
+    "method": "PostMessage"
+  },
+  "playback": {
+    "started": true,
+    "failed": false,
+    "window": "Palune — stream?static=true&api_key=a016e9705058477bb2e9b16c96a6a6a8&MediaSourceId=1689938400b922d7cfb5a3ff3ac697c9"
+  },
+  "progress": {
+    "remoteReportError": false,
+    "reported": [
+      "播放进度回写：3.2s（progress）",
+      "播放进度回写：13.2s（progress）",
+      "播放进度回写：23.5s（progress）"
+    ],
+    "window": "Palune — stream?static=true&api_key=a016e9705058477bb2e9b16c96a6a6a8&MediaSourceId=1689938400b922d7cfb5a3ff3ac697c9"
+  },
+  "serverSession": [
+    {
+      "client": "Palune",
+      "item": "Palune Resume Movie (2026)",
+      "itemId": "1689938400b922d7cfb5a3ff3ac697c9",
+      "positionTicks": 235000000,
+      "playMethod": "DirectPlay"
+    }
+  ],
+  "closed": false,
+  "serverUserData": {
+    "PlayedPercentage": 6.527777777777779,
+    "PlaybackPositionTicks": 235000000,
+    "PlayCount": 2,
+    "IsFavorite": false,
+    "LastPlayedDate": "2026-11-13T07:51:30.3840379Z",
+    "Played": false,
+    "Key": "16899384-00b9-22d7-cfb5-a3ff3ac697c9",
+    "ItemId": "1689938400b922d7cfb5a3ff3ac697c9"
+  }
+}

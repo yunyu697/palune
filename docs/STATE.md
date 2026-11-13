@@ -2,8 +2,8 @@
 
 > 自动推进的续跑点。每完成一个可验证节点更新本文件；撞到单轮上限时以本文件为准。
 
-更新时间：2026-11-09（Asia/Shanghai）
-当前里程碑：**M4 本地媒体库完成（扫描/索引/缩略图/海报墙/列表），待 M5**
+更新时间：2026-11-13（Asia/Shanghai）
+当前里程碑：**M4 本地媒体库完成；媒体服务器适配器已接（Jellyfin 族真机验证，Plex 未验证）**
 版本：`1.0.0`（**功能冻结候选 RC**，未收口；alpha 段已到上限，按纪律转正式号，但不等于缺口闭合）
 
 ## 里程碑收口标准（长期纪律，之后每个里程碑按此执行）
@@ -34,7 +34,7 @@
 
 ## 设置整组补齐（S1–S6）
 
-按 `docs/SETTINGS-GAP.md` §8 的分组整组补齐；配置键与默认值以 `src/settings/Preferences.cpp` 的注册表为准，运行时取证状态见 `SETTINGS-GAP.md` §10.2（2026-11-08 十项已跑真实进程，8 项 DONE，3 项标 NOT_VERIFIED）。
+按 `docs/SETTINGS-GAP.md` §8 的分组整组补齐；配置键与默认值以 `src/settings/Preferences.cpp` 的注册表为准，运行时取证状态见 `SETTINGS-GAP.md` §10.2（2026-11-08 首次跑真实进程，2026-11-13 复跑并补许可项：十项中 9 项 DONE，beta 通道为 URL 级 DONE，外部查看器拉起归人工清单）。
 
 | 组 | 改动 | 证据 |
 |---|---|---|
@@ -67,9 +67,24 @@
 
 测试：`ctest -C Release` 8/8 PASS（`docs/evidence/tst-media-m4.xml`）。扫描状态文案已从底部移到工具栏下方，避免压住最后一条（本轮截图复验发现并修正）。
 
+## M4+：媒体服务器适配器（Jellyfin 协议族 + Plex）
+
+用户在最早需求里要求支持极空间 / 飞牛 / Jellyfin / Emby / Plex。此前只有接口、没有实现，海报墙与进度同步仅对本地目录生效；本轮补齐实现并做真机验证。
+
+| 项 | 结论 | 证据 |
+|---|---|---|
+| Jellyfin 全链路 | **DONE（真机）**：连接 → 认证 → 媒体库列表 → 海报 → 直链播放 → 进度回写，服务端 `UserData.PlaybackPositionTicks` 与最后一次上报一致 | `docs/evidence/media-server/jellyfin-live.md`、`app-library-posters.png`、`app-probe.json`、`live-adapter-test.txt` |
+| Emby / 极空间 / 飞牛 | **复用同一 `JellyfinAdapter` 路径**；以真实 Jellyfin 换 `Kind` 断言认证与拉库仍通。**未在真实 Emby / 极空间 / 飞牛设备上验证** | `otherJellyfinKinds`（4 passed） |
+| Plex | 适配器已落地并编译（PIN 登录、资源发现、XML 库、`/:/timeline`、`/:/scrobble`）；**PIN 创建 201 / 轮询未授权 authToken=null / 资源发现 401、缺 Client-Identifier 400 已实测**；**无真实 Plex 服务器**，授权完成、库、播放链路未实机断言，不计入完成 | `src/media/PlexAdapter.cpp`、`docs/evidence/media-server/plex-probe.md` |
+| 协议族已知约束 | Jellyfin `MinResumeDurationSeconds=300`：短于 5 分钟的条目不保存续播位置；且必须先发 `/Sessions/Playing` 再发 Progress，位置才落 UserData。适配器已按此实现并在真机验证 | 同上 |
+| 不可验证项 | 应用内视频画面截图（锁屏 + GPU surface）、退出时 stop（探针 WM_CLOSE 未退出）、Plex 全链路 | 同上「尚未验证 / 无法验证」表 |
+| 设置页连接表单 | **DONE（真机）**：设置 →「媒体库」页完成 地址 / 类型（Jellyfin、Emby、其他 Jellyfin 标注极空间与飞牛）/ 用户名密码或 API Key / 测试连接 / 保存 / 删除 / 状态（已连接、认证失败、不可达）；保存后直接可用且重启回填 | `docs/evidence/media-server/server-connect-probe.json`、`server-form-*.png`、`server-restart-prefilled.png` |
+| token 存储 | **DONE（真机）**：token 只写系统凭据存储（Windows Credential Manager / macOS Keychain / libsecret），`settings.toml` 无明文；旧明文 token 启动时迁移并删除 | `server-connect-probe.json`（`configHasPlaintextToken=false`、`beforeHasPlaintextToken→false`、`migrationLogged=true`、`libraryLoaded=true`）|
+| 仍需人工验收 | 真实 Emby / 极空间 / 飞牛设备、Plex 账号与 Plex Pass、macOS Keychain / Linux libsecret、外部查看器拉起、视频画面 | `docs/manual-acceptance.md` |
+
 ### 1.0.0 候选版本（RC）记录
 
-口径：**这是功能冻结候选版本，不是缺口已闭合的正式版**。设置三块 P0 与预览联动已于 11-08 补齐（M2-10 转 DONE），十项行为取证 8 项 DONE、3 项 NOT_VERIFIED；但 P1（生产签名/更新通道、计划文档缺失）未清，对外只写 `1.0.0-RC`，不得称“已收口”。
+口径：**这是功能冻结候选版本，不是缺口已闭合的正式版**。设置三块 P0 与预览联动已于 11-08 补齐（M2-10 转 DONE），十项行为取证 9 项 DONE（beta 通道为 URL 级，外部查看器拉起归人工清单）；但 P1（生产签名/更新通道、计划文档缺失）未清，对外只写 `1.0.0-RC`，不得称“已收口”。
 
 | 项 | 值 |
 |---|---|
@@ -109,7 +124,7 @@
 | 5 | 「打开主页」是死链 | 写死 `https://palune.app/`，该域名无服务 | 改 `https://github.com/yunyu697/palune`；`homepage-link.json`：github HEAD 200，palune.app TLS 失败 |
 | 6 | 设置窗不是独立窗口 | `Qt::Tool` + `setTransientParent` + 主窗几何四连跟随 | 改 `Qt::Window`、去瞬态父窗、只居中一次、删跟随连接；`ownerHandle=0`，主窗移动后设置窗位置不变 |
 
-设置 P0 五组：存储整组（上限 2000MB/保留 14 天/导出导入/重建索引，探针 115.3MB→57.7MB、旧日志清除、索引重建、导入恢复 `ui.autoPlay`）、界面语言（`ui.language` 三选一，重启生效，中英两次启动截图 + ts/qm 补齐）、媒体库入口（设置第 6 页可添加目录/重扫/打开媒体库/改默认视图）、字幕描边预览（`outline × 2` 与 mpv `sub-border-size` 同口径，实测 4.0px）、B 第三栏（PQ + BT.2390 实算曲线，600 nits 拐点/10000→600）。十项行为取证中 8 项 DONE、`betaChannel` 为 URL 级 DONE、`openLicense` 仍 PARTIAL、代理只验证失败链路。
+设置 P0 五组：存储整组（上限 2000MB/保留 14 天/导出导入/重建索引，探针 115.3MB→57.7MB、旧日志清除、索引重建、导入恢复 `ui.autoPlay`）、界面语言（`ui.language` 三选一，重启生效，中英两次启动截图 + ts/qm 补齐）、媒体库入口（设置第 6 页可添加目录/重扫/打开媒体库/改默认视图）、字幕描边预览（`outline × 2` 与 mpv `sub-border-size` 同口径，实测 4.0px）、B 第三栏（PQ + BT.2390 实算曲线，600 nits 拐点/10000→600）。十项行为取证中 9 项 DONE（`betaChannel` 为 URL 级 DONE；`openLicense` 以 `licensePath()` 断言 + 真实分支日志闭合并于 11-13 复跑确认），代理验证失败链路。
 
 出包记录：`dist/build-record.json`（VC Redist 14.52 的六个 CRT 字节数与 SHA-256、Qt 6.8.3、libmpv/libsodium 哈希）。**P0 未闭合前不称收口**，版本仍是 `1.0.0-RC`。
 

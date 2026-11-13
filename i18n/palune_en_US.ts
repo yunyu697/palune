@@ -2,21 +2,6 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="en_US">
 <context>
-    <name>ThemeRegistry</name>
-    <message>
-        <source>缺少 [ui] theme，已回退到布局 A</source>
-        <translation>[ui] theme is missing; fell back to layout A</translation>
-    </message>
-    <message>
-        <source>非法主题值 "%1"，已回退到布局 A</source>
-        <translation>Invalid theme value "%1"; fell back to layout A</translation>
-    </message>
-    <message>
-        <source>主题 %1 资源缺失，已回退到布局 A</source>
-        <translation>Resources for theme %1 are missing; fell back to layout A</translation>
-    </message>
-</context>
-<context>
     <name>EmptyState</name>
     <message>
         <source>媒体库</source>
@@ -679,42 +664,6 @@
 <context>
     <name>SettingsPanel</name>
     <message>
-        <source>经典</source>
-        <translation>Classic</translation>
-    </message>
-    <message>
-        <source>工作台</source>
-        <translation>Workbench</translation>
-    </message>
-    <message>
-        <source>沉浸</source>
-        <translation>Immersive</translation>
-    </message>
-    <message>
-        <source>经典：顶部悬浮标题条 + 底部双行控制栏，无侧栏</source>
-        <translation>Classic: floating title strip on top and a two-row control bar at the bottom, no side panel</translation>
-    </message>
-    <message>
-        <source>工作台：顶部扁平栏 + 右侧常驻检查器，信息密度最高</source>
-        <translation>Workbench: flat top bar plus a persistent inspector on the right; highest information density</translation>
-    </message>
-    <message>
-        <source>沉浸：左上标题胶囊 + 底部悬浮胶囊，最少干扰</source>
-        <translation>Immersive: title capsule at top left and a floating control capsule at the bottom; minimal distraction</translation>
-    </message>
-    <message>
-        <source>[sub] outline，默认 1.0（播放器实际描边 2px = outline × 2，预览同口径），即时生效</source>
-        <translation>[sub] outline, default 1.0 (the player actually uses 2px = outline × 2, and the preview follows the same rule); applies immediately</translation>
-    </message>
-    <message>
-        <source>输入 0–10000 nits（虚线=不压缩）</source>
-        <translation>Input 0–10000 nits (dashed = no compression)</translation>
-    </message>
-    <message>
-        <source>拐点 ≈ %1 nits · 10000 nits 输入映射到 %2 nits</source>
-        <translation>Knee ≈ %1 nits · 10000 nits input maps to %2 nits</translation>
-    </message>
-    <message>
         <source> / </source>
         <translation> / </translation>
     </message>
@@ -751,12 +700,20 @@
         <translation>60 s</translation>
     </message>
     <message>
+        <source>API Key</source>
+        <translation>API Key</translation>
+    </message>
+    <message>
         <source>BT.2390 色调映射</source>
         <translation>BT.2390 tone mapping</translation>
     </message>
     <message>
         <source>HDR 色调映射（BT.2390）</source>
         <translation>HDR tone mapping (BT.2390)</translation>
+    </message>
+    <message>
+        <source>Jellyfin 用户名</source>
+        <translation>Jellyfin username</translation>
     </message>
     <message>
         <source>[audio] channels = auto / stereo / 5.1，即时生效</source>
@@ -819,8 +776,8 @@
         <translation>[sub] fontSize, default 15; applies immediately</translation>
     </message>
     <message>
-        <source>[sub] outline，默认 1.0px，即时生效</source>
-        <translation>[sub] outline, default 1.0px; applies immediately</translation>
+        <source>[sub] outline，默认 1.0（播放器实际描边 2px = outline × 2，预览同口径），即时生效</source>
+        <translation>[sub] outline, default 1.0 (player draws 2 px = outline × 2; preview uses the same scale), applied immediately</translation>
     </message>
     <message>
         <source>[sub] position，默认贴底 8%，即时生效</source>
@@ -889,6 +846,10 @@
         <translation>Theme</translation>
     </message>
     <message>
+        <source>保存并连接</source>
+        <translation>Save and connect</translation>
+    </message>
+    <message>
         <source>信息</source>
         <translation>Info</translation>
     </message>
@@ -917,6 +878,10 @@
         <translation>Off (software decoding)</translation>
     </message>
     <message>
+        <source>其他 Jellyfin（极空间 / 飞牛）</source>
+        <translation>Other Jellyfin (ZSpace / FeiNiu)</translation>
+    </message>
+    <message>
         <source>写入 [diag] logLevel，即时生效；debug 仅用于排查，会产生大量日志</source>
         <translation>Writes [diag] logLevel; applies immediately. Use debug only for troubleshooting; it produces a lot of logs</translation>
     </message>
@@ -939,6 +904,10 @@
     <message>
         <source>列表</source>
         <translation>List</translation>
+    </message>
+    <message>
+        <source>删除连接</source>
+        <translation>Remove connection</translation>
     </message>
     <message>
         <source>加载外挂字幕…</source>
@@ -997,6 +966,10 @@
         <translation>Library: </translation>
     </message>
     <message>
+        <source>媒体服务器（Jellyfin / Emby）</source>
+        <translation>Media server (Jellyfin / Emby)</translation>
+    </message>
+    <message>
         <source>字号</source>
         <translation>Font size</translation>
     </message>
@@ -1033,6 +1006,10 @@
         <translation>Storage</translation>
     </message>
     <message>
+        <source>密码</source>
+        <translation>Password</translation>
+    </message>
+    <message>
         <source>导入配置（重启生效）…</source>
         <translation>Import settings (restart required)…</translation>
     </message>
@@ -1045,8 +1022,12 @@
         <translation>Ready</translation>
     </message>
     <message>
-        <source>布局 </source>
-        <translation>Layout </translation>
+        <source>工作台</source>
+        <translation>Workbench</translation>
+    </message>
+    <message>
+        <source>工作台：顶部扁平栏 + 右侧常驻检查器，信息密度最高</source>
+        <translation>Workbench: flat top bar with a persistent right inspector, highest information density</translation>
     </message>
     <message>
         <source>常规</source>
@@ -1121,12 +1102,20 @@
         <translation>Open config folder</translation>
     </message>
     <message>
+        <source>拐点 ≈ %1 nits · 10000 nits 输入映射到 %2 nits</source>
+        <translation>Knee ≈ %1 nits · 10000 nits input maps to %2 nits</translation>
+    </message>
+    <message>
         <source>按上限立即清理</source>
         <translation>Clean up to the limit now</translation>
     </message>
     <message>
         <source>按键中…</source>
         <translation>Press keys…</translation>
+    </message>
+    <message>
+        <source>控制台 → 高级 → API 密钥</source>
+        <translation>Dashboard → Advanced → API Keys</translation>
     </message>
     <message>
         <source>描边</source>
@@ -1185,11 +1174,6 @@
         <translation>Pause</translation>
     </message>
     <message>
-        <source>曲线预览不可用
-缺少真实 BT.2390 数据源，1.0 不提供图形曲线（非占位图）</source>
-        <translation>Curve preview unavailable\nNo real BT.2390 data source; 1.0 does not ship a graphical curve (not a placeholder).</translation>
-    </message>
-    <message>
         <source>更新</source>
         <translation>Update</translation>
     </message>
@@ -1202,8 +1186,16 @@
         <translation>Hide to tray when minimized</translation>
     </message>
     <message>
+        <source>服务器地址</source>
+        <translation>Server address</translation>
+    </message>
+    <message>
         <source>未打开</source>
         <translation>Not opened</translation>
+    </message>
+    <message>
+        <source>未连接</source>
+        <translation>Not connected</translation>
     </message>
     <message>
         <source>本地模式：不提供账户、登录与云端同步。账户体系无后端支撑，1.1 之后显式延后，不计入 1.0.0 范围。</source>
@@ -1212,6 +1204,10 @@
     <message>
         <source>条目 %1 · 根目录 %2 · 状态：%3</source>
         <translation>Entry %1 · root %2 · status: %3</translation>
+    </message>
+    <message>
+        <source>极空间、飞牛等兼容 Jellyfin 协议的设备请选「其他 Jellyfin」。密码或 API Key 保存在系统凭据存储（Windows 凭据管理器 / macOS 钥匙串 / libsecret），不写入配置文件。</source>
+        <translation>Choose "Other Jellyfin" for Jellyfin-compatible devices such as ZSpace or FeiNiu. Passwords and API keys are stored in the system credential store (Windows Credential Manager / macOS Keychain / libsecret) and never written to the config file.</translation>
     </message>
     <message>
         <source>查看许可与开源声明</source>
@@ -1226,6 +1222,14 @@
         <translation>Detected </translation>
     </message>
     <message>
+        <source>正在保存并拉取媒体库…</source>
+        <translation>Saving and loading library…</translation>
+    </message>
+    <message>
+        <source>正在测试连接…</source>
+        <translation>Testing connection…</translation>
+    </message>
+    <message>
         <source>正在等待新快捷键…按 Esc 取消</source>
         <translation>Waiting for a new shortcut… press Esc to cancel</translation>
     </message>
@@ -1234,8 +1238,20 @@
         <translation>Stable</translation>
     </message>
     <message>
+        <source>沉浸</source>
+        <translation>Immersive</translation>
+    </message>
+    <message>
+        <source>沉浸：左上标题胶囊 + 底部悬浮胶囊，最少干扰</source>
+        <translation>Immersive: floating title pill at the top-left and a floating bottom pill, minimal distraction</translation>
+    </message>
+    <message>
         <source>测试版</source>
         <translation>Beta</translation>
+    </message>
+    <message>
+        <source>测试连接</source>
+        <translation>Test connection</translation>
     </message>
     <message>
         <source>海报墙</source>
@@ -1262,8 +1278,20 @@
         <translation>Status: </translation>
     </message>
     <message>
+        <source>用户名</source>
+        <translation>Username</translation>
+    </message>
+    <message>
+        <source>用户名 + 密码</source>
+        <translation>Username + password</translation>
+    </message>
+    <message>
         <source>界面语言</source>
         <translation>Interface language</translation>
+    </message>
+    <message>
+        <source>登录方式</source>
+        <translation>Sign-in method</translation>
     </message>
     <message>
         <source>白色</source>
@@ -1294,6 +1322,10 @@
         <translation>Simplified Chinese</translation>
     </message>
     <message>
+        <source>类型</source>
+        <translation>Type</translation>
+    </message>
+    <message>
         <source>索引文件：</source>
         <translation>Index file: </translation>
     </message>
@@ -1308,6 +1340,14 @@
     <message>
         <source>紧凑模式</source>
         <translation>Compact mode</translation>
+    </message>
+    <message>
+        <source>经典</source>
+        <translation>Classic</translation>
+    </message>
+    <message>
+        <source>经典：顶部悬浮标题条 + 底部双行控制栏，无侧栏</source>
+        <translation>Classic: floating title bar at the top plus a two-row control bar at the bottom, no side panel</translation>
     </message>
     <message>
         <source>绿色</source>
@@ -1396,6 +1436,10 @@
     <message>
         <source>轨道 </source>
         <translation>Track </translation>
+    </message>
+    <message>
+        <source>输入 0–10000 nits（虚线=不压缩）</source>
+        <translation>Enter 0–10000 nits (dashed = no compression)</translation>
     </message>
     <message>
         <source>输出</source>

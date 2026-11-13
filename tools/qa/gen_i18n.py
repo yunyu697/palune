@@ -351,6 +351,40 @@ TRANSLATIONS = {
     "（尚未生成）": " (not generated yet)",
     "（未绑定）": " (unbound)",
     "）：": "): ",
+    "媒体服务器（Jellyfin / Emby）": "Media server (Jellyfin / Emby)",
+    "极空间、飞牛等兼容 Jellyfin 协议的设备请选「其他 Jellyfin」。密码或 API Key 保存在系统凭据存储（Windows 凭据管理器 / macOS 钥匙串 / libsecret），不写入配置文件。":
+        "Choose \"Other Jellyfin\" for Jellyfin-compatible devices such as ZSpace or FeiNiu. "
+        "Passwords and API keys are stored in the system credential store "
+        "(Windows Credential Manager / macOS Keychain / libsecret) and never written to the config file.",
+    "其他 Jellyfin（极空间 / 飞牛）": "Other Jellyfin (ZSpace / FeiNiu)",
+    "用户名 + 密码": "Username + password",
+    "服务器地址": "Server address",
+    "用户名": "Username",
+    "Jellyfin 用户名": "Jellyfin username",
+    "密码": "Password",
+    "控制台 → 高级 → API 密钥": "Dashboard → Advanced → API Keys",
+    "登录方式": "Sign-in method",
+    "测试连接": "Test connection",
+    "保存并连接": "Save and connect",
+    "正在测试连接…": "Testing connection…",
+    "正在保存并拉取媒体库…": "Saving and loading library…",
+    "删除连接": "Remove connection",
+    "未连接": "Not connected",
+    "类型": "Type",
+    "经典": "Classic",
+    "沉浸": "Immersive",
+    "经典：顶部悬浮标题条 + 底部双行控制栏，无侧栏":
+        "Classic: floating title bar at the top plus a two-row control bar at the bottom, no side panel",
+    "工作台：顶部扁平栏 + 右侧常驻检查器，信息密度最高":
+        "Workbench: flat top bar with a persistent right inspector, highest information density",
+    "沉浸：左上标题胶囊 + 底部悬浮胶囊，最少干扰":
+        "Immersive: floating title pill at the top-left and a floating bottom pill, minimal distraction",
+    "[sub] outline，默认 1.0（播放器实际描边 2px = outline × 2，预览同口径），即时生效":
+        "[sub] outline, default 1.0 (player draws 2 px = outline × 2; preview uses the same scale), applied immediately",
+    "API Key": "API Key",
+    "输入 0–10000 nits（虚线=不压缩）": "Enter 0–10000 nits (dashed = no compression)",
+    "拐点 ≈ %1 nits · 10000 nits 输入映射到 %2 nits":
+        "Knee ≈ %1 nits · 10000 nits input maps to %2 nits",
 }
 
 # C++ 侧用户可见文案（状态、错误、示例数据），统一用 "Palune" 上下文。

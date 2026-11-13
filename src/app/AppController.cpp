@@ -2024,16 +2024,15 @@ void AppController::runPreferencesProbe(const QString &path)
         behavior.insert(QStringLiteral("downloadDirIsolated"), prefs->downloadDirEffective() == dir);
     }
 
-    // 许可：文件存在 + 走 openLicense 的真实分支（外部查看器是否成功打开不做断言）。
+    // 许可：断言解析到的 NOTICE.md 路径真实存在，再走 openLicense 的真实分支。
+    // 外部查看器是否成功拉起不做断言（属人工清单）。
     {
-        const QString notice = QCoreApplication::applicationDirPath() + QStringLiteral("/NOTICE.md");
-        const QString shareNotice =
-            QCoreApplication::applicationDirPath() + QStringLiteral("/../share/palune/NOTICE.md");
-        const bool found = QFileInfo::exists(notice) || QFileInfo::exists(shareNotice);
-        behavior.insert(QStringLiteral("licenseFileExists"), found);
-        if (found)
+        const QString resolved = prefs->licensePath();
+        behavior.insert(QStringLiteral("licensePath"), resolved);
+        behavior.insert(QStringLiteral("licenseFileExists"), !resolved.isEmpty());
+        if (!resolved.isEmpty())
             prefs->openLicense();
-        behavior.insert(QStringLiteral("licenseActionInvoked"), found);
+        behavior.insert(QStringLiteral("licenseActionInvoked"), !resolved.isEmpty());
     }
 
     m_player->setVolume(70);

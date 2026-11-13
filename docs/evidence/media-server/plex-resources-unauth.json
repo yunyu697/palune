@@ -1,0 +1,29 @@
+{
+    "probe": "GET https://plex.tv/api/v2/resources?includeHttps=1&includeRelay=1",
+    "date": "2026-11-13T16:13:10+08:00",
+    "requestHeaders": {
+        "X-Plex-Product": "Palune",
+        "X-Plex-Version": "1.0.0",
+        "X-Plex-Client-Identifier": "palune-desktop-1",
+        "X-Plex-Platform": "Windows",
+        "X-Plex-Device": "Desktop",
+        "X-Plex-Token": "palune-invalid-probe",
+        "Accept": "application/json"
+    },
+    "httpStatus": 401,
+    "response": {
+        "errors": [
+            { "code": 1001, "message": "User could not be authenticated", "status": 401 }
+        ]
+    },
+    "control": {
+        "probe": "同上但缺少 X-Plex-Client-Identifier",
+        "httpStatus": 400,
+        "response": {
+            "errors": [
+                { "code": 1000, "message": "X-Plex-Client-Identifier is missing", "status": 400 }
+            ]
+        }
+    },
+    "note": "401 证明端点可达且鉴权生效；400 对照证明 X-Plex-Client-Identifier 是硬要求，适配器 plexHeaders() 已始终携带"
+}

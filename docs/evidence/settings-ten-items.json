@@ -1,5 +1,6 @@
 {
     "date": "2026-11-09",
+    "updated": "2026-11-13",
     "scope": "SETTINGS-GAP §10.2 十项设置的行为级取证（真实窗口/播放器/网络，不是只读键值）",
     "build": "build/Release/Palune.exe (Release, Qt 6.8.3, MSVC 19.52, Windows, DPR 200%)",
     "method": "PALUNE_PREFS_PROBE 在真实进程内执行；窗口态由 PALUNE_WINDOW_STATE_PROBE 单独冷启动；更新链路用本地签名 feed（Ed25519，keyId palune-test）跑真实下载；代理用不可达端点触发真实请求",
@@ -87,15 +88,22 @@
         },
         {
             "id": "openLicense",
-            "status": "PARTIAL",
-            "observed": { "licenseFileExists": true, "actionInvoked": true },
-            "reason": "外部查看器是否成功打开无法自动断言；已验证许可文件存在与 openLicense 分支真实调用"
+            "status": "DONE",
+            "observed": {
+                "licensePath": "D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/build/Release/NOTICE.md",
+                "licenseFileExists": true,
+                "licenseActionInvoked": true,
+                "log": "打开许可文件：D:/Users/Tyler Zhang/Documents/Trae-CN/temp_20261106_08/palune/build/Release/NOTICE.md"
+            },
+            "evidence": "docs/evidence/settings-behavior-probe-20261113.json",
+            "note": "Preferences::licensePath() 抽出后，路径解析与文件存在性可断言；探针走真实 openLicense 分支并落日志。外部查看器（notepad 等）是否成功拉起仍无法在自动化里断言，改由人工清单「设置→更新→查看许可」覆盖"
         }
     ],
     "raw": [
         "docs/evidence/settings-probe-rc.json",
         "docs/evidence/settings-behavior-probe-autocheck.json",
         "docs/evidence/settings-behavior-probe.json",
+        "docs/evidence/settings-behavior-probe-20261113.json",
         "docs/evidence/window-state-startmax.json",
         "docs/evidence/window-state-normal.json",
         "docs/evidence/report-e2e-download-dir.json"

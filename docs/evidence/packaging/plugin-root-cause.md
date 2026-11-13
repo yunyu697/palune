@@ -2,8 +2,8 @@
 
 日期：2026-11-13
 机器：Windows 10/11 x64（本机），Qt 6.8.3 msvc2022_64，Palune `1.0.0-RC`
-样本（排查时的上一版）：`dist/Palune-1.0.0-win-x64.exe`，59,725,136 B，SHA-256 `d2131369…7320a3`（与 `dist/release-1.0.0-rc/` 同一份）
-修复后重出：59,755,764 B，SHA-256 `05f700a4fe2556968cd8a3e76353de559d128eefeb3f49c8792ceab5c044ecdc`（新增 `bin\qt.conf`、构建树部署与安装器自检）
+样本（排查时的上一版，现存档于 `dist/release-1.0.0-rc/`）：59,725,136 B，SHA-256 `d2131369038aaff596217392641026ca3152e8a059a264b515a6b5f85a7320a3`
+修复后重出：59,755,761 B，SHA-256 `e7da60d5abaaaccde9adc1eb80a1c4d42b25c55fd7aaaf05f26bc2fe10845acf`（新增 `bin\qt.conf`、构建树部署与安装器自检；解包后 5 项关键文件齐全，`cwd=System32` + 空 `QT_QPA_PLATFORM_PLUGIN_PATH` 离屏启动 PASS）
 
 > 排查全程离屏/隐藏桌面：不抢焦点、不弹模态、不播音频。需要真实窗口的检查集中在一次批处理里执行（见 `tools/m0/run_hidden_selftest.ps1`）。
 

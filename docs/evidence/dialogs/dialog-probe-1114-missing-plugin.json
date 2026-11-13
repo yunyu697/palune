@@ -1,0 +1,37 @@
+{
+  "exe": "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\palune\\dist\\preflight-corrupt-plugin\\Palune.exe",
+  "seconds": 6.0,
+  "dialogs": [
+    {
+      "class": "#32770",
+      "title": "Palune",
+      "children": [
+        {
+          "class": "Button",
+          "text": "确定"
+        },
+        {
+          "class": "Static",
+          "text": ""
+        },
+        {
+          "class": "Static",
+          "text": "Palune 缺少运行所需的组件，无法启动。\n请重新安装 Palune；如果装了安全软件，请先把安装目录加入信任列表。\n仍然无法启动时，请把日志文件发给支持人员。"
+        }
+      ],
+      "screenshot": "dialog-1114-missing-plugin-1.png",
+      "at": 1794605135.0
+    }
+  ],
+  "topLevelWindows": [
+    {
+      "class": "#32770",
+      "title": "Palune",
+      "size": [
+        952,
+        390
+      ]
+    }
+  ],
+  "stderr": ""
+}

@@ -91,9 +91,13 @@ QString executableDir()
 
 // 部署版只信任自己目录里的平台插件。外部环境（其他 Qt 应用、开发终端）留下的
 // 插件路径可能指向另一套 Qt，版本不匹配时 QApplication 构造阶段直接 qFatal，
-// 用户只会看到一个英文报错框。这里先清理外部变量。
+// 用户只会看到一个英文报错框。这里先清理外部变量，并把 DLL 搜索目录钉在应用目录。
 void preparePlatformPlugins(const QString &appDir)
 {
+    // 插件自身的依赖（Qt6Gui 等）优先从应用目录解析，避免 PATH 上的另一套 Qt 抢占。
+    const QString nativeDir = QDir::toNativeSeparators(appDir);
+    SetDllDirectoryW(reinterpret_cast<LPCWSTR>(nativeDir.utf16()));
+
     if (QFileInfo::exists(appDir + QStringLiteral("/platforms/qwindows.dll"))) {
         qputenv("QT_PLUGIN_PATH", appDir.toLocal8Bit());
         qunsetenv("QT_QPA_PLATFORM_PLUGIN_PATH");
@@ -101,12 +105,27 @@ void preparePlatformPlugins(const QString &appDir)
         qputenv("QT_PLUGIN_PATH", (appDir + QStringLiteral("/plugins")).toLocal8Bit());
         qunsetenv("QT_QPA_PLATFORM_PLUGIN_PATH");
     }
+
+    // 开发终端/CI 常留下 QT_QPA_PLATFORM（offscreen、bogus）。请求的平台插件不在
+    // 本目录时清掉它，让 Qt 回到默认的 windows 平台；否则 Qt 同样会在
+    // QApplication 构造阶段弹 "no Qt platform plugin could be initialized"。
+    const QByteArray requested = qgetenv("QT_QPA_PLATFORM");
+    if (!requested.isEmpty()) {
+        const QString platform = QString::fromLocal8Bit(requested)
+                                     .section(QLatin1Char(':'), 0, 0)
+                                     .trimmed();
+        const bool localPlugin = platform.isEmpty()
+            || QFileInfo::exists(appDir + QStringLiteral("/platforms/q%1.dll").arg(platform))
+            || QFileInfo::exists(appDir + QStringLiteral("/plugins/platforms/q%1.dll").arg(platform));
+        if (!localPlugin)
+            qunsetenv("QT_QPA_PLATFORM");
+    }
 }
 
 // 只认应用目录里的插件。部署版的 Qt6Core.dll 就在 exe 旁边，Qt 的插件前缀由
 // 这个 DLL 的位置推导（= exe 目录），不会再去找开发机上 C:\Qt 那套；把
 // QLibraryInfo 前缀也算作“可用”会让自检在开发机上撒谎，真正启动时才 qFatal。
-bool platformPluginAvailable(const QString &appDir)
+QString platformPluginPath(const QString &appDir)
 {
     const QStringList candidates = {
         appDir + QStringLiteral("/platforms/qwindows.dll"),
@@ -114,8 +133,25 @@ bool platformPluginAvailable(const QString &appDir)
     };
     for (const QString &path : candidates) {
         if (QFileInfo::exists(path))
-            return true;
+            return path;
     }
+    return {};
+}
+
+// 文件在也可能加载失败：缺 CRT、依赖被隔离、位数不符都会让 Qt 在
+// QApplication 构造阶段弹英文框。这里先真正 LoadLibrary 一次，失败就走中文提示。
+bool platformPluginLoadable(const QString &path, unsigned long *error)
+{
+    const QString native = QDir::toNativeSeparators(path);
+    HMODULE module = LoadLibraryExW(reinterpret_cast<LPCWSTR>(native.utf16()), nullptr,
+                                    LOAD_LIBRARY_SEARCH_APPLICATION_DIR
+                                        | LOAD_LIBRARY_SEARCH_SYSTEM32);
+    if (module) {
+        // 不释放：Qt 随后会用同一个模块，保持加载可避免依赖被卸载。
+        return true;
+    }
+    if (error)
+        *error = GetLastError();
     return false;
 }
 
@@ -128,6 +164,19 @@ void reportMissingPlatform(const QString &logPath, const QString &appDir)
     Log::error(QStringLiteral("启动自检失败：找不到平台插件 qwindows.dll；"
                               "应用目录：%1；Qt 插件前缀：%2")
                    .arg(appDir, QLibraryInfo::path(QLibraryInfo::PluginsPath)));
+    MessageBoxW(nullptr,
+                L"Palune 缺少运行所需的组件，无法启动。\n"
+                L"请重新安装 Palune；如果装了安全软件，请先把安装目录加入信任列表。\n"
+                L"仍然无法启动时，请把日志文件发给支持人员。",
+                L"Palune", MB_OK | MB_ICONERROR);
+}
+
+// 插件文件在、但加载不起来的兜底：同样不让 Qt 的原生英文框接手。
+void reportUnloadablePlatform(const QString &logPath, const QString &pluginPath, unsigned long error)
+{
+    Log::init(logPath);
+    Log::error(QStringLiteral("启动自检失败：平台插件存在但无法加载（Win32 错误 %1）：%2")
+                   .arg(QString::number(qulonglong(error)), pluginPath));
     MessageBoxW(nullptr,
                 L"Palune 缺少运行所需的组件，无法启动。\n"
                 L"请重新安装 Palune；如果装了安全软件，请先把安装目录加入信任列表。\n"
@@ -184,8 +233,14 @@ int main(int argc, char *argv[])
 #if defined(Q_OS_WIN)
     const QString appDir = executableDir();
     preparePlatformPlugins(appDir);
-    if (!platformPluginAvailable(appDir)) {
+    const QString pluginPath = platformPluginPath(appDir);
+    if (pluginPath.isEmpty()) {
         reportMissingPlatform(AppPaths::logFile(), appDir);
+        return 1;
+    }
+    unsigned long pluginError = 0;
+    if (!platformPluginLoadable(pluginPath, &pluginError)) {
+        reportUnloadablePlatform(AppPaths::logFile(), pluginPath, pluginError);
         return 1;
     }
 #endif

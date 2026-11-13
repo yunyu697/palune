@@ -1,0 +1,24 @@
+{
+  "exe": "C:\\PaluneVerify2\\bin\\Palune.exe",
+  "seconds": 7.0,
+  "dialogs": [],
+  "topLevelWindows": [
+    {
+      "class": "Qt683QWindowIcon",
+      "title": "Palune",
+      "size": [
+        2360,
+        1400
+      ]
+    },
+    {
+      "class": "Qt683QWindowIcon",
+      "title": "Palune Video Surface - Palune",
+      "size": [
+        2360,
+        1400
+      ]
+    }
+  ],
+  "stderr": ""
+}

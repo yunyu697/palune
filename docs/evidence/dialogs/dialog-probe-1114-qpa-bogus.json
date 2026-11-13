@@ -1,0 +1,37 @@
+{
+  "exe": "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\palune\\build\\Release\\Palune.exe",
+  "seconds": 6.0,
+  "dialogs": [
+    {
+      "class": "#32770",
+      "title": "Palune",
+      "children": [
+        {
+          "class": "Button",
+          "text": "确定"
+        },
+        {
+          "class": "Static",
+          "text": ""
+        },
+        {
+          "class": "Static",
+          "text": "This application failed to start because no Qt platform plugin could be initialized. Reinstalling the application may fix this problem.\n\nAvailable platform plugins are: windows.\n"
+        }
+      ],
+      "screenshot": "dialog-1114-qpa-bogus-1.png",
+      "at": 1794605014.0
+    }
+  ],
+  "topLevelWindows": [
+    {
+      "class": "#32770",
+      "title": "Palune",
+      "size": [
+        980,
+        422
+      ]
+    }
+  ],
+  "stderr": "qt.qpa.plugin: Could not find the Qt platform plugin \"bogus\" in \"\"\n"
+}

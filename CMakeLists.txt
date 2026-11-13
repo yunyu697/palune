@@ -198,6 +198,12 @@ if(WIN32 AND WINDEPLOYQT_EXECUTABLE)
         COMMAND "${WINDEPLOYQT_EXECUTABLE}" --qmldir "${CMAKE_CURRENT_SOURCE_DIR}/qml"
                 --no-compiler-runtime --dir "$<TARGET_FILE_DIR:Palune>" "$<TARGET_FILE:Palune>"
         COMMENT "windeployqt：让构建树自带 Qt 运行时与 platforms 插件")
+    # 构建树也带 qt.conf，行为与安装树一致：插件/QML/翻译路径只按应用目录解析。
+    add_custom_command(TARGET Palune POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${CMAKE_CURRENT_SOURCE_DIR}/packaging/qt.conf"
+                "$<TARGET_FILE_DIR:Palune>/qt.conf"
+        COMMENT "qt.conf：把 Qt 插件前缀钉在应用目录")
 endif()
 
 # ---------------------------------------------------------------------------
@@ -379,6 +385,12 @@ palune_ck_gui:
 IfFileExists '$INSTDIR\\bin\\platforms\\qwindows.dll' palune_ck_qwin
   StrCpy $R0 '$R0platforms/qwindows.dll; '
 palune_ck_qwin:
+IfFileExists '$INSTDIR\\bin\\qt.conf' palune_ck_conf
+  StrCpy $R0 '$R0qt.conf; '
+palune_ck_conf:
+IfFileExists '$INSTDIR\\bin\\vcruntime140.dll' palune_ck_crt
+  StrCpy $R0 '$R0vcruntime140.dll; '
+palune_ck_crt:
 IfFileExists '$INSTDIR\\bin\\libmpv-2.dll' palune_ck_mpv
   StrCpy $R0 '$R0libmpv-2.dll; '
 palune_ck_mpv:

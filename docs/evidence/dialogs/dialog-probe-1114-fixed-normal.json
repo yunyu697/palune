@@ -1,0 +1,24 @@
+{
+  "exe": "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\palune\\build\\Release\\Palune.exe",
+  "seconds": 7.0,
+  "dialogs": [],
+  "topLevelWindows": [
+    {
+      "class": "Qt683QWindowIcon",
+      "title": "Palune",
+      "size": [
+        2360,
+        1400
+      ]
+    },
+    {
+      "class": "Qt683QWindowIcon",
+      "title": "Palune Video Surface - Palune",
+      "size": [
+        2360,
+        1400
+      ]
+    }
+  ],
+  "stderr": ""
+}

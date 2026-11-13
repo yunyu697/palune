@@ -117,12 +117,12 @@ RC 重发（2026-11-13，同一 tag `1.0.0-RC`，替换资产）：
 
 | 资产 | 字节 | SHA-256 |
 |---|---|---|
-| `Palune-1.0.0-win-x64.exe` | 59,725,407 | `e9c27fa7ae851be9bc9facfedc3247737a452d8681e77f2ba0e19d0108378fd4` |
-| `latest.json` | 1,178 | `43fb1ed566130041c0685effa466d2b692b24ef052d62afc79310c5148a42262` |
-| `SHA256SUMS` | 361 | `f9671a20fd21978401930550f2b50fda37cdd505df49fedf4fe69b7c185fed36` |
-| `build-record.json` | 3,202 | `1deb4df2a5647f48a424ef8772e18dc7913407b7b5314d84b8911ae523755499` |
+| `Palune-1.0.0-win-x64.exe` | 59,725,136 | `d2131369038aaff596217392641026ca3152e8a059a264b515a6b5f85a7320a3` |
+| `latest.json` | 1,178 | `e3bf4e6d2cb53835c71b3c235fbc782b4b673850e3e6e64ec802e5ac2bd78dd5` |
+| `SHA256SUMS` | 361 | `5360b79cfabc4a1854731107bea7ef6a1277b57c20528ed8324afecfeb336104` |
+| `build-record.json` | 3,202 | `127a279961339225870eed092be3b8ca243ecf1e82e853d42f06b665660b8756` |
 
-`latest.json` 用 `palune-test`（Ed25519）重签，`verify_manifest.py` 复验 PASS（`manifestSignature` / `versionMatches` / `sha256sums` / `artifacts` 全 true，见 `docs/evidence/release-1.0.0-rc/manifest-verify-rerun.json`）；GitHub 远端 asset digest 与本地逐个一致。新包做了真实安装/卸载：183 个文件、快捷方式与卸载注册表项齐全，启动 `windowReadyMs=524`（旧包 1878ms），卸载后目录/快捷方式/注册表全清（`windows-install-evidence.json`）。清单下载前缀已改为 `https://github.com/yunyu697/palune/releases/download/1.0.0-RC`（旧包指向已停用的 `palune-releases`）。
+`latest.json` 用 `palune-test`（Ed25519）重签，`verify_manifest.py` 复验 PASS（`manifestSignature` / `versionMatches` / `sha256sums` / `artifacts` 全 true，见 `docs/evidence/release-1.0.0-rc/manifest-verify-rerun.json`）；GitHub 远端 asset digest 与本地逐个一致。`build-record.json` 记录的源码提交是 `c082930`（产物由该提交构建；记录本身在其后提交）。新包做了真实安装/卸载：183 个文件、快捷方式与卸载注册表项齐全，冷启动 `windowReadyMs=973` / 同机二次启动 `622`（旧包 1878），卸载后目录/快捷方式/注册表全清（`windows-install-evidence.json`）。清单下载前缀已改为 `https://github.com/yunyu697/palune/releases/download/1.0.0-RC`（旧包指向已停用的 `palune-releases`）。
 
 ## alpha10：六项实机缺陷
 

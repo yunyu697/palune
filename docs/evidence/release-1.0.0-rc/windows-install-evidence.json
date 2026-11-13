@@ -1,7 +1,8 @@
 {
   "installer": "dist/Palune-1.0.0-win-x64.exe",
-  "installerBytes": 59725407,
-  "installerSha256": "e9c27fa7ae851be9bc9facfedc3247737a452d8681e77f2ba0e19d0108378fd4",
+  "installerBytes": 59725136,
+  "installerSha256": "d2131369038aaff596217392641026ca3152e8a059a264b515a6b5f85a7320a3",
+  "gitCommit": "c082930cfa84c8df34d0ee91361072221b4e416d",
   "installDir": "C:\\Temp\\palune-rc-install",
   "installArgs": "/S /D=C:\\Temp\\palune-rc-install",
   "installExitCode": 0,
@@ -35,7 +36,7 @@
     "report": {
       "configDir": "C:\\Temp\\palune-rc-cfg",
       "fallbackReason": "缺少 [ui] theme，已回退到布局 A",
-      "generatedAt": "2026-11-13T15:05:09",
+      "generatedAt": "2026-11-13T15:10:20",
       "mode": "m2-config-check",
       "played": false,
       "playerAvailable": true,
@@ -43,8 +44,16 @@
       "theme": "A",
       "verdict": "PASS",
       "version": "1.0.0",
-      "windowReadyMs": 524,
-      "windowReadyWithin800ms": true
+      "windowReadyMs": 973,
+      "windowReadyWithin800ms": false,
+      "note": "安装后首次冷启动（文件缓存为空）"
+    },
+    "warmReport": {
+      "generatedAt": "2026-11-13T15:10:27",
+      "windowReadyMs": 622,
+      "windowReadyWithin800ms": true,
+      "verdict": "PASS",
+      "note": "同机第二次启动"
     },
     "ok": true
   },
@@ -56,5 +65,5 @@
     "registryGone": true
   },
   "verdict": "PASS",
-  "generatedAt": "2026-11-13T15:06:00"
+  "generatedAt": "2026-11-13T15:11:00"
 }

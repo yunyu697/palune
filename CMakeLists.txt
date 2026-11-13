@@ -387,7 +387,7 @@ StrCmp $R0 '' palune_ck_ok
   FileWrite $R1 'Palune installation check failed. Missing: $R0'
   FileClose $R1
   SetErrorLevel 3
-  MessageBox MB_ICONSTOP|MB_OK 'Palune 安装不完整：缺少运行所需组件（$R0）。$\r$\n常见原因是安全软件拦截了安装过程；请把安装目录加入信任列表后重新安装。'
+  MessageBox MB_ICONSTOP|MB_OK 'Palune 安装不完整：缺少运行所需组件（$R0）。常见原因是安全软件拦截了安装过程，请把安装目录加入信任列表后重新安装。'
 palune_ck_ok:
 ]=])
     # MSI 的 ProductVersion 必须是纯数字版本，alpha 后缀交给文件名表达。

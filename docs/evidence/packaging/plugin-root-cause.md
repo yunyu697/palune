@@ -2,7 +2,8 @@
 
 日期：2026-11-13
 机器：Windows 10/11 x64（本机），Qt 6.8.3 msvc2022_64，Palune `1.0.0-RC`
-样本：`dist/Palune-1.0.0-win-x64.exe`（59,725,136 B，SHA-256 `d2131369…7320a3`，与 `dist/release-1.0.0-rc/` 同一份）
+样本（排查时的上一版）：`dist/Palune-1.0.0-win-x64.exe`，59,725,136 B，SHA-256 `d2131369…7320a3`（与 `dist/release-1.0.0-rc/` 同一份）
+修复后重出：59,755,764 B，SHA-256 `05f700a4fe2556968cd8a3e76353de559d128eefeb3f49c8792ceab5c044ecdc`（新增 `bin\qt.conf`、构建树部署与安装器自检）
 
 > 排查全程离屏/隐藏桌面：不抢焦点、不弹模态、不播音频。需要真实窗口的检查集中在一次批处理里执行（见 `tools/m0/run_hidden_selftest.ps1`）。
 
@@ -66,6 +67,6 @@ C:\Qt\6.8.3\msvc2022_64\bin\Qt6Core.dll                     同上
 
 1. **构建树自带部署**（`CMakeLists.txt` POST_BUILD windeployqt）：`build\Release\Palune.exe` 现在可直接双击启动，覆盖情况 ③。
 2. **`bin\qt.conf` 随包安装**：`Prefix=. Plugins=. Qml2Imports=qml Translations=translations`，插件/QML 解析钉死在安装目录。
-3. **打包门禁**：`windeployqt` 缺失时 CMake 直接 `FATAL_ERROR`（以前静默跳过会打出没有 Qt 运行时的包）；安装阶段断言 `Palune.exe`/`Qt6Core.dll`/`Qt6Gui.dll`/`platforms/qwindows.dll`/`qt.conf`/`qml/QtQuick/qmldir` 存在；`package_windows.ps1` 再次断言 11 项运行时组件。
-4. **安装器落盘自检**（`CPACK_NSIS_EXTRA_INSTALL_COMMANDS`）：安装结束前检查 5 个关键文件，缺失时中文提示 + 写 `install-check.log` + 退出码 3，覆盖情况 ②（安全软件拦截/写入不完整）。
+3. **打包门禁**：`windeployqt` 缺失时 CMake 直接 `FATAL_ERROR`（以前静默跳过会打出没有 Qt 运行时的包）；安装暂存断言 6 个关键文件存在；`package_windows.ps1` 再次断言 10 项运行时组件（实测输出「安装树自检通过：10 项运行时组件齐全」）。
+4. **安装器落盘自检**（`CPACK_NSIS_EXTRA_INSTALL_COMMANDS`）：安装结束前检查 5 个关键文件，缺失时中文提示 + 写 `install-check.log` + 退出码 3，覆盖情况 ②（安全软件拦截/写入不完整）。NSIS 安装器是 ANSI 构建，中文提示按系统代码页编码（中文 Windows 正常）；非中文系统以 `install-check.log` 为准。
 5. **启动自检修正**：只认应用目录里的插件，不再把开发机 `QLibraryInfo` 前缀算作“可用”（上一版会在开发机上误判通过，真正启动才 `qFatal`）。

@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.21)
 
 # 版本号唯一来源：仓库根目录 VERSION 文件。
-# 规则：开发期为 1.0.0-alphaN；除第一段外任何段 <= 10，alpha 编号 <= 10。
+# 规则：预发布必须带序号（1.0.0-alphaN / -betaN / -RCn，裸后缀不合法）；
+# 除第一段外任何段 <= 10，alpha/beta 编号 <= 10，RC 序号不设上限。
 file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" PALUNE_VERSION LIMIT_COUNT 1)
 string(STRIP "${PALUNE_VERSION}" PALUNE_VERSION)
 

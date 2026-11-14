@@ -1,7 +1,7 @@
 # 发行与更新链路（单仓：yunyu697/palune）
 
-更新时间：2026-11-08
-适用版本：`1.0.0-alpha8` 起（2026-11-08 迁移点之后）
+更新时间：2026-11-14
+适用版本：`1.0.0-RC1` 起（2026-11-14 RC 序号化；后缀规则见 §11）
 
 ## 1. 仓库关系（两仓 → 单仓）
 
@@ -24,7 +24,7 @@ https://github.com/yunyu697/palune/releases/latest/download/latest.json
 
 - 该 URL 不需要任何凭据，客户端不带 `Authorization` 头。
 - **分界时点：2026-11-08**。自该时点起清单只在源码仓生成与发布；旧仓地址不再更新（详见 §7）。
-- **预发布口径**：alpha / beta / RC 一律 `prerelease=true`，`releases/latest` 只指向正式版。代价是预发布清单不在固定主链上，需走 tag 定点 URL：`https://github.com/yunyu697/palune/releases/download/<tag>/latest.json`。
+- **预发布口径**：带序号的 `-alphaN` / `-betaN` / `-RCn` tag 一律 `prerelease=true`，`releases/latest` 只指向正式版；裸后缀（`-alpha` / `-beta` / `-RC`）在 CI 直接失败（见 §11）。代价是预发布清单不在固定主链上，需走 tag 定点 URL：`https://github.com/yunyu697/palune/releases/download/<tag>/latest.json`。
 - 当前本仓全部 Release 均为预发布，因此 **`releases/latest` 目前是 404**（实测），要等首个正式版（`1.0.0`）发布后才有主链。旧仓 `1.0.0-alpha6` 的 `Latest` 标记随归档保留在旧仓，不参与本仓主链。
 
 ## 2. 发布凭据
@@ -53,7 +53,7 @@ permissions:
 
 `.github/workflows/release.yml`：
 
-1. `version`：校验 `VERSION` 规则，取出通道；**按 tag 后缀**判定 `prerelease`（`-alpha` / `-beta` / `-RC` 一律为预发布）。
+1. `version`：校验 `VERSION` 规则，取出通道；**按 tag 后缀**判定 `prerelease`（`-alphaN` / `-betaN` / `-RCn` 为预发布，裸后缀直接失败）。
 2. `windows` / `macos` / `linux`：各自构建、跑相关单测、打包；Windows 额外做「安装 → 启动 → 卸载」验证。
 3. `manifest`：生成 `latest.json` 与 `SHA256SUMS`，`--base-url` 指向本仓 `https://github.com/yunyu697/palune/releases/download/<tag>`；**断言**清单签名与每个产物签名都存在，未签名直接失败。
 4. `publish`：用 `GITHUB_TOKEN` 把顶层资产发到**本仓** Release。`prerelease=true` 时带 `--prerelease`，不接管 `releases/latest`；只有正式 tag 才发普通 Release。
@@ -175,3 +175,39 @@ permissions:
 - **推送前必须先确认 tag 指向提交里的工作流版本**：GitHub 对 push 事件使用被推提交里的工作流文件。工作流修正只对之后的新提交生效。
 - 本轮迁移时 `gh workflow disable Release` → 创建 Release → 核对无新 run → `gh workflow enable Release`；未触发任何重建。
 - 2026-11-08 起 `publish` / `assert-public-feed` 均指向本仓，但仍**没有一次真实 tag 触发的端到端记录**；等 `1.0.0` 正式通道开启时一并验证。
+
+## 11. 版本号规则（alpha / beta / RC）
+
+唯一来源是仓库根目录的 `VERSION`：`PALUNE_VERSION` 宏、安装包文件名、应用内「关于」、`latest.json` 的 `payload.version`、`build-record.json` 与 README 必须与它逐字一致。
+
+| 阶段 | 写法 | 编号范围 | 上限 | 推进方式 |
+|---|---|---|---|---|
+| 开发期 | `MAJOR.MINOR.PATCH-alphaN` | N = 1..10 | **10** | 只递增 N；`alpha10` 之后转 `beta1` |
+| 测试期 | `MAJOR.MINOR.PATCH-betaN` | N = 1..10 | **10** | 只递增 N；`beta10` 之后转 `RC1` |
+| 候选期 | `MAJOR.MINOR.PATCH-RCn` | n = 1, 2, 3 … **无上限** | **无上限** | 每次迭代递增 n（RC10 之后可继续 RC11、RC12…），通过后直接发正式版 |
+| 正式版 | `MAJOR.MINOR.PATCH` | — | — | 当前只允许 `1.0.0` |
+
+硬约束：
+
+- **预发布必须带序号**：`1.0.0-RC`、`1.0.0-alpha`、`1.0.0-beta` 这类裸后缀一律不合规，不能用同一个 tag 反复顶替新一轮 RC；每次 RC 迭代都必须新 tag（`-RC2`、`-RC3`…）。
+- **「除首位外每段 ≤ 10、不出现 11」只管 major.minor.patch**（如 `0.11.x`、`1.0.11` 不允许）；这条**不约束 RC 计数**，RC 序号只要求是从 1 开始的正整数（无前导零）、无上限。
+- **alpha / beta 仍是 1..10**，不随 RC 放开。
+- semver 序：`1.0.0-RC1 < 1.0.0-RC2 < … < 1.0.0`。
+- 预发布一律 `prerelease=true`，不接管 `releases/latest`；`-RCn` 不会被当成正式版。
+
+执行点：
+
+- `python tools/version/check_version.py`：裸后缀、alpha/beta 越界、版本段 >10、CI 里 tag 与 VERSION 不一致，都会 `[FAIL]` 并退出 1；`ci.yml` 与 `release.yml` 第一步都跑它。
+- `release.yml` 的 `prerelease` 由 tag 后缀 `-alphaN` / `-betaN` / `-RCn` 判定；裸后缀 tag 直接 `::error::` 失败并退出。
+
+### 11.1 `1.0.0-RC` → `1.0.0-RC1`（2026-11-14）
+
+已发布的 `1.0.0-RC` 视作 RC1：tag 与 Release 改名为 `1.0.0-RC1`，安装包按 `VERSION=1.0.0-RC1` 重新构建（版本字符串进入 exe 文件名与 `latest.json`）。
+
+**旧链接直接失效，不做兼容或跳转**：
+
+- `releases/tag/1.0.0-RC`、`releases/download/1.0.0-RC/...` 均为 404；
+- 旧 `latest.json`（`version=1.0.0`）里的资产 URL 指向旧 tag，随之失效；
+- 已安装 `1.0.0-RC` 的用户重装 `1.0.0-RC1` 即可；
+- 已归档旧仓 `yunyu697/palune-releases` 里的历史 `1.0.0-RC` Release 不受影响，仅作历史取证。
+

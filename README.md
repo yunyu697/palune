@@ -2,7 +2,7 @@
 
 轻量、无位图皮肤、面向 Windows 优先的桌面视频播放器。
 
-当前版本：**1.0.0-RC**（`VERSION` = `1.0.0`；功能冻结候选，**尚未收口**，见「已知限制」；对外不得称正式版）。
+当前版本：**1.0.0-RC1**（`VERSION` = `1.0.0-RC1`；功能冻结候选，**尚未收口**，见「已知限制」；对外不得称正式版）。
 
 已实现主线（截至 2026-11-13）：
 
@@ -157,17 +157,17 @@ macOS / Linux 依赖：`tools/ci/fetch_deps.sh`（brew / apt / dnf / pacman）�
 - 清单与产物必须已签名；`manifest` job 自带断言，`signature` 缺失直接失败
 - 发布凭据：只用 GitHub 自带 `GITHUB_TOKEN`（`permissions: contents: write`，作用域仅本仓）；不再需要 `RELEASE_REPO_TOKEN` 或任何跨仓 PAT
 - 发布后 `assert-public-feed` job 会**不带凭据** GET 本仓 `releases/latest/download/latest.json`，要求 200 且能取到 `version`；401/404 直接失败
-- 预发布（alpha / beta / RC）按 **tag 后缀** 判定：一律 `prerelease=true`，**不接管** `releases/latest`；只有正式版 tag（如 `1.0.0`）才发普通 Release
+- 预发布（alpha / beta / RC）按 **tag 后缀** 判定：`-alphaN` / `-betaN` / `-RCn` 一律 `prerelease=true`，**不接管** `releases/latest`；裸后缀 tag 直接失败；只有正式版 tag（如 `1.0.0`）才发普通 Release
 - 最新发布页：https://github.com/yunyu697/palune/releases
 
-### 1.0.0-RC 当前发布状态（2026-11-13 核对）
+### 1.0.0-RC1 当前发布状态（2026-11-14 核对）
 
 | 项 | 值 |
 | --- | --- |
-| Release | [1.0.0-RC](https://github.com/yunyu697/palune/releases/tag/1.0.0-RC)，`prerelease=true`（2026-11-08 由旧仓迁入本仓） |
-| 资产 | `Palune-1.0.0-win-x64.exe`（**59,757,564 B**，SHA-256 `6ABCB7DB0EC814969727938EAD5B0AE6FD70E398C0F8F0EC533CE8B893F74278`，含 2026-11-14 的启动预检修复）、`latest.json`、`SHA256SUMS`、`windows-install-evidence.json`、`install-launch.json`、`build-record.json` |
-| 重发记录 | 2026-11-13 重写说明并替换资产；2026-11-14 再次替换为上述新包：修掉启动前 Qt 英文弹框（外部 `QT_QPA_PLATFORM` 指向不存在的平台插件、插件存在但加载失败两类），并在 DLL 搜索、`qt.conf`、安装器自检（`qt.conf`/CRT）上收口。两次替换后远端 digest 与本地 `SHA256SUMS` 逐条一致，`releases/latest` 前后均为 **404**，`prerelease=true` 未变 |
-| 清单 | `--channel stable`、`version 1.0.0`、`keyId palune-test`；用 `resources/trust/update.pub` 独立验签 PASS（`docs/evidence/release-1.0.0-rc/manifest-verify.json`） |
+| Release | [1.0.0-RC1](https://github.com/yunyu697/palune/releases/tag/1.0.0-RC1)，`prerelease=true`（2026-11-14 由 `1.0.0-RC` 改写，旧 tag 视作 RC1；旧链接已失效） |
+| 资产 | `Palune-1.0.0-RC1-win-x64.exe`（**59,757,762 B**，SHA-256 `C893A8D7525D4F5E1471C12ECC7CA1A423FAC51022C9D1D236DBAFDE1407C128`）、`latest.json`、`SHA256SUMS`、`windows-install-evidence.json`、`install-launch.json`、`build-record.json` |
+| 重发记录 | 2026-11-13 重写说明并替换资产；2026-11-14 修掉启动前 Qt 英文弹框（外部 `QT_QPA_PLATFORM` 指向不存在的平台插件、插件存在但加载失败两类），并在 DLL 搜索、`qt.conf`、安装器自检（`qt.conf`/CRT）上收口；同日按 RC 序号规则把 `1.0.0-RC` 改写为 `1.0.0-RC1` 重新打包发布（旧 tag 与旧下载链接失效，无跳转）。远端 digest 与本地 `SHA256SUMS` 逐条一致，`releases/latest` 前后均为 **404**，`prerelease=true` 未变 |
+| 清单 | `--channel stable`、`version 1.0.0-RC1`、`keyId palune-test`；`--base-url .../releases/download/1.0.0-RC1`；用 `resources/trust/update.pub` 独立验签 PASS（`docs/evidence/release-1.0.0-rc1/manifest-verify.json`） |
 | 更新主链 | 本仓 `releases/latest` 当前 **404**（本仓全部 Release 均为 prerelease，尚无正式版；alpha6 的 Latest 标记留在已归档旧仓，不参与本仓主链） |
 | 历史 tag 补发 | `1.0.0-alpha8/9/10` 已按原资产、原哈希迁入本仓，均为 prerelease；`1.0.0` 仍只在本地 |
 | 未提供 | macOS/Linux 产物、MSI、生产签名（P1 未清） |
@@ -175,11 +175,13 @@ macOS / Linux 依赖：`tools/ci/fetch_deps.sh`（brew / apt / dnf / pacman）�
 
 ## 版本号规则（硬约束）
 
-- 开发期：`1.0.0-alphaN`，每次推进只递增 `N`；
-- **除第一段外任何数值段 ≤ 10，禁止出现 11**（alpha 编号超过 10、minor/patch 超过 10 都不允许）；
-- `alpha10` 之后转 `1.0.0`；
-- `VERSION` 是唯一来源，构建配置（`PALUNE_VERSION` 宏）、安装包命名、应用内「关于」与更新清单示例必须一致；
-- 校验：`python tools/version/check_version.py`，CI 第一步即执行，不合规直接失败。
+- 唯一来源：`VERSION`；`PALUNE_VERSION` 宏、安装包命名、应用内「关于」与更新清单必须一致；
+- 开发期：`1.0.0-alphaN`，N = 1..10，每次只递增 N；`alpha10` 之后转 `beta1`；
+- 测试期：`1.0.0-betaN`，N = 1..10；`beta10` 之后转 `RC1`；
+- 候选期：`1.0.0-RCn`，n 从 1 开始、**无上限**（RC10 之后可继续 RC11、RC12…），通过后直接发 `1.0.0`；
+- **预发布必须带序号**：裸 `1.0.0-RC` / `1.0.0-alpha` / `1.0.0-beta` 一律不合规，不能用一个 tag 反复发新一轮 RC；
+- **「除首位外每段 ≤ 10、禁止出现 11」只管 `major.minor.patch`**（`0.11.x`、`1.0.11` 不允许），不约束 RC 计数；alpha/beta 仍限 1..10；
+- 校验：`python tools/version/check_version.py`，CI 第一步即执行，不合规直接失败；CI 里 tag 必须与 `VERSION` 逐字一致。
 
 ## M0 实测结论（本机 Windows，1 屏 100% 缩放）
 

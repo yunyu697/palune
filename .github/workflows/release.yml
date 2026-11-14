@@ -38,12 +38,22 @@ jobs:
             *-alpha*) echo "channel=alpha" >> "$GITHUB_OUTPUT" ;;
             *)        echo "channel=stable" >> "$GITHUB_OUTPUT" ;;
           esac
-          # 预发布口径按 tag 判定：带 alpha/beta/RC 后缀的 tag 一律按 prerelease 发布，
-          # 不接管 releases/latest；VERSION 只有 1.0.0，光看版本号会把 RC 误判成正式版。
+          # 预发布口径按 tag 判定：带 alpha/beta/RC **序号**后缀的 tag（-alphaN/-betaN/-RCn）
+          # 一律按 prerelease 发布，不接管 releases/latest；VERSION 现在是 1.0.0-RC1，
+          # 光看版本号会把 RC 误判成正式版。
+          # 裸后缀（-RC / -alpha / -beta）直接失败：预发布必须带序号，不能用裸的 RC 反复发。
           TAG="${GITHUB_REF_NAME:-}"
           case "$TAG" in
-            *-alpha*|*-beta*|*-RC*|*-rc*) echo "prerelease=true" >> "$GITHUB_OUTPUT" ;;
-            *)                           echo "prerelease=false" >> "$GITHUB_OUTPUT" ;;
+            *-alpha|*-beta|*-RC|*-rc)
+              echo "::error::tag $TAG 是裸后缀；预发布 tag 必须带序号，如 -alpha1、-beta1、-RC1"
+              exit 1
+              ;;
+            *-alpha[0-9]*|*-beta[0-9]*|*-RC[0-9]*|*-rc[0-9]*)
+              echo "prerelease=true" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "prerelease=false" >> "$GITHUB_OUTPUT"
+              ;;
           esac
           echo "版本 $VERSION tag=$TAG"
 

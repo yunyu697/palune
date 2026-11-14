@@ -180,7 +180,7 @@ macOS / Linux 依赖：`tools/ci/fetch_deps.sh`（brew / apt / dnf / pacman）�
 - 测试期：`1.0.0-betaN`，N = 1..10；`beta10` 之后转 `RC1`；
 - 候选期：`1.0.0-RCn`，n 从 1 开始、**无上限**（RC10 之后可继续 RC11、RC12…），通过后直接发 `1.0.0`；
 - **预发布必须带序号**：裸 `1.0.0-RC` / `1.0.0-alpha` / `1.0.0-beta` 一律不合规，不能用一个 tag 反复发新一轮 RC；
-- **「除首位外每段 ≤ 10、禁止出现 11」只管 `major.minor.patch`**（`0.11.x`、`1.0.11` 不允许），不约束 RC 计数；alpha/beta 仍限 1..10；
+- **「除首位外每段 ≤ 10、禁止出现 11」只管 `major.minor.patch`**（`0.11.x` 这类越界段不允许），不约束 RC 计数；alpha/beta 仍限 1..10；
 - 校验：`python tools/version/check_version.py`，CI 第一步即执行，不合规直接失败；CI 里 tag 必须与 `VERSION` 逐字一致。
 
 ## M0 实测结论（本机 Windows，1 屏 100% 缩放）

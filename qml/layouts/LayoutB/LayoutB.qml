@@ -338,7 +338,7 @@ Item {
                             spacing: tokens.spaceHair
                             visible: queueHover.containsMouse
                             Text {
-                                text: "↑"
+                                text: qsTr("↑")
                                 color: tokens.textMuted
                                 font.pixelSize: tokens.fontS
                                 MouseArea {
@@ -348,7 +348,7 @@ Item {
                                 }
                             }
                             Text {
-                                text: "↓"
+                                text: qsTr("↓")
                                 color: tokens.textMuted
                                 font.pixelSize: tokens.fontS
                                 MouseArea {

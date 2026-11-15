@@ -185,6 +185,46 @@
         <source>音轨 — · 字幕 —</source>
         <translation>Audio — · subtitles —</translation>
     </message>
+    <message>
+        <source>共 %1 个章节</source>
+        <translation>%1 chapters</translation>
+    </message>
+    <message>
+        <source>播放队列 %1</source>
+        <translation>Play queue %1</translation>
+    </message>
+    <message>
+        <source>添加</source>
+        <translation>Add</translation>
+    </message>
+    <message>
+        <source>排序</source>
+        <translation>Sort</translation>
+    </message>
+    <message>
+        <source>保存</source>
+        <translation>Save</translation>
+    </message>
+    <message>
+        <source>载入</source>
+        <translation>Load</translation>
+    </message>
+    <message>
+        <source>清空</source>
+        <translation>Clear</translation>
+    </message>
+    <message>
+        <source>队列为空：打开文件、拖入多个文件，或点「添加」</source>
+        <translation>Queue is empty: open a file, drop several files, or click Add</translation>
+    </message>
+    <message>
+        <source>↑</source>
+        <translation>↑</translation>
+    </message>
+    <message>
+        <source>↓</source>
+        <translation>↓</translation>
+    </message>
 </context>
 <context>
     <name>LayoutC</name>
@@ -317,6 +357,34 @@
     <message>
         <source>退出</source>
         <translation>Exit</translation>
+    </message>
+    <message>
+        <source>打开网络地址…</source>
+        <translation>Open network address…</translation>
+    </message>
+    <message>
+        <source>添加到队列…</source>
+        <translation>Add to queue…</translation>
+    </message>
+    <message>
+        <source>截图</source>
+        <translation>Screenshot</translation>
+    </message>
+    <message>
+        <source>打开网络地址</source>
+        <translation>Open network address</translation>
+    </message>
+    <message>
+        <source>https://、rtsp://、rtmp:// …</source>
+        <translation>https://, rtsp://, rtmp:// …</translation>
+    </message>
+    <message>
+        <source>取消</source>
+        <translation>Cancel</translation>
+    </message>
+    <message>
+        <source>播放</source>
+        <translation>Play</translation>
     </message>
 </context>
 <context>
@@ -1552,6 +1620,98 @@
     <message>
         <source>）：</source>
         <translation>): </translation>
+    </message>
+    <message>
+        <source>画面比例</source>
+        <translation>Aspect ratio</translation>
+    </message>
+    <message>
+        <source>[playback] video-aspect-override；「填充」会同时开启 panscan，即时生效</source>
+        <translation>[playback] video-aspect-override; Fill also enables panscan, applied immediately</translation>
+    </message>
+    <message>
+        <source>填充</source>
+        <translation>Fill</translation>
+    </message>
+    <message>
+        <source>字体</source>
+        <translation>Font</translation>
+    </message>
+    <message>
+        <source>[sub] fontFamily，默认跟随系统；对纯文本字幕生效，ASS 仍按自带样式</source>
+        <translation>[sub] fontFamily, follows the system by default; applies to plain-text subtitles, ASS keeps its own styles</translation>
+    </message>
+    <message>
+        <source>微软雅黑</source>
+        <translation>Microsoft YaHei</translation>
+    </message>
+    <message>
+        <source>宋体</source>
+        <translation>SimSun</translation>
+    </message>
+    <message>
+        <source>楷体</source>
+        <translation>KaiTi</translation>
+    </message>
+    <message>
+        <source>Arial</source>
+        <translation>Arial</translation>
+    </message>
+    <message>
+        <source>Segoe UI</source>
+        <translation>Segoe UI</translation>
+    </message>
+    <message>
+        <source>字重</source>
+        <translation>Weight</translation>
+    </message>
+    <message>
+        <source>[sub] weight，默认常规；粗体写 sub-bold=yes</source>
+        <translation>[sub] weight, regular by default; bold is sub-bold=yes</translation>
+    </message>
+    <message>
+        <source>粗体</source>
+        <translation>Bold</translation>
+    </message>
+    <message>
+        <source>背景</source>
+        <translation>Background</translation>
+    </message>
+    <message>
+        <source>[sub] background，默认透明；格式 #RRGGBBAA</source>
+        <translation>[sub] background, transparent by default; format #RRGGBBAA</translation>
+    </message>
+    <message>
+        <source>透明</source>
+        <translation>Transparent</translation>
+    </message>
+    <message>
+        <source>半透明黑</source>
+        <translation>Semi-transparent black</translation>
+    </message>
+    <message>
+        <source>不透明黑</source>
+        <translation>Opaque black</translation>
+    </message>
+    <message>
+        <source>阴影</source>
+        <translation>Shadow</translation>
+    </message>
+    <message>
+        <source>[sub] shadow，默认 0；播放器按 shadow × 2 px 写入</source>
+        <translation>[sub] shadow, 0 by default; written as shadow × 2 px</translation>
+    </message>
+    <message>
+        <source>行距</source>
+        <translation>Spacing</translation>
+    </message>
+    <message>
+        <source>[sub] spacing，默认 0.5，即时生效</source>
+        <translation>[sub] spacing, 0.5 by default, applied immediately</translation>
+    </message>
+    <message>
+        <source>截图目录</source>
+        <translation>Screenshot folder</translation>
     </message>
 </context>
 <context>

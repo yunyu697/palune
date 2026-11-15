@@ -748,8 +748,8 @@ Item {
                                     { label: qsTr("微软雅黑"), value: "Microsoft YaHei" },
                                     { label: qsTr("宋体"), value: "SimSun" },
                                     { label: qsTr("楷体"), value: "KaiTi" },
-                                    { label: "Arial", value: "Arial" },
-                                    { label: "Segoe UI", value: "Segoe UI" }
+                                    { label: qsTr("Arial"), value: "Arial" },
+                                    { label: qsTr("Segoe UI"), value: "Segoe UI" }
                                 ]
                                 onPicked: function (v) { prefs.subtitleFontFamily = v }
                             }

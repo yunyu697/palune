@@ -2,7 +2,6 @@
 
 #include "diag/Log.h"
 
-#include <QCollator>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -142,6 +141,48 @@ void PlayQueue::moveDown(int index)
     notifyChanged();
 }
 
+namespace {
+
+// 自然排序：连续数字段按数值比较（E2 < E10），其余字符忽略大小写逐字比较。
+// 不用 QCollator：它依赖运行环境的 locale/ICU，CI 的 C locale 下 numericMode 不生效，
+// 同一队列在桌面与 CI 上会排出不同顺序。
+bool naturalLess(const QString &lhs, const QString &rhs)
+{
+    int i = 0;
+    int j = 0;
+    while (i < lhs.size() && j < rhs.size()) {
+        if (lhs.at(i).isDigit() && rhs.at(j).isDigit()) {
+            const int li = i;
+            const int lj = j;
+            while (i < lhs.size() && lhs.at(i).isDigit())
+                ++i;
+            while (j < rhs.size() && rhs.at(j).isDigit())
+                ++j;
+            QString a = lhs.mid(li, i - li);
+            QString b = rhs.mid(lj, j - lj);
+            while (a.size() > 1 && a.startsWith(QLatin1Char('0')))
+                a.remove(0, 1);
+            while (b.size() > 1 && b.startsWith(QLatin1Char('0')))
+                b.remove(0, 1);
+            if (a.size() != b.size())
+                return a.size() < b.size();
+            const int cmp = a.compare(b);
+            if (cmp != 0)
+                return cmp < 0;
+            continue;
+        }
+        const QChar ca = lhs.at(i).toLower();
+        const QChar cb = rhs.at(j).toLower();
+        if (ca != cb)
+            return ca < cb;
+        ++i;
+        ++j;
+    }
+    return (lhs.size() - i) < (rhs.size() - j);
+}
+
+} // namespace
+
 void PlayQueue::sortByName()
 {
     if (m_items.size() < 2)
@@ -149,14 +190,10 @@ void PlayQueue::sortByName()
     const QString currentPath = (m_current >= 0 && m_current < m_items.size())
         ? m_items.at(m_current).toMap().value(QStringLiteral("path")).toString()
         : QString();
-    QCollator collator;
-    collator.setNumericMode(true);
-    collator.setCaseSensitivity(Qt::CaseInsensitive);
     std::stable_sort(m_items.begin(), m_items.end(),
-                     [&collator](const QVariant &a, const QVariant &b) {
-                         return collator.compare(a.toMap().value(QStringLiteral("name")).toString(),
-                                                 b.toMap().value(QStringLiteral("name")).toString())
-                             < 0;
+                     [](const QVariant &a, const QVariant &b) {
+                         return naturalLess(a.toMap().value(QStringLiteral("name")).toString(),
+                                            b.toMap().value(QStringLiteral("name")).toString());
                      });
     m_current = -1;
     if (!currentPath.isEmpty()) {

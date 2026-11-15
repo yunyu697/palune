@@ -82,6 +82,20 @@
 | token 存储 | **DONE（真机）**：token 只写系统凭据存储（Windows Credential Manager / macOS Keychain / libsecret），`settings.toml` 无明文；旧明文 token 启动时迁移并删除 | `server-connect-probe.json`（`configHasPlaintextToken=false`、`beforeHasPlaintextToken→false`、`migrationLogged=true`、`libraryLoaded=true`）|
 | 仍需人工验收 | 真实 Emby / 极空间 / 飞牛设备、Plex 账号与 Plex Pass、macOS Keychain / Linux libsecret、外部查看器拉起、视频画面 | `docs/manual-acceptance.md` |
 
+### 1.0.0-RC2（2026-11-15）
+
+| 项 | 值 |
+|---|---|
+| 状态 | RC / 候选，`prerelease=true`，非正式版；P0（外部查看器/更新通道）未做，不影响本版 |
+| 版本 | `VERSION` = `1.0.0-RC2`，`check_version.py` 退出码 0 |
+| 安装包 | `Palune-1.0.0-RC2-win-x64.exe`，59,870,056 B，SHA-256 `2a088fcebe06883cefec7ab83dc1ac1173465afeb3847b115c28355b47cac1c2` |
+| tag / commit | `1.0.0-RC2` → `e1eca1479a8362f3247ef7599e9109448f68ddec` |
+| 发布 | https://github.com/yunyu697/palune/releases/tag/1.0.0-RC2，4 个资产，远端 digest 与本地一致；`latest.json`（keyId `palune-test`）用 `update.pub` 独立验签 PASS |
+| 出包门禁 | 构建树 12 个 exe 依赖检查 PASS；安装暂存树白名单 10 项 + 依赖检查 PASS（缺件拒绝出包） |
+| 本机校验 | ctest 12/12（0 失败）、qmllint 0、设计令牌检查 0 |
+| 已知红 | 该提交 CI（run 43699085001）：`check_layers.py` 3 处、覆盖率 job 的 `qml_check` 缺 QPA 插件；未在本版修 |
+| 内容 | UI 六条、覆盖窗分层、图标平台合规、圆角白边、依赖部署与 CI 校验（`docs/release-notes/1.0.0-RC2.md`） |
+
 ### 1.0.0 候选版本（RC）记录
 
 口径：**这是功能冻结候选版本，不是缺口已闭合的正式版**。设置三块 P0 与预览联动已于 11-08 补齐（M2-10 转 DONE），十项行为取证 9 项 DONE（beta 通道为 URL 级，外部查看器拉起归人工清单）；但 P1（生产签名/更新通道、计划文档缺失）未清，对外只写 `1.0.0-RC`，不得称“已收口”。

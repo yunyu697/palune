@@ -160,7 +160,20 @@ macOS / Linux 依赖：`tools/ci/fetch_deps.sh`（brew / apt / dnf / pacman）�
 - 预发布（alpha / beta / RC）按 **tag 后缀** 判定：`-alphaN` / `-betaN` / `-RCn` 一律 `prerelease=true`，**不接管** `releases/latest`；裸后缀 tag 直接失败；只有正式版 tag（如 `1.0.0`）才发普通 Release
 - 最新发布页：https://github.com/yunyu697/palune/releases
 
-### 1.0.0-RC1 当前发布状态（2026-11-14 核对）
+### 1.0.0-RC2 当前发布状态（2026-11-15 核对）
+
+| 项 | 值 |
+| --- | --- |
+| Release | [1.0.0-RC2](https://github.com/yunyu697/palune/releases/tag/1.0.0-RC2)，`prerelease=true`，tag `1.0.0-RC2` → `e1eca1479a8362f3247ef7599e9109448f68ddec` |
+| 资产（4 个） | `Palune-1.0.0-RC2-win-x64.exe`（**59,870,056 B**，SHA-256 `2a088fcebe06883cefec7ab83dc1ac1173465afeb3847b115c28355b47cac1c2`）、`latest.json`、`SHA256SUMS`、`build-record.json`；远端 digest 与本地 SHA-256 逐条一致 |
+| 清单 | `--channel stable`、`version 1.0.0-RC2`、`keyId palune-test`；`--base-url .../releases/download/1.0.0-RC2`；用 `resources/trust/update.pub` 独立验签 **PASS**（`docs/evidence/release-1.0.0-rc2/manifest-verify.json`） |
+| 可访问性 | 匿名访问 Release 页、`latest.json`、安装包均 **200**；`releases/latest` 仍为 **404**（不接管 Latest） |
+| 本版内容 | UI 六条、覆盖窗分层（`enforceLayering`）、图标平台合规（icns Big Sur 824 / hicolor 8 档 / macOS 单色 template / 多尺寸 QIcon）、圆角白边（删 QML 发丝描边 + 圆角单一来源 12/8/18 + DWM 系统窗框）、依赖部署与 CI 校验（构建树 12 exe + 安装暂存树出包门禁）；逐条见 `docs/release-notes/1.0.0-RC2.md` |
+| 本机校验 | `check_version.py` 0、`ctest` 12/12、`check_qml.ps1` 0、`check_design_tokens.py` 0 |
+| 已知红 | 该提交 CI（run 43699085001）红：`check_layers.py` 3 处（LayoutB 的 `player.setChapter`/mpv 注释、SettingsPanel 的 `player.setAspectRatio`）与覆盖率 job 的 `qml_check`（未部署 QPA 插件）；详见 `docs/RELEASES.md` §11.2 |
+| 未提供 | macOS/Linux 产物、MSI、生产签名；安装→启动→卸载自检本机未跑（按「不占前台/不弹窗」跳过） |
+
+### 1.0.0-RC1 发布状态（2026-11-14 核对）
 
 | 项 | 值 |
 | --- | --- |

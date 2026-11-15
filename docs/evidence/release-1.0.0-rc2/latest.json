@@ -1,0 +1,32 @@
+{
+  "payload": {
+    "schemaVersion": 1,
+    "channel": "stable",
+    "version": "1.0.0-RC2",
+    "publishedAt": "2026-11-15T09:27:22Z",
+    "notes": {
+      "zh-CN": "1.0.0-RC2：圆角白边/图标平台合规/覆盖窗分层/出包依赖门禁修复",
+      "en": "1.0.0-RC2：圆角白边/图标平台合规/覆盖窗分层/出包依赖门禁修复"
+    },
+    "artifacts": [
+      {
+        "platform": "windows",
+        "arch": "x86_64",
+        "url": "https://github.com/yunyu697/palune/releases/download/1.0.0-RC2/Palune-1.0.0-RC2-win-x64.exe",
+        "size": 59870056,
+        "sha256": "2a088fcebe06883cefec7ab83dc1ac1173465afeb3847b115c28355b47cac1c2",
+        "installer": "nsis",
+        "minOsVersion": "10.0",
+        "signature": {
+          "type": "ed25519",
+          "value": "4j59MTV+uMgRY5e1ne9x3pcF9j69P/+3aAN0C1ddlhUenhZIFipEtcQ4WYtzuDMDAp/v6oPglSnZuGsPXHVqCA=="
+        }
+      }
+    ]
+  },
+  "signature": {
+    "type": "ed25519",
+    "keyId": "palune-test",
+    "value": "gZdspeA5zGrqUXAslE7eTOj77qmVIU5xWJhjORAA4CFT91OFV7WQjFbuj7wkR3dSHoGLj9MXwyt3IF0Jex4JCQ=="
+  }
+}

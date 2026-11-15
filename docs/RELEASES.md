@@ -1,7 +1,7 @@
 # 发行与更新链路（单仓：yunyu697/palune）
 
-更新时间：2026-11-14
-适用版本：`1.0.0-RC1` 起（2026-11-14 RC 序号化；后缀规则见 §11）
+更新时间：2026-11-15
+适用版本：`1.0.0-RC2` 起（2026-11-15 发布；RC 序号无上限，后缀规则见 §11）
 
 ## 1. 仓库关系（两仓 → 单仓）
 
@@ -210,4 +210,21 @@ permissions:
 - 旧 `latest.json`（`version=1.0.0`）里的资产 URL 指向旧 tag，随之失效；
 - 已安装 `1.0.0-RC` 的用户重装 `1.0.0-RC1` 即可；
 - 已归档旧仓 `yunyu697/palune-releases` 里的历史 `1.0.0-RC` Release 不受影响，仅作历史取证。
+
+### 11.2 `1.0.0-RC2`（2026-11-15）
+
+| 项 | 实测值 |
+| --- | --- |
+| tag / commit | `1.0.0-RC2` → `e1eca1479a8362f3247ef7599e9109448f68ddec`（`refs/tags/1.0.0-RC2` 指向该提交，type=commit） |
+| 安装包 | `Palune-1.0.0-RC2-win-x64.exe`，**59,870,056 B**，SHA-256 `2a088fcebe06883cefec7ab83dc1ac1173465afeb3847b115c28355b47cac1c2` |
+| 资产（4 个） | 上述 exe、`latest.json`（1,127 B，`d20c0aa5…f7efbfbee`）、`SHA256SUMS`（181 B，`6f8d8060…d2d30537`）、`build-record.json`（3,210 B，`d2fb0522…90051ed7`）；GitHub 远端 digest 与本地 SHA-256 逐条一致 |
+| 清单 | `--channel stable`、`version 1.0.0-RC2`、`keyId palune-test`、`--base-url .../releases/download/1.0.0-RC2`、artifact 1 条（windows/x86_64/nsis，size 与 sha256 均与本地一致）；`resources/trust/update.pub` 独立验签 **PASS**，`manifestSignature/versionMatches/sha256sums/artifacts` 四项全 true（`docs/evidence/release-1.0.0-rc2/manifest-verify.json`） |
+| 预发布 | `prerelease=true`、`isDraft=false`；`releases/latest` 仍为 **404**（不接管 Latest） |
+| 可访问性 | 匿名 GET `releases/tag/1.0.0-RC2`、`.../download/1.0.0-RC2/latest.json`、`.../download/1.0.0-RC2/Palune-1.0.0-RC2-win-x64.exe` 均 **200**（curl 无凭据） |
+| 出包门禁 | 构建树 12 个 exe 依赖检查 **PASS**；`cmake --install` 暂存树白名单 10 项齐全 + 依赖检查 **PASS**（1 个 exe / 16 个同目录二进制） |
+| 本机校验 | `check_version.py` 0；`ctest` 12/12 通过（0 失败）；`check_qml.ps1` 0；`check_design_tokens.py` 0 |
+| 未做 | 安装→启动→卸载自检（本机验证会弹窗，按「不占前台/不弹窗」跳过）；macOS/Linux 产物、MSI、生产签名 |
+| 已知红 | 该提交的 CI（run 43699085001）红：① `check_layers.py` 3 处违规（`qml/layouts/LayoutB/LayoutB.qml` 第 263 行 `player.setChapter(...)`、第 208 行注释含 mpv；`qml/SettingsPanel.qml` 第 636 行 `player.setAspectRatio(...)`）；② 覆盖率 job 的 `qml_check` 用例在未部署 QPA 插件的 build-cov 下失败（`no Qt platform plugin could be initialized`）。本地 `ctest` 跑在已部署插件的 `build/` 上，故未复现 ② |
+| 流程偏差（记录在案） | 按 §10 应先停用 Release 工作流再建 tag；本次漏做，`gh release create` 触发 run 43699395430，`version` job 通过后在 `windows` 构建阶段被取消，未触达 `publish`，资产未被覆盖（取消后重新核对远端 4 个资产 digest 与本地一致） |
+
 

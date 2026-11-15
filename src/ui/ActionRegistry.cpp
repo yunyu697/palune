@@ -13,12 +13,14 @@ QString modifierPrefix(int modifiers)
     QStringList parts;
     if (modifiers & Qt::ControlModifier)
         parts << QStringLiteral("Ctrl");
+    // 顺序必须与 platformKeySpec 生成绑定时的写法一致：macOS 把 Ctrl 改写成 Meta 后
+    // Meta 仍在最前，若这里把 Meta 排到最后，Meta+Shift+O 会拼成 Shift+Meta 而查不到。
+    if (modifiers & Qt::MetaModifier)
+        parts << QStringLiteral("Meta");
     if (modifiers & Qt::ShiftModifier)
         parts << QStringLiteral("Shift");
     if (modifiers & Qt::AltModifier)
         parts << QStringLiteral("Alt");
-    if (modifiers & Qt::MetaModifier)
-        parts << QStringLiteral("Meta");
     return parts.join(QLatin1Char('+'));
 }
 

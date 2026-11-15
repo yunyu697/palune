@@ -887,8 +887,7 @@ Item {
                                 pixelSize: prefs.subtitleFontSize
                                 textColor: prefs.subtitleColor
                                 outline: prefs.subtitleOutline * 2
-                                fontFamily: prefs.subtitleFontFamily === ""
-                                            ? Qt.application.font.family : prefs.subtitleFontFamily
+                                fontFamily: prefs.subtitleFontFamily
                                 fontWeight: prefs.subtitleWeight === "bold" ? Font.Bold : Font.Normal
                                 horizontalAlignment: Text.AlignHCenter
                             }

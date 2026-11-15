@@ -3,8 +3,12 @@
 #include "diag/Log.h"
 
 #include <QCoreApplication>
+#include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
+#include <QRegularExpression>
+
+#include <cstring>
 
 #if defined(Q_OS_UNIX)
 #include <clocale>
@@ -274,6 +278,12 @@ bool MpvClient::openFile(const QString &path)
     m_errorMessage.clear();
     emit errorMessageChanged();
     clearVideoInfo();
+    // 换文件时先清空上一文件的章节，避免加载过程中界面显示旧章节。
+    if (!m_chapters.isEmpty() || m_chapterCount >= 0) {
+        m_chapters.clear();
+        m_chapterCount = -1;
+        emit chaptersChanged();
+    }
     m_filePath = absolute;
     emit filePathChanged();
     return true;
@@ -422,7 +432,9 @@ bool MpvClient::setStringProperty(const char *name, const char *value)
 }
 
 void MpvClient::setSubtitleStyle(int fontSize, const QString &color, double outline,
-                                 int positionPercent)
+                                 int positionPercent, const QString &fontFamily,
+                                 const QString &fontWeight, const QString &background,
+                                 double shadowOffset, double lineSpacing)
 {
     // mpv 的 sub-font-size 以 720p 为基准（默认 55），界面上的 15 对应约 54。
     const int scaled = qBound(8, qRound(fontSize * 3.6), 200);
@@ -433,6 +445,18 @@ void MpvClient::setSubtitleStyle(int fontSize, const QString &color, double outl
     // sub-pos：100 为贴底，向上移动 = 减小数值。
     const int pos = qBound(0, 100 - positionPercent, 100);
     setStringProperty("sub-pos", QByteArray::number(pos).constData());
+    // 字体族为空表示沿用 mpv 默认 sans-serif；显式设置后对纯文本字幕生效。
+    if (!fontFamily.trimmed().isEmpty())
+        setStringProperty("sub-font", fontFamily.trimmed().toUtf8().constData());
+    setStringProperty("sub-bold", fontWeight == QLatin1String("bold") ? "yes" : "no");
+    // 背景色格式为 #RRGGBBAA；空串/透明表示不加背景。
+    setStringProperty("sub-back-color",
+                      (background.isEmpty() ? QStringLiteral("#00000000") : background)
+                          .toUtf8().constData());
+    const int shadow = qBound(0, qRound(shadowOffset * 2.0), 12);
+    setStringProperty("sub-shadow-offset", QByteArray::number(shadow).constData());
+    const double spacing = qBound(0.0, lineSpacing, 10.0);
+    setStringProperty("sub-spacing", QByteArray::number(spacing, 'f', 1).constData());
 }
 
 void MpvClient::setSubtitleDelayAbsolute(double seconds)
@@ -471,6 +495,68 @@ void MpvClient::addSubtitleFile(const QString &path)
         Log::warn(QStringLiteral("外挂字幕加载失败：%1").arg(path));
     else
         Log::info(QStringLiteral("外挂字幕已加载：%1").arg(path));
+}
+
+void MpvClient::setChapter(int index)
+{
+    if (!m_initialized || index < 0 || index >= m_chapters.size())
+        return;
+    const QVariantMap chapter = m_chapters.at(index).toMap();
+    const double time = chapter.value(QStringLiteral("time")).toDouble();
+    seek(qMax(0.0, time));
+    Log::info(QStringLiteral("跳转章节 %1：%2s")
+                  .arg(chapter.value(QStringLiteral("title")).toString())
+                  .arg(time, 0, 'f', 2));
+}
+
+void MpvClient::setAspectRatio(const QString &mode)
+{
+    if (!m_initialized)
+        return;
+    QString aspect = QStringLiteral("no");
+    double panscan = 0.0;
+    if (mode == QLatin1String("fill")) {
+        panscan = 1.0;
+    } else if (mode == QLatin1String("16:9") || mode == QLatin1String("4:3")
+               || mode == QLatin1String("21:9") || mode == QLatin1String("1:1")) {
+        aspect = mode;
+    }
+    setStringProperty("video-aspect-override", aspect.toUtf8().constData());
+    double value = panscan;
+    if (m_api->setProperty(m_mpv, "panscan", MPV_FORMAT_DOUBLE, &value) < 0)
+        Log::warn(QStringLiteral("画面填充设置失败：%1").arg(mode));
+    m_aspectRatio = mode.isEmpty() ? QStringLiteral("auto") : mode;
+    emit aspectRatioChanged();
+    Log::info(QStringLiteral("画面比例设为 %1").arg(m_aspectRatio));
+}
+
+QString MpvClient::screenshotToDir(const QString &dir)
+{
+    if (!m_initialized || m_filePath.isEmpty())
+        return {};
+    QDir target(dir.isEmpty() ? QDir::homePath() : dir);
+    if (!target.exists() && !target.mkpath(QStringLiteral("."))) {
+        Log::warn(QStringLiteral("截图目录创建失败：%1").arg(target.absolutePath()));
+        return {};
+    }
+    QString base = m_title.isEmpty() ? QFileInfo(m_filePath).completeBaseName() : m_title;
+    base.replace(QRegularExpression(QStringLiteral("[\\\\/:*?\"<>|\\r\\n]+")), QStringLiteral("_"));
+    base = base.trimmed().left(80);
+    if (base.isEmpty())
+        base = QStringLiteral("palune");
+    const QString stamp = QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd-HHmmss"));
+    QString path = target.absoluteFilePath(QStringLiteral("%1-%2.png").arg(base, stamp));
+    for (int i = 1; QFileInfo::exists(path) && i < 100; ++i)
+        path = target.absoluteFilePath(QStringLiteral("%1-%2-%3.png").arg(base, stamp).arg(i));
+    const QByteArray file = path.toUtf8();
+    const char *args[] = {"screenshot-to-file", file.constData(), "video", nullptr};
+    const int rc = m_api->command(m_mpv, args);
+    if (rc < 0) {
+        Log::warn(QStringLiteral("截图失败：%1").arg(m_api->errorString(rc)));
+        return {};
+    }
+    Log::info(QStringLiteral("截图已保存：%1").arg(path));
+    return path;
 }
 
 void MpvClient::setAudioDelay(double seconds)
@@ -710,6 +796,7 @@ void MpvClient::handleEvents()
             break;
         case MPV_EVENT_FILE_LOADED:
             m_pendingFile = false;
+            refreshChapterList();
             emit fileLoaded();
             break;
         case MPV_EVENT_END_FILE: {
@@ -874,6 +961,46 @@ void MpvClient::refreshTrackList()
     m_audioTracks = audio;
     m_subtitleTracks = subtitles;
     emit tracksChanged();
+}
+
+void MpvClient::refreshChapterList()
+{
+    mpv_node node;
+    memset(&node, 0, sizeof(node));
+    QVariantList chapters;
+    int64_t count = 0;
+    if (m_api->getProperty(m_mpv, "chapter-list", MPV_FORMAT_NODE, &node) >= 0
+        && node.format == MPV_FORMAT_NODE_ARRAY) {
+        count = node.u.list->num;
+        for (int i = 0; i < node.u.list->num; ++i) {
+            const mpv_node &entry = node.u.list->values[i];
+            if (entry.format != MPV_FORMAT_NODE_MAP)
+                continue;
+            QVariantMap chapter;
+            for (int j = 0; j < entry.u.list->num; ++j) {
+                const QString key = QString::fromUtf8(entry.u.list->keys[j]);
+                const mpv_node &value = entry.u.list->values[j];
+                if (key == QLatin1String("title") && value.format == MPV_FORMAT_STRING)
+                    chapter.insert(QStringLiteral("title"), QString::fromUtf8(value.u.string));
+                else if (key == QLatin1String("time") && value.format == MPV_FORMAT_DOUBLE)
+                    chapter.insert(QStringLiteral("time"), value.u.double_);
+            }
+            if (!chapter.contains(QStringLiteral("time")))
+                continue;
+            if (chapter.value(QStringLiteral("title")).toString().isEmpty())
+                chapter.insert(QStringLiteral("title"),
+                               QCoreApplication::translate("Palune", "章节 %1").arg(i + 1));
+            chapter.insert(QStringLiteral("index"), i);
+            chapters.append(chapter);
+        }
+    }
+    if (node.format != MPV_FORMAT_NONE)
+        m_api->freeNodeContents(&node);
+    if (count == m_chapterCount && chapters == m_chapters)
+        return;
+    m_chapterCount = count;
+    m_chapters = chapters;
+    emit chaptersChanged();
 }
 
 bool MpvClient::sampleVideoLuminance(double *mean, int *width, int *height, QString *error)

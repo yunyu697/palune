@@ -11,6 +11,9 @@ Item {
     property real outline: 1.0
     property int horizontalAlignment: Text.AlignHCenter
     property int wrapMode: Text.WordWrap
+    // Text 没有子项 font：字体族/字重要作为显式属性下发到每一层 Text。
+    property string fontFamily: ""
+    property int fontWeight: Font.Normal
 
     // 传入的是播放器实际 sub-border-size（0–12px），不是 [sub] outline 设置值。
     readonly property real outlineWidth: Math.max(0, Math.min(12, outline))
@@ -24,6 +27,8 @@ Item {
         visible: false
         text: root.text
         font.pixelSize: root.pixelSize
+        font.family: root.fontFamily
+        font.weight: root.fontWeight
         wrapMode: Text.NoWrap
     }
 
@@ -40,6 +45,8 @@ Item {
             text: root.text
             color: "#000000"
             font.pixelSize: root.pixelSize
+            font.family: root.fontFamily
+            font.weight: root.fontWeight
         }
     }
 
@@ -51,5 +58,7 @@ Item {
         text: root.text
         color: root.textColor
         font.pixelSize: root.pixelSize
+        font.family: root.fontFamily
+        font.weight: root.fontWeight
     }
 }

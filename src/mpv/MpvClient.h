@@ -27,6 +27,8 @@ class MpvClient : public QObject
     Q_PROPERTY(double speed READ speed NOTIFY speedChanged)
     Q_PROPERTY(QVariantList audioTracks READ audioTracks NOTIFY tracksChanged)
     Q_PROPERTY(QVariantList subtitleTracks READ subtitleTracks NOTIFY tracksChanged)
+    Q_PROPERTY(QVariantList chapters READ chapters NOTIFY chaptersChanged)
+    Q_PROPERTY(QString aspectRatio READ aspectRatio WRITE setAspectRatio NOTIFY aspectRatioChanged)
     Q_PROPERTY(int startFileCount READ startFileCount NOTIFY playbackEventsChanged)
     Q_PROPERTY(int endFileCount READ endFileCount NOTIFY playbackEventsChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
@@ -67,11 +69,19 @@ public:
     Q_INVOKABLE QString propertyString(const QString &name) const;
     // 设置项（Preferences 调用）：均为 mpv 属性写入，可在播放中即时生效。
     void setSubtitleStyle(int fontSize, const QString &color, double outline,
-                          int positionPercent);
+                          int positionPercent, const QString &fontFamily = QString(),
+                          const QString &fontWeight = QString(), const QString &background = QString(),
+                          double shadowOffset = 0.0, double lineSpacing = 0.0);
     void setSubtitleDelayAbsolute(double seconds);
     void setSubtitleAutoLoad(bool enabled);
     void setSubtitleEncoding(const QString &encoding);
     Q_INVOKABLE void addSubtitleFile(const QString &path);
+    // 章节：索引按 chapter-list 顺序，跳转按章节起始时间做精确 seek。
+    Q_INVOKABLE void setChapter(int index);
+    // 画面比例：auto / 16:9 / 4:3 / 21:9 / 1:1 / fill（fill 为拉伸铺满）。
+    Q_INVOKABLE void setAspectRatio(const QString &mode);
+    // 截图：保存到指定目录，返回实际写出的绝对路径（失败返回空）。
+    Q_INVOKABLE QString screenshotToDir(const QString &dir);
     void setAudioDelay(double seconds);
     void setAudioChannels(const QString &channels);
     void setAudioDevice(const QString &device);
@@ -94,6 +104,8 @@ public:
     double subtitleDelay() const { return m_subtitleDelay; }
     QVariantList audioTracks() const { return m_audioTracks; }
     QVariantList subtitleTracks() const { return m_subtitleTracks; }
+    QVariantList chapters() const { return m_chapters; }
+    QString aspectRatio() const { return m_aspectRatio; }
     int startFileCount() const { return m_startFileCount; }
     int endFileCount() const { return m_endFileCount; }
     QString errorMessage() const { return m_errorMessage; }
@@ -122,6 +134,8 @@ signals:
     void filePathChanged();
     void speedChanged();
     void tracksChanged();
+    void chaptersChanged();
+    void aspectRatioChanged();
     void playbackEventsChanged();
     void fileLoaded();
     void endFile(const QString &reason);
@@ -142,6 +156,7 @@ private:
     void updateVideoInfo();
     void clearVideoInfo();
     void refreshTrackList();
+    void refreshChapterList();
     // 统一的属性写入入口：失败只告警，不影响播放。
     bool setStringProperty(const char *name, const char *value);
     template <typename T>
@@ -173,6 +188,9 @@ private:
     double m_audioPts = 0.0;
     QVariantList m_audioTracks;
     QVariantList m_subtitleTracks;
+    QVariantList m_chapters;
+    qint64 m_chapterCount = -1;
+    QString m_aspectRatio = QStringLiteral("auto");
     qint64 m_trackCount = -1;
     int m_startFileCount = 0;
     int m_endFileCount = 0;

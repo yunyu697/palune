@@ -9,11 +9,11 @@ import "../tokens"
 // 10×10 视觉画布、1px 描边，缩放时不会出现“最小化像短线、关闭像斜杠”的错位。
 Row {
     id: row
-    spacing: 8
+    spacing: tokens.spaceM
 
     property bool compact: typeof compactMode !== "undefined" && compactMode.compact
-    readonly property int size: row.compact ? 26 : 30
-    readonly property int iconSize: row.compact ? 9 : 10
+    readonly property int size: row.compact ? tokens.ctrlH : tokens.ctrlHL
+    readonly property int iconSize: tokens.iconS
 
     Tokens { id: tokens }
 
@@ -22,13 +22,13 @@ Row {
         width: row.size
         height: row.size
         radius: width / 2
-        color: minHover.containsMouse ? "#33ffffff" : "#1affffff"
-        border.width: 1
+        color: minHover.containsMouse ? tokens.statePressed : tokens.stateRest
+        border.width: tokens.stroke
         border.color: tokens.border
         Rectangle {
             anchors.centerIn: parent
             width: row.iconSize
-            height: 1
+            height: tokens.stroke
             color: tokens.text
         }
         MouseArea {
@@ -45,8 +45,8 @@ Row {
         width: row.size
         height: row.size
         radius: width / 2
-        color: maxHover.containsMouse ? "#33ffffff" : "#1affffff"
-        border.width: 1
+        color: maxHover.containsMouse ? tokens.statePressed : tokens.stateRest
+        border.width: tokens.stroke
         border.color: tokens.border
         Item {
             anchors.centerIn: parent
@@ -56,7 +56,7 @@ Row {
             Rectangle {
                 anchors.fill: parent
                 color: "transparent"
-                border.width: 1
+                border.width: tokens.stroke
                 border.color: tokens.text
             }
         }
@@ -71,7 +71,7 @@ Row {
                 width: row.iconSize - 2
                 height: row.iconSize - 2
                 color: "transparent"
-                border.width: 1
+                border.width: tokens.stroke
                 border.color: tokens.text
             }
             Rectangle {
@@ -80,7 +80,7 @@ Row {
                 width: row.iconSize - 2
                 height: row.iconSize - 2
                 color: "transparent"
-                border.width: 1
+                border.width: tokens.stroke
                 border.color: tokens.text
             }
         }
@@ -98,9 +98,9 @@ Row {
         width: row.size
         height: row.size
         radius: width / 2
-        color: closeHover.containsMouse ? "#cc8a3b3b" : "#1affffff"
-        border.width: 1
-        border.color: closeHover.containsMouse ? "#cc8a3b3b" : tokens.border
+        color: closeHover.containsMouse ? tokens.dangerHover : tokens.stateRest
+        border.width: tokens.stroke
+        border.color: closeHover.containsMouse ? tokens.dangerHover : tokens.border
         Item {
             anchors.centerIn: parent
             width: row.iconSize
@@ -108,16 +108,16 @@ Row {
             Rectangle {
                 anchors.centerIn: parent
                 width: row.iconSize
-                height: 1
+                height: tokens.stroke
                 rotation: 45
-                color: closeHover.containsMouse ? "#ffd9d9" : tokens.text
+                color: closeHover.containsMouse ? tokens.dangerHoverText : tokens.text
             }
             Rectangle {
                 anchors.centerIn: parent
                 width: row.iconSize
-                height: 1
+                height: tokens.stroke
                 rotation: -45
-                color: closeHover.containsMouse ? "#ffd9d9" : tokens.text
+                color: closeHover.containsMouse ? tokens.dangerHoverText : tokens.text
             }
         }
         MouseArea {

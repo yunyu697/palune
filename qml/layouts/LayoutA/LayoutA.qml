@@ -10,7 +10,7 @@ Item {
     id: layoutA
 
     readonly property bool compact: typeof compactMode !== "undefined" && compactMode.compact
-    readonly property bool showSecondary: width >= 900 && !layoutA.compact
+    readonly property bool showSecondary: width >= tokens.bpWide && !layoutA.compact
     // 设计稿 §1.5：A 的空态隐藏标题条与控制条，只留空态卡。
     readonly property bool hasFile: player.filePath !== ""
     // 媒体库以 352px 滑出侧栏打开时，底部控制条右边界收至 368px（设计稿 §3.A）。
@@ -27,7 +27,7 @@ Item {
     // 空态下标题条隐藏，但仍需要能关闭/最小化窗口（窗口按钮单独浮在右上）。
     WindowButtons {
         visible: !layoutA.hasFile && uiState.chromeVisible
-        anchors { top: parent.top; right: parent.right; margins: 18 }
+        anchors { top: parent.top; right: parent.right; margins: tokens.spaceXL }
         compact: layoutA.compact
     }
 
@@ -39,22 +39,22 @@ Item {
             top: parent.top
             left: parent.left
             right: parent.right
-            margins: 10
+            margins: tokens.spaceM
         }
         height: tokens.topBarHeight
-        radius: 16
+        radius: tokens.radiusL
         color: "transparent"
         border.width: 0
 
         Text {
             id: brand
             anchors.left: parent.left
-            anchors.leftMargin: 24
+            anchors.leftMargin: tokens.space3XL
             anchors.verticalCenter: parent.verticalCenter
             text: "PALUNE"
             color: tokens.accent
             font.pixelSize: tokens.fontS
-            font.letterSpacing: 3
+            font.letterSpacing: tokens.trackingM
             font.weight: Font.DemiBold
         }
 
@@ -65,13 +65,13 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             text: player.title === "" ? qsTr("未打开文件") : player.title
             color: tokens.text
-            font.pixelSize: 15
+            font.pixelSize: tokens.fontSubtitle
             elide: Text.ElideRight
         }
 
         WindowButtons {
             anchors.right: parent.right
-            anchors.rightMargin: 18
+            anchors.rightMargin: tokens.spaceXL
             anchors.verticalCenter: parent.verticalCenter
             compact: layoutA.compact
         }
@@ -86,23 +86,23 @@ Item {
             left: parent.left
             right: parent.right
             topMargin: 0
-            bottomMargin: 10
-            leftMargin: 10
-            rightMargin: layoutA.libraryOpen ? 368 : 10
+            bottomMargin: tokens.spaceM
+            leftMargin: tokens.spaceM
+            rightMargin: layoutA.libraryOpen ? tokens.libraryDockReserve : tokens.spaceM
         }
-        height: layoutA.compact ? 64 : tokens.transportHeight
-        radius: 16
+        height: layoutA.compact ? tokens.compactBarH : tokens.transportHeight
+        radius: tokens.radiusL
         color: tokens.glass
-        border.width: 1
+        border.width: tokens.stroke
         border.color: tokens.border
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.leftMargin: 20
-            anchors.rightMargin: 20
-            anchors.topMargin: 8
-            anchors.bottomMargin: 8
-            spacing: 2
+            anchors.leftMargin: tokens.spaceXXL
+            anchors.rightMargin: tokens.spaceXXL
+            anchors.topMargin: tokens.spaceM
+            anchors.bottomMargin: tokens.spaceM
+            spacing: tokens.spaceHair
 
             SeekBar {
                 Layout.fillWidth: true
@@ -113,7 +113,7 @@ Item {
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: tokens.spaceM
 
                 PillButton {
                     label: player.paused ? qsTr("播放") : qsTr("暂停")

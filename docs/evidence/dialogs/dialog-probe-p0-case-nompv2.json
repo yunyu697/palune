@@ -1,0 +1,38 @@
+{
+  "exe": "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\palune\\build\\qa\\case-nompv\\Palune.exe",
+  "seconds": 10.0,
+  "dialogs": [
+    {
+      "class": "#32770",
+      "title": "Palune",
+      "children": [
+        {
+          "class": "Button",
+          "text": "确定"
+        },
+        {
+          "class": "Static",
+          "text": ""
+        },
+        {
+          "class": "Static",
+          "text": "Palune 无法启动：播放组件 libmpv 加载失败（未找到 libmpv 动态库（libmpv-2.dll / libmpv.so.2 / libmpv.2.dylib）。禁止静态链接，请把动态库放在程序目录。）。请重新安装 Palune。\n\n日志：C:\\Users\\TYLERZ~1\\AppData\\Local\\Temp\\palune-dialog-pj04eon1/logs/palune.log"
+        }
+      ],
+      "screenshot": "dialog-p0-case-nompv2-1.png",
+      "at": 1794707699.7
+    }
+  ],
+  "topLevelWindows": [
+    {
+      "class": "#32770",
+      "title": "Palune",
+      "size": [
+        992,
+        484
+      ]
+    }
+  ],
+  "launch": "shell",
+  "stderr": ""
+}

@@ -1,4 +1,5 @@
 #include "app/AppController.h"
+#include "app/BrandIcon.h"
 
 #include "core/AppPaths.h"
 #include "core/ProcessMetrics.h"
@@ -14,6 +15,7 @@
 #include "theme/LayoutHost.h"
 #include "theme/ThemeRegistry.h"
 #include "ui/CompactController.h"
+#include "ui/PlayQueue.h"
 #include "ui/UiStateStore.h"
 #include "ui/ActionRegistry.h"
 #include "update/UpdateService.h"
@@ -28,6 +30,7 @@
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDir>
+#include <QDirIterator>
 #include <QElapsedTimer>
 #include <QEventLoop>
 #include <QFile>
@@ -45,6 +48,7 @@
 #include <QScreen>
 #include <QSystemTrayIcon>
 #include <QVector>
+#include <QQmlComponent>
 #include <QQmlEngine>
 #include <QSysInfo>
 #include <QQuickItem>
@@ -83,6 +87,21 @@ QString defaultReportPath(const QString &suffix)
 
 // start() 在 app.exec() 之前调用，自动化模式通过 finishWithCode() 把退出码送进事件循环。
 
+// 启动期的不可恢复错误：必须让用户看到“为什么”和日志位置，不能只退出。
+// 文案固定中文，不使用 Qt 的英文原生对话框。
+void reportStartupFailure(const QString &reason)
+{
+    Log::error(reason);
+    const QString text = QStringLiteral("Palune 无法启动：%1\n\n日志：%2")
+                             .arg(reason, Log::filePath());
+#if defined(Q_OS_WIN)
+    MessageBoxW(nullptr, reinterpret_cast<LPCWSTR>(text.utf16()), L"Palune",
+                MB_OK | MB_ICONERROR);
+#else
+    QMessageBox::critical(nullptr, QStringLiteral("Palune"), text);
+#endif
+}
+
 } // namespace
 
 AppController::AppController(const Options &options, Settings *settings, QObject *parent)
@@ -98,6 +117,14 @@ void AppController::start()
     if (m_options.restarted) {
         writeRestartMarker();
         QTimer::singleShot(0, qApp, &QCoreApplication::quit);
+        return;
+    }
+    if (m_options.qmlCheck) {
+        runQmlCheck();
+        return;
+    }
+    if (m_options.p0Probe) {
+        runP0Probe();
         return;
     }
     if (!m_options.shotDir.isEmpty()) {
@@ -161,8 +188,13 @@ void AppController::start()
 void AppController::startNormal()
 {
     m_player = new MpvClient(this);
-    if (!m_player->initialize())
-        Log::error(QStringLiteral("libmpv 初始化失败：%1").arg(m_player->loadError()));
+    if (!m_player->initialize()) {
+        // 窗口能出来但一点播放就失败，属于“看起来正常”的静默故障；直接说明并退出。
+        reportStartupFailure(QStringLiteral("播放组件 libmpv 加载失败（%1）。请重新安装 Palune。")
+                                 .arg(m_player->loadError()));
+        finishWithCode(4);
+        return;
+    }
     connect(m_player, &MpvClient::errorOccurred, this, [](const QString &message) {
         Log::error(QStringLiteral("播放器：%1").arg(message));
     });
@@ -174,7 +206,7 @@ void AppController::startNormal()
 
     m_windows = new WindowController(m_player, m_updater, m_settings, m_library, this);
     if (!m_windows->start(1180, 700)) {
-        Log::error(QStringLiteral("窗口初始化失败"));
+        reportStartupFailure(QStringLiteral("界面文件加载失败。详情见日志中的 QML 报错行号。"));
         finishWithCode(4);
         return;
     }
@@ -235,11 +267,11 @@ void AppController::startNormal()
         });
     }
 
-    // 通知区域图标：窗口被最小化或切走后仍能找到入口。图标与窗口/exe 共用同一份
-    // 品牌资源（qrc 里的 256 PNG），自动化截图场景不创建，避免遮挡与干扰。
+    // 通知区域图标：窗口被最小化或切走后仍能找到入口。用品牌小尺寸阶梯（macOS 为
+    // 单色 template 图），不再直接把 256 彩色 App 图塞给系统缩。自动化截图场景不创建。
     const bool uiAutomation = automationMode;
     if (!uiAutomation && QSystemTrayIcon::isSystemTrayAvailable()) {
-        m_tray = new QSystemTrayIcon(QIcon(QStringLiteral(":/packaging/palune-256.png")), this);
+        m_tray = new QSystemTrayIcon(brandTrayIcon(), this);
         m_tray->setToolTip(QStringLiteral("Palune 媒体播放器"));
         auto *menu = new QMenu();
         connect(qApp, &QCoreApplication::aboutToQuit, menu, &QObject::deleteLater);
@@ -355,6 +387,169 @@ void AppController::startNormal()
             finishWithCode(overall == QLatin1String("PASS") ? 0 : 2);
         });
     }
+}
+
+void AppController::runQmlCheck()
+{
+    // 只做编译/加载，不实例化：不需要窗口、mpv 或上下文属性，
+    // 因此可在安装后与 CI 里安全运行，专门拦截“属性名写错导致整窗起不来”。
+    QQmlEngine engine;
+    QJsonArray files;
+    bool ok = true;
+    int count = 0;
+    QDirIterator it(QStringLiteral(":/qml"), QStringList{QStringLiteral("*.qml")},
+                    QDir::Files, QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        const QString path = it.next();
+        ++count;
+        QQmlComponent component(&engine, QUrl(QStringLiteral("qrc") + path));
+        QJsonObject entry;
+        entry.insert(QStringLiteral("file"), path);
+        if (component.isError()) {
+            ok = false;
+            QStringList errors;
+            for (const QQmlError &error : component.errors()) {
+                const QString line = error.toString();
+                errors << line;
+                Log::error(QStringLiteral("QML: %1").arg(line));
+            }
+            entry.insert(QStringLiteral("ok"), false);
+            entry.insert(QStringLiteral("errors"), QJsonArray::fromStringList(errors));
+        } else {
+            entry.insert(QStringLiteral("ok"), true);
+        }
+        files.append(entry);
+    }
+
+    QJsonObject report;
+    report.insert(QStringLiteral("mode"), QStringLiteral("qml-check"));
+    report.insert(QStringLiteral("version"), QStringLiteral(PALUNE_VERSION));
+    report.insert(QStringLiteral("ok"), ok);
+    report.insert(QStringLiteral("count"), count);
+    report.insert(QStringLiteral("files"), files);
+    const QString path = m_options.reportPath.isEmpty()
+        ? QDir::currentPath() + QStringLiteral("/qml-check.json")
+        : m_options.reportPath;
+    writeJsonReport(report, path);
+    Log::info(QStringLiteral("QML 自检：%1 个文件，%2")
+                  .arg(count).arg(ok ? QStringLiteral("通过") : QStringLiteral("失败")));
+    finishWithCode(ok ? 0 : 2);
+}
+
+void AppController::runP0Probe()
+{
+    // P0 行为证据：真实 libmpv 下逐项写入再回读，避免把“有入口”当成“可用”。
+    // vo/ao 都用 null，进程不需要窗口与音频设备，可在无头桌面里跑。
+    const QString media = !m_options.videoPath.isEmpty() ? m_options.videoPath
+                                                         : m_options.mediaPath;
+    const QString shotDir = (m_options.reportPath.isEmpty()
+                                 ? QDir::tempPath()
+                                 : QFileInfo(m_options.reportPath).absolutePath())
+        + QStringLiteral("/p0-shots");
+    qputenv("PALUNE_MPV_VO", "null");
+    qputenv("PALUNE_MPV_AO", "null");
+
+    MpvClient player;
+    QJsonObject report;
+    report.insert(QStringLiteral("mode"), QStringLiteral("p0-probe"));
+    report.insert(QStringLiteral("version"), QStringLiteral(PALUNE_VERSION));
+    report.insert(QStringLiteral("media"), media);
+
+    bool ok = true;
+    QString error;
+    if (media.isEmpty() || !QFileInfo::exists(media)) {
+        ok = false;
+        error = QStringLiteral("缺少测试样本：请用 --video 或 --media 指定一个带章节的文件");
+    } else if (!player.initialize() || !player.setVideoWindow(0)) {
+        ok = false;
+        error = QStringLiteral("libmpv 初始化失败：%1").arg(player.loadError());
+    }
+
+    if (ok) {
+        player.openFile(media);
+        waitFor([&player]() { return player.duration() > 0.0; }, 15000);
+
+        // 1) 章节：来自 mpv chapter-list，标题与起始时间都要有。
+        QJsonArray chapters;
+        for (const QVariant &value : player.chapters()) {
+            const QVariantMap chapter = value.toMap();
+            chapters.append(QJsonObject{
+                {QStringLiteral("title"), chapter.value(QStringLiteral("title")).toString()},
+                {QStringLiteral("time"), chapter.value(QStringLiteral("time")).toDouble()}});
+        }
+        report.insert(QStringLiteral("chapters"), chapters);
+
+        // 2) 画面比例：写入 4:3 / 16:9，回读 video-aspect-override。
+        QJsonObject aspect;
+        for (const char *mode : {"16:9", "4:3"}) {
+            player.setAspectRatio(QLatin1String(mode));
+            aspect.insert(QLatin1String(mode), player.propertyString(
+                              QStringLiteral("video-aspect-override")));
+        }
+        player.setAspectRatio(QStringLiteral("auto"));
+        aspect.insert(QStringLiteral("auto"),
+                      player.propertyString(QStringLiteral("video-aspect-override")));
+        report.insert(QStringLiteral("aspect"), aspect);
+
+        // 3) 字幕样式：字体族/字重/背景/阴影/行距一次写入后逐项回读。
+        player.setSubtitleStyle(20, QStringLiteral("#ffeedd"), 2.0, 94,
+                                QStringLiteral("Microsoft YaHei"), QStringLiteral("bold"),
+                                QStringLiteral("#80000000"), 2.0, 0.8);
+        QJsonObject style;
+        const QStringList styleKeys = {
+            QStringLiteral("sub-font"), QStringLiteral("sub-bold"),
+            QStringLiteral("sub-back-color"), QStringLiteral("sub-shadow-offset"),
+            QStringLiteral("sub-spacing"), QStringLiteral("sub-font-size"),
+            QStringLiteral("sub-border-size"), QStringLiteral("sub-pos")};
+        for (const QString &key : styleKeys)
+            style.insert(key, player.propertyString(key));
+        report.insert(QStringLiteral("subtitleStyle"), style);
+
+        // 4) 截图：screenshot-to-file 真写盘，检查文件存在且非空。
+        const QString shot = player.screenshotToDir(shotDir);
+        bool shotOk = !shot.isEmpty();
+        if (shotOk) {
+            const QString path = shot;
+            shotOk = waitFor([&path]() { return QFileInfo(path).size() > 0; }, 3000);
+        }
+        report.insert(QStringLiteral("screenshot"),
+                      QJsonObject{{QStringLiteral("dir"), shotDir},
+                                  {QStringLiteral("path"), shot},
+                                  {QStringLiteral("exists"), shotOk}});
+
+        const auto nearValue = [](const QString &text, double expected) {
+            bool converted = false;
+            const double value = text.toDouble(&converted);
+            return converted && qAbs(value - expected) < 0.01;
+        };
+        const bool aspectOk = nearValue(aspect.value(QStringLiteral("4:3")).toString(), 4.0 / 3.0)
+            && nearValue(aspect.value(QStringLiteral("16:9")).toString(), 16.0 / 9.0);
+        const bool styleOk = style.value(QStringLiteral("sub-font")).toString()
+                == QLatin1String("Microsoft YaHei")
+            && style.value(QStringLiteral("sub-bold")).toString() == QLatin1String("yes")
+            && nearValue(style.value(QStringLiteral("sub-spacing")).toString(), 0.8);
+        const bool chapterOk = !chapters.isEmpty();
+        report.insert(QStringLiteral("checks"),
+                      QJsonObject{{QStringLiteral("chapters"), chapterOk},
+                                  {QStringLiteral("aspect"), aspectOk},
+                                  {QStringLiteral("subtitleStyle"), styleOk},
+                                  {QStringLiteral("screenshot"), shotOk}});
+        ok = chapterOk && aspectOk && styleOk && shotOk;
+        if (!ok)
+            error = QStringLiteral("片段未通过：chapters=%1 aspect=%2 style=%3 screenshot=%4")
+                        .arg(chapterOk).arg(aspectOk).arg(styleOk).arg(shotOk);
+        player.stop();
+    }
+
+    report.insert(QStringLiteral("ok"), ok);
+    if (!error.isEmpty())
+        report.insert(QStringLiteral("error"), error);
+    const QString path = m_options.reportPath.isEmpty()
+        ? QDir::currentPath() + QStringLiteral("/p0-probe.json")
+        : m_options.reportPath;
+    writeJsonReport(report, path);
+    Log::info(QStringLiteral("P0 行为探针：%1").arg(ok ? QStringLiteral("通过") : error));
+    finishWithCode(ok ? 0 : 2);
 }
 
 void AppController::runShots()
@@ -1134,6 +1329,10 @@ void AppController::runM2Actions()
     MediaLibraryService demoLibrary;
     ShotPlayer shotPlayer;
     ShotWindow shotWin;
+    // 布局 B 的检查器读 queue.*：自动化不落盘，只给演示条目。
+    PlayQueue demoQueue;
+    demoQueue.setUrls(QVariantList{QStringLiteral("D:/qa/sample-1.mp4"),
+                                   QStringLiteral("D:/qa/sample-2.mp4")}, 0);
 
     QVariantList recent;
     for (int i = 1; i <= 8; ++i)
@@ -1146,7 +1345,7 @@ void AppController::runM2Actions()
     shotPlayer.setPosition(30.0);
     shotPlayer.setVolume(100.0);
 
-    // 让 40 个动作都有可核对的状态变化（截图/自动化桩，不触发真实解码）。
+    // 让 47 个动作都有可核对的状态变化（截图/自动化桩，不触发真实解码）。
     ActionRegistry registry;
     Preferences demoPrefs(&demoSettings, nullptr, &demo, &demoCompact, &registry);
     QStringList dispatched;
@@ -1215,6 +1414,7 @@ void AppController::runM2Actions()
     ctx->setContextProperty(QStringLiteral("actions"), &registry);
     ctx->setContextProperty(QStringLiteral("library"), &demoLibrary);
     ctx->setContextProperty(QStringLiteral("prefs"), &demoPrefs);
+    ctx->setContextProperty(QStringLiteral("queue"), &demoQueue);
     view.resize(1280, 720);
     view.setSource(QUrl(QStringLiteral("qrc:/qml/Main.qml")));
     if (view.status() != QQuickView::Ready) {
@@ -1261,24 +1461,41 @@ void AppController::runM2Actions()
     report.insert(QStringLiteral("total"), registry.count());
     report.insert(QStringLiteral("conflicts"), QJsonArray::fromVariantList(registry.conflicts()));
     const QVariantList actionList = registry.actions();
-    bool bindableAll = true;
+    // 1.1.0 起有 3 条队列动作默认不绑键（清空/保存/载入），因此这里区分
+    // 「可绑键动作」与「无键动作」：无键动作是设计选择，不算绑定失败。
+    QStringList unboundIds;
+    bool bindingSpecsResolve = true;
     for (const QVariant &entry : actionList) {
         const QVariantMap map = entry.toMap();
-        const QVariantMap keys = map.value(QStringLiteral("keys")).toMap();
-        if (keys.value(ActionRegistry::currentPlatform()).toString().isEmpty())
-            bindableAll = false;
+        const QString id = map.value(QStringLiteral("id")).toString();
+        const QString spec = map.value(QStringLiteral("keys")).toMap()
+                                 .value(ActionRegistry::currentPlatform()).toString();
+        if (spec.isEmpty()) {
+            unboundIds << id;
+            continue;
+        }
+        int key = 0;
+        int modifiers = 0;
+        if (!ActionRegistry::parseKeySpec(spec, &key, &modifiers)
+            || registry.actionForKey(key, modifiers,
+                                     ActionRegistry::currentPlatform()) != id) {
+            bindingSpecsResolve = false;
+        }
     }
-    report.insert(QStringLiteral("bindableAll"), bindableAll);
+    report.insert(QStringLiteral("bindableAll"), unboundIds.isEmpty());
+    report.insert(QStringLiteral("unbound"), QJsonArray::fromStringList(unboundIds));
+    report.insert(QStringLiteral("bindingSpecsResolve"), bindingSpecsResolve);
 
     QJsonArray themes;
-    bool allPass = registry.count() == 40 && registry.conflicts().isEmpty() && bindableAll;
+    bool allPass = registry.count() == 47 && registry.conflicts().isEmpty()
+        && bindingSpecsResolve;
     for (const QString &theme : {QStringLiteral("A"), QStringLiteral("B"), QStringLiteral("C")}) {
         demoTheme.switchTo(theme);
         demoCompact.setTheme(theme);
         demoCompact.reset();
         demoCompact.feedWidth(1280);
         demoCompact.flush();
-        // 上一轮 40 动作分发会把全屏/控件可见性改掉；每轮先回到基线再采集。
+        // 上一轮 47 动作分发会把全屏/控件可见性改掉；每轮先回到基线再采集。
         shotWin.setFullscreen(false);
         demoUi.setChromeVisible(true);
         shotPlayer.setPaused(false);
@@ -1375,7 +1592,7 @@ void AppController::runM2Actions()
             && theme1 == QLatin1String("A") && theme2 == QLatin1String("B")
             && theme3 == QLatin1String("C");
 
-        // 40 个动作在该主题下都能被分发（绑定的可达性）
+        // 47 个动作在该主题下都能被分发（绑定的可达性）
         dispatched.clear();
         for (const QVariant &entry : actionList)
             registry.dispatch(entry.toMap().value(QStringLiteral("id")).toString(), QVariant());
@@ -1623,6 +1840,9 @@ void AppController::runM2UiPerf()
     MediaLibraryService demoLibrary;
     ShotPlayer shotPlayer;
     ShotWindow shotWin;
+    PlayQueue demoQueue;
+    demoQueue.setUrls(QVariantList{QStringLiteral("D:/qa/sample-1.mp4"),
+                                   QStringLiteral("D:/qa/sample-2.mp4")}, 0);
     shotPlayer.setFilePath(QStringLiteral("D:/qa/demo-4k60.mp4"));
     shotPlayer.setTitle(QCoreApplication::translate("Palune", "示例影片 · 4K60"));
     shotPlayer.setDuration(7200.0);
@@ -1644,6 +1864,7 @@ void AppController::runM2UiPerf()
     ctx->setContextProperty(QStringLiteral("actions"), &demoActions);
     ctx->setContextProperty(QStringLiteral("library"), &demoLibrary);
     ctx->setContextProperty(QStringLiteral("prefs"), &demoPrefs);
+    ctx->setContextProperty(QStringLiteral("queue"), &demoQueue);
     view.resize(3840, 2160);
     view.setSource(QUrl(QStringLiteral("qrc:/qml/Main.qml")));
     if (view.status() != QQuickView::Ready) {
@@ -2128,6 +2349,9 @@ void AppController::runShotMatrix()
     MediaLibraryService demoLibrary;
     ShotPlayer shotPlayer;
     ShotWindow shotWin;
+    PlayQueue demoQueue;
+    demoQueue.setUrls(QVariantList{QStringLiteral("D:/qa/sample-1.mp4"),
+                                   QStringLiteral("D:/qa/sample-2.mp4")}, 0);
 
     QVariantList recent;
     for (int i = 1; i <= 8; ++i)
@@ -2156,6 +2380,7 @@ void AppController::runShotMatrix()
     ctx->setContextProperty(QStringLiteral("compactMode"), &demoCompact);
     ctx->setContextProperty(QStringLiteral("library"), &demoLibrary);
     ctx->setContextProperty(QStringLiteral("prefs"), &demoPrefs);
+    ctx->setContextProperty(QStringLiteral("queue"), &demoQueue);
     const QSize normalSize = m_options.shotSize.isValid() ? m_options.shotSize : QSize(1440, 900);
     view.resize(normalSize);
     view.setSource(QUrl(QStringLiteral("qrc:/qml/Main.qml")));

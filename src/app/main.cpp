@@ -1,4 +1,5 @@
 #include "app/AppController.h"
+#include "app/BrandIcon.h"
 
 #include "core/AppPaths.h"
 #include "core/StartupClock.h"
@@ -8,7 +9,9 @@
 
 #include <QApplication>
 #include <QCoreApplication>
+#include <QDateTime>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QIcon>
 #include <QLibraryInfo>
@@ -19,6 +22,7 @@
 #include <clocale>
 
 #include <cstdio>
+#include <cstdlib>
 
 #if defined(Q_OS_WIN)
 #include <shobjidl.h>
@@ -94,9 +98,27 @@ QString executableDir()
 // 用户只会看到一个英文报错框。这里先清理外部变量，并把 DLL 搜索目录钉在应用目录。
 void preparePlatformPlugins(const QString &appDir)
 {
-    // 插件自身的依赖（Qt6Gui 等）优先从应用目录解析，避免 PATH 上的另一套 Qt 抢占。
+    // 依赖解析钉死：只认应用目录 + System32，PATH 上的同名 DLL 一律不再参与。
+    // 这是“插件找到了、却被另一套 Qt6Core/Qt6Gui 抢先解析”的根因修复。
+    SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32);
     const QString nativeDir = QDir::toNativeSeparators(appDir);
     SetDllDirectoryW(reinterpret_cast<LPCWSTR>(nativeDir.utf16()));
+
+    // 把带 Qt6Core/Qt6Gui 的其它目录从 PATH 里剔除，避免第三方软件自带的 Qt
+    // 通过 PATH 混进来（SetDefaultDllDirectories 已挡住 DLL，但子进程会继承 PATH）。
+    const QStringList pathEntries =
+        qEnvironmentVariable("PATH").split(QLatin1Char(';'), Qt::SkipEmptyParts);
+    QStringList kept;
+    for (const QString &entry : pathEntries) {
+        const QString dir = QDir::cleanPath(entry.trimmed());
+        if (dir.isEmpty() || dir.compare(nativeDir, Qt::CaseInsensitive) == 0
+            || QFileInfo::exists(dir + QStringLiteral("/Qt6Core.dll"))
+            || QFileInfo::exists(dir + QStringLiteral("/Qt6Gui.dll"))) {
+            continue;
+        }
+        kept << entry;
+    }
+    qputenv("PATH", kept.join(QLatin1Char(';')).toLocal8Bit());
 
     if (QFileInfo::exists(appDir + QStringLiteral("/platforms/qwindows.dll"))) {
         qputenv("QT_PLUGIN_PATH", appDir.toLocal8Bit());
@@ -196,6 +218,39 @@ QString resolveProtocolUrl(const QString &path)
     return target.isEmpty() ? QString() : target;
 }
 
+// QApplication 构造阶段的 qFatal（平台插件、QML 引擎内部错误等）会走 Qt 默认
+// 处理器，在 Windows 上直接弹英文 MessageBox。这个处理器在 QApplication 之前
+// 装上，把这些诊断先写进日志，并用中文说明替代 Qt 的原生对话框。
+QString g_startupLogPath;
+
+void startupMessageHandler(QtMsgType type, const QMessageLogContext &, const QString &message)
+{
+    if (!g_startupLogPath.isEmpty()) {
+        QFile file(g_startupLogPath);
+        if (file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
+            const char *level = type == QtFatalMsg ? "FATAL"
+                : type == QtCriticalMsg ? "ERROR"
+                : type == QtWarningMsg ? "WARN" : "INFO";
+            file.write(QStringLiteral("%1 [%2] %3\n")
+                           .arg(QDateTime::currentDateTime().toString(Qt::ISODate),
+                                QLatin1String(level), message)
+                           .toUtf8());
+        }
+    }
+    if (type == QtFatalMsg) {
+#if defined(Q_OS_WIN)
+        const QString detail = QStringLiteral(
+            "Palune 无法启动：运行环境不完整。\n\n"
+            "日志：%1\n\n"
+            "请重新安装 Palune；如果仍然失败，请把日志文件发给支持人员。")
+            .arg(g_startupLogPath);
+        MessageBoxW(nullptr, reinterpret_cast<LPCWSTR>(detail.utf16()),
+                    L"Palune", MB_OK | MB_ICONERROR);
+#endif
+        std::abort();
+    }
+}
+
 } // namespace
 
 int main(int argc, char *argv[])
@@ -230,6 +285,11 @@ int main(int argc, char *argv[])
     if (!configOverride.isEmpty())
         AppPaths::setConfigDirOverride(configOverride);
 
+    // QApplication 之前就接管 Qt 诊断：这一阶段没有 Log，也不能让 Qt 弹英文框。
+    g_startupLogPath = AppPaths::logFile();
+    QDir().mkpath(QFileInfo(g_startupLogPath).absolutePath());
+    qInstallMessageHandler(startupMessageHandler);
+
 #if defined(Q_OS_WIN)
     const QString appDir = executableDir();
     preparePlatformPlugins(appDir);
@@ -251,9 +311,8 @@ int main(int argc, char *argv[])
     std::setlocale(LC_NUMERIC, "C");
     app.setApplicationVersion(QStringLiteral(PALUNE_VERSION));
     app.setApplicationDisplayName(QStringLiteral("Palune"));
-    // 窗口/任务栏图标：与 exe 资源同一份品牌图标（resources/brand 的 SVG 导出），
-    // 避免 QML 窗口落回默认空白图标。
-    app.setWindowIcon(QIcon(QStringLiteral(":/packaging/palune-256.png")));
+    // 窗口/任务栏图标：同一份品牌 PNG 阶梯（16..1024），Windows 按 DPI 选档，避免单张 256 被硬缩。
+    app.setWindowIcon(brandAppIcon());
 
     // 测试与自动化可以用 PALUNE_CONFIG_DIR 把配置、日志、崩溃目录重定向到临时目录。
     Settings settings;
@@ -313,6 +372,8 @@ int main(int argc, char *argv[])
     options.uiPanel = valueArg(argc, argv, "--ui-panel");
     options.uiCapture = valueArg(argc, argv, "--ui-capture");
     options.uiActions = valueArg(argc, argv, "--ui-actions");
+    options.qmlCheck = hasArg(argc, argv, "--qml-check");
+    options.p0Probe = hasArg(argc, argv, "--p0-probe");
     const QString shotSize = valueArg(argc, argv, "--shot-size");
     if (!shotSize.isEmpty()) {
         const QStringList parts = shotSize.split(QLatin1Char('x'));
@@ -328,6 +389,8 @@ int main(int argc, char *argv[])
         || options.m2Actions
         || options.m2UiPerf
         || options.m2Window
+        || options.qmlCheck
+        || options.p0Probe
         || !options.shotDir.isEmpty();
 
     // 位置参数作为待打开文件（跳过已知的取值参数，避免把 flag 的值误当文件）

@@ -15,12 +15,12 @@ Rectangle {
     readonly property bool compact: typeof compactMode !== "undefined" && compactMode.compact
 
     implicitWidth: labelText.implicitWidth + (compact ? 18 : 26)
-    implicitHeight: compact ? 26 : 30
+    implicitHeight: compact ? tokens.ctrlH : tokens.ctrlHL
     radius: tokens.radiusS
     color: highlighted
            ? tokens.accentSoft
-           : (hoverArea.containsMouse ? "#26ffffff" : "#14ffffff")
-    border.width: activeFocus ? 2 : 1
+           : (hoverArea.containsMouse ? tokens.stateHover : tokens.stateRest)
+    border.width: activeFocus ? tokens.strokeFocus : tokens.stroke
     border.color: activeFocus ? tokens.accent
                               : (highlighted ? tokens.accent : tokens.border)
     activeFocusOnTab: restorable

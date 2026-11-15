@@ -1,0 +1,46 @@
+[
+  {
+    "variant": "no-qwindows",
+    "removed": "platforms\\",
+    "processId": 12028,
+    "dialogHostPid": "608",
+    "exitCode": "RUNNING",
+    "dialogTitle": "Palune.exe - 系统错误",
+    "dialogBody": "由于找不到 Qt6Quick.dll，无法继续执行代码。重新安装程序可能会解决此问题。 ",
+    "screenshot": "loader-no-qwindows.png",
+    "capturedAt": "2026-11-15 11:13:17"
+  },
+  {
+    "variant": "no-quick",
+    "removed": "Qt6Quick.dll",
+    "processId": 24360,
+    "dialogHostPid": "608",
+    "exitCode": "0xC0000135",
+    "dialogTitle": "Palune.exe - 系统错误",
+    "dialogBody": "由于找不到 Qt6Quick.dll，无法继续执行代码。重新安装程序可能会解决此问题。 ",
+    "screenshot": "loader-no-quick.png",
+    "capturedAt": "2026-11-15 11:14:27"
+  },
+  {
+    "variant": "no-widgets",
+    "removed": "Qt6Widgets.dll",
+    "processId": 14376,
+    "dialogHostPid": "608",
+    "exitCode": "0xC0000135",
+    "dialogTitle": "Palune.exe - 系统错误",
+    "dialogBody": "由于找不到 Qt6Widgets.dll，无法继续执行代码。重新安装程序可能会解决此问题。 ",
+    "screenshot": "loader-no-widgets.png",
+    "capturedAt": "2026-11-15 11:14:37"
+  },
+  {
+    "variant": "none",
+    "removed": "Qt6Widgets/Quick/Gui/Qml/Network/Core.dll",
+    "processId": 2308,
+    "dialogHostPid": "608",
+    "exitCode": "RUNNING",
+    "dialogTitle": "Palune.exe - 系统错误",
+    "dialogBody": "由于找不到 Qt6Gui.dll，无法继续执行代码。重新安装程序可能会解决此问题。 ",
+    "screenshot": "loader-none.png",
+    "capturedAt": "2026-11-15 11:14:53"
+  }
+]

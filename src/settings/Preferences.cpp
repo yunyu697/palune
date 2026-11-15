@@ -49,6 +49,12 @@ const QString kSubDelay = QStringLiteral("sub.delay");
 const QString kSubPos = QStringLiteral("sub.position");
 const QString kSubAuto = QStringLiteral("sub.autoLoad");
 const QString kSubEncoding = QStringLiteral("sub.encoding");
+const QString kSubFontFamily = QStringLiteral("sub.fontFamily");
+const QString kSubWeight = QStringLiteral("sub.weight");
+const QString kSubBackground = QStringLiteral("sub.background");
+const QString kSubShadow = QStringLiteral("sub.shadow");
+const QString kSubSpacing = QStringLiteral("sub.spacing");
+const QString kScreenshotDir = QStringLiteral("storage.screenshotDir");
 
 const QString kAudioDevice = QStringLiteral("audio.device");
 const QString kAudioChannels = QStringLiteral("audio.channels");
@@ -91,6 +97,14 @@ QString humanBytes(qint64 bytes)
     if (bytes < kb * kb * kb)
         return QStringLiteral("%1 MB").arg(QString::number(bytes / (kb * kb), 'f', 1));
     return QStringLiteral("%1 GB").arg(QString::number(bytes / (kb * kb * kb), 'f', 2));
+}
+
+QString defaultScreenshotDir()
+{
+    QString base = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
+    if (base.isEmpty())
+        base = QDir::homePath();
+    return QDir(base).filePath(QStringLiteral("Palune"));
 }
 } // namespace
 
@@ -181,6 +195,12 @@ void Preferences::reload()
     m_subtitlePosition = intValue(kSubPos, 8);
     m_autoLoadSubtitles = boolValue(kSubAuto, true);
     m_subtitleEncoding = stringValue(kSubEncoding, QStringLiteral("auto"));
+    m_subtitleFontFamily = stringValue(kSubFontFamily, QString());
+    m_subtitleWeight = stringValue(kSubWeight, QStringLiteral("normal"));
+    m_subtitleBackground = stringValue(kSubBackground, QStringLiteral("#00000000"));
+    m_subtitleShadow = doubleValue(kSubShadow, 0.0);
+    m_subtitleSpacing = doubleValue(kSubSpacing, 0.5);
+    m_screenshotDir = stringValue(kScreenshotDir, defaultScreenshotDir());
 
     m_audioDevice = stringValue(kAudioDevice, QStringLiteral("auto"));
     m_audioChannels = stringValue(kAudioChannels, QStringLiteral("auto"));
@@ -417,6 +437,64 @@ void Preferences::setSubtitleEncoding(const QString &value)
     emit preferencesChanged();
 }
 
+void Preferences::setSubtitleFontFamily(const QString &value)
+{
+    const QString trimmed = value.trimmed();
+    if (trimmed == m_subtitleFontFamily) return;
+    m_subtitleFontFamily = trimmed;
+    store(kSubFontFamily, trimmed);
+    applySubtitles();
+    emit preferencesChanged();
+}
+
+void Preferences::setSubtitleWeight(const QString &value)
+{
+    const QString weight = value == QLatin1String("bold") ? QStringLiteral("bold")
+                                                          : QStringLiteral("normal");
+    if (weight == m_subtitleWeight) return;
+    m_subtitleWeight = weight;
+    store(kSubWeight, weight);
+    applySubtitles();
+    emit preferencesChanged();
+}
+
+void Preferences::setSubtitleBackground(const QString &value)
+{
+    if (value == m_subtitleBackground) return;
+    m_subtitleBackground = value;
+    store(kSubBackground, value);
+    applySubtitles();
+    emit preferencesChanged();
+}
+
+void Preferences::setSubtitleShadow(double value)
+{
+    value = qBound(0.0, value, 6.0);
+    if (qFuzzyCompare(value + 1.0, m_subtitleShadow + 1.0)) return;
+    m_subtitleShadow = value;
+    store(kSubShadow, value);
+    applySubtitles();
+    emit preferencesChanged();
+}
+
+void Preferences::setSubtitleSpacing(double value)
+{
+    value = qBound(0.0, value, 10.0);
+    if (qFuzzyCompare(value + 1.0, m_subtitleSpacing + 1.0)) return;
+    m_subtitleSpacing = value;
+    store(kSubSpacing, value);
+    applySubtitles();
+    emit preferencesChanged();
+}
+
+void Preferences::setScreenshotDir(const QString &value)
+{
+    if (value == m_screenshotDir) return;
+    m_screenshotDir = value;
+    store(kScreenshotDir, value);
+    emit preferencesChanged();
+}
+
 void Preferences::setAudioDevice(const QString &value)
 {
     if (value == m_audioDevice) return;
@@ -531,7 +609,8 @@ void Preferences::applySubtitles()
     if (!m_player)
         return;
     m_player->setSubtitleStyle(m_subtitleFontSize, m_subtitleColor, m_subtitleOutline,
-                               m_subtitlePosition);
+                               m_subtitlePosition, m_subtitleFontFamily, m_subtitleWeight,
+                               m_subtitleBackground, m_subtitleShadow, m_subtitleSpacing);
     m_player->setSubtitleDelayAbsolute(m_subtitleDelay);
     m_player->setSubtitleAutoLoad(m_autoLoadSubtitles);
     m_player->setSubtitleEncoding(m_subtitleEncoding);
@@ -715,6 +794,14 @@ void Preferences::chooseSubtitleFile()
     if (file.isEmpty() || !m_player)
         return;
     m_player->addSubtitleFile(file);
+}
+
+void Preferences::chooseScreenshotDir()
+{
+    const QString dir = QFileDialog::getExistingDirectory(
+        nullptr, QStringLiteral("选择截图保存目录"), screenshotDir());
+    if (!dir.isEmpty())
+        setScreenshotDir(QDir::toNativeSeparators(dir));
 }
 
 QString Preferences::licensePath() const

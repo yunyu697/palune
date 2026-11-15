@@ -42,6 +42,8 @@ add_library(palune_core STATIC
     src/ui/CompactController.h
     src/ui/ActionRegistry.cpp
     src/ui/ActionRegistry.h
+    src/ui/PlayQueue.cpp
+    src/ui/PlayQueue.h
     src/media/MediaLibraryService.cpp
     src/media/MediaLibraryService.h
     src/media/ThumbnailProvider.cpp
@@ -84,6 +86,47 @@ if(WIN32)
     # ole32：ThumbnailProvider 用 IShellItemImageFactory（SHCreateItemFromParsingName）。
     # advapi32：CredentialStore 用 CredWriteW / CredReadW / CredDeleteW。
     target_link_libraries(palune_core PUBLIC user32 dwmapi shell32 psapi ole32 advapi32)
+endif()
+
+# MSVC 运行时 vcruntime140 / msvcp140 必须与 exe 同目录，否则干净机器双击 0xC0000135。
+# windeployqt 的 --compiler-runtime 只部署 vc_redist.x64.exe（还要再跑一次安装器），
+# 这里直接从 VC Redist 目录取 CRT DLL，确定性更高；构建树与安装树共用这一份清单。
+set(PALUNE_MSVC_CRT_DLLS "")
+if(MSVC AND WIN32)
+    set(_palune_vc_root "")
+    if(DEFINED ENV{VCINSTALLDIR} AND EXISTS "$ENV{VCINSTALLDIR}/Redist")
+        set(_palune_vc_root "$ENV{VCINSTALLDIR}")
+    endif()
+    if(NOT _palune_vc_root AND CMAKE_CXX_COMPILER)
+        set(_palune_probe "${CMAKE_CXX_COMPILER}")
+        foreach(_i RANGE 7)
+            get_filename_component(_palune_probe "${_palune_probe}" DIRECTORY)
+            if(EXISTS "${_palune_probe}/Redist")
+                set(_palune_vc_root "${_palune_probe}")
+                break()
+            endif()
+        endforeach()
+    endif()
+    if(_palune_vc_root)
+        file(GLOB _palune_crt
+            "${_palune_vc_root}/Redist/MSVC/*/x64/Microsoft.VC*.CRT/*.dll")
+        list(SORT _palune_crt)
+        foreach(_name IN ITEMS vcruntime140.dll vcruntime140_1.dll msvcp140.dll
+                               msvcp140_1.dll msvcp140_2.dll concrt140.dll)
+            foreach(_file IN LISTS _palune_crt)
+                get_filename_component(_base "${_file}" NAME)
+                if(_base STREQUAL _name)
+                    list(APPEND PALUNE_MSVC_CRT_DLLS "${_file}")
+                endif()
+            endforeach()
+        endforeach()
+    endif()
+    if(PALUNE_MSVC_CRT_DLLS)
+        message(STATUS "MSVC 运行时随构建树/安装包部署：${_palune_vc_root}")
+    else()
+        message(WARNING "未找到 MSVC 运行时（VCINSTALLDIR / 编译器路径），"
+                        "构建树里的 exe 在没装 VC Redist 的机器上会缺 vcruntime140.dll")
+    endif()
 endif()
 
 qt_add_executable(Palune
@@ -132,6 +175,17 @@ qt_add_resources(Palune "app_resources"
         resources/trust/test-update.pub
         i18n/palune_en_US.qm
         packaging/palune-256.png
+        resources/brand/png/palune-16.png
+        resources/brand/png/palune-24.png
+        resources/brand/png/palune-32.png
+        resources/brand/png/palune-48.png
+        resources/brand/png/palune-64.png
+        resources/brand/png/palune-128.png
+        resources/brand/png/palune-256.png
+        resources/brand/png/palune-512.png
+        resources/brand/png/palune-1024.png
+        resources/brand/png/tray-template-18.png
+        resources/brand/png/tray-template-36.png
 )
 
 if(WIN32)
@@ -179,33 +233,40 @@ foreach(_rel IN ITEMS
     endif()
 endforeach()
 
-function(palune_copy_runtime_libs target)
-    foreach(_lib IN LISTS PALUNE_RUNTIME_LIBS)
-        get_filename_component(_name "${_lib}" NAME)
-        add_custom_command(TARGET ${target} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${_lib}" "$<TARGET_FILE_DIR:${target}>/${_name}"
-            COMMENT "复制运行时库 ${_name}")
-    endforeach()
+# 所有可执行 target 一律 POST_BUILD 部署运行时依赖。
+# 理由：构建树里的 exe 和安装树一样会被直接双击（实机已出现 tst_*.exe 双击弹
+# 「系统错误：找不到 Qt6Test.dll / Qt6Gui.dll」，弹框由 csrss 持有、正文读不到），
+# 只给 Palune 做 windeployqt 堵不住这个入口。
+# 具体步骤放在 cmake/deploy_qt_runtime.cmake 里，用 file(LOCK) 串行化：
+# 所有 exe 输出到同一目录，并行 POST_BUILD 同时跑 windeployqt 会在 Windows 上
+# 抢写同一批 DLL。
+function(palune_deploy_dependencies target)
+    if(NOT WIN32)
+        return()
+    endif()
+    set(_extra "")
+    if(target STREQUAL "Palune")
+        list(APPEND _extra "-DQML_SRC_DIR=${CMAKE_CURRENT_SOURCE_DIR}/qml")
+    endif()
+    if(target MATCHES "^tst_")
+        list(APPEND _extra "-DTEST_LIB=$<TARGET_FILE_DIR:Qt6::Core>/Qt6Test.dll")
+    endif()
+    add_custom_command(TARGET ${target} POST_BUILD
+        COMMAND ${CMAKE_COMMAND}
+            "-DEXE=$<TARGET_FILE:${target}>"
+            "-DDEST=$<TARGET_FILE_DIR:${target}>"
+            "-DWINDEPLOYQT=${WINDEPLOYQT_EXECUTABLE}"
+            "-DQT_CONF=${CMAKE_CURRENT_SOURCE_DIR}/packaging/qt.conf"
+            "-DCRT=${PALUNE_MSVC_CRT_DLLS}"
+            "-DRUNTIME_LIBS=${PALUNE_RUNTIME_LIBS}"
+            "-DLOCK=${CMAKE_BINARY_DIR}/palune-deploy.lock"
+            ${_extra}
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy_qt_runtime.cmake"
+        COMMENT "部署运行时依赖（${target}）：Qt DLL / platforms 插件 / CRT / qt.conf"
+        VERBATIM)
 endfunction()
 
-palune_copy_runtime_libs(Palune)
-
-# 构建树也必须是“可直接双击启动”的部署树：日常运行走的就是 build/Release/Palune.exe，
-# 没有 app-local platforms/qwindows.dll 时 Qt 会在 QApplication 构造前 qFatal，
-# 用户只看到一个英文弹框（docs/evidence/dialogs）。
-if(WIN32 AND WINDEPLOYQT_EXECUTABLE)
-    add_custom_command(TARGET Palune POST_BUILD
-        COMMAND "${WINDEPLOYQT_EXECUTABLE}" --qmldir "${CMAKE_CURRENT_SOURCE_DIR}/qml"
-                --no-compiler-runtime --dir "$<TARGET_FILE_DIR:Palune>" "$<TARGET_FILE:Palune>"
-        COMMENT "windeployqt：让构建树自带 Qt 运行时与 platforms 插件")
-    # 构建树也带 qt.conf，行为与安装树一致：插件/QML/翻译路径只按应用目录解析。
-    add_custom_command(TARGET Palune POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${CMAKE_CURRENT_SOURCE_DIR}/packaging/qt.conf"
-                "$<TARGET_FILE_DIR:Palune>/qt.conf"
-        COMMENT "qt.conf：把 Qt 插件前缀钉在应用目录")
-endif()
+palune_deploy_dependencies(Palune)
 
 # ---------------------------------------------------------------------------
 # 安装与打包（release 工作流使用：Windows NSIS/MSI、macOS dmg、Linux AppImage/deb/rpm）
@@ -227,46 +288,9 @@ install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/NOTICE.md" DESTINATION "${CMAKE_INSTA
 # qt.conf 与 exe 同目录：把 Qt 的插件/QML/翻译路径钉死在安装目录，不再受外部 Qt 前缀影响。
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/packaging/qt.conf" DESTINATION "${CMAKE_INSTALL_BINDIR}")
 
-# MSVC 运行时 vcruntime140 / msvcp140 必须随包安装，否则干净机器双击 0xC0000135。
-# windeployqt 的 --compiler-runtime 只部署 vc_redist.x64.exe（还要再跑一次安装器），
-# 这里直接从 VC Redist 目录取 CRT DLL，确定性更高。
-set(PALUNE_MSVC_CRT_DLLS "")
-if(MSVC AND WIN32)
-    set(_palune_vc_root "")
-    if(DEFINED ENV{VCINSTALLDIR} AND EXISTS "$ENV{VCINSTALLDIR}/Redist")
-        set(_palune_vc_root "$ENV{VCINSTALLDIR}")
-    endif()
-    if(NOT _palune_vc_root AND CMAKE_CXX_COMPILER)
-        set(_palune_probe "${CMAKE_CXX_COMPILER}")
-        foreach(_i RANGE 7)
-            get_filename_component(_palune_probe "${_palune_probe}" DIRECTORY)
-            if(EXISTS "${_palune_probe}/Redist")
-                set(_palune_vc_root "${_palune_probe}")
-                break()
-            endif()
-        endforeach()
-    endif()
-    if(_palune_vc_root)
-        file(GLOB _palune_crt
-            "${_palune_vc_root}/Redist/MSVC/*/x64/Microsoft.VC*.CRT/*.dll")
-        list(SORT _palune_crt)
-        foreach(_name IN ITEMS vcruntime140.dll vcruntime140_1.dll msvcp140.dll
-                               msvcp140_1.dll msvcp140_2.dll concrt140.dll)
-            foreach(_file IN LISTS _palune_crt)
-                get_filename_component(_base "${_file}" NAME)
-                if(_base STREQUAL _name)
-                    list(APPEND PALUNE_MSVC_CRT_DLLS "${_file}")
-                endif()
-            endforeach()
-        endforeach()
-    endif()
-    if(PALUNE_MSVC_CRT_DLLS)
-        message(STATUS "MSVC 运行时随安装包部署：${_palune_vc_root}")
-        install(FILES ${PALUNE_MSVC_CRT_DLLS} DESTINATION "${CMAKE_INSTALL_BINDIR}")
-    else()
-        message(WARNING "未找到 MSVC 运行时（VCINSTALLDIR / 编译器路径），"
-                        "干净机器可能缺 vcruntime140.dll")
-    endif()
+# MSVC 运行时随包安装（清单在文件开头统一探测，构建树与安装树共用同一份）。
+if(PALUNE_MSVC_CRT_DLLS)
+    install(FILES ${PALUNE_MSVC_CRT_DLLS} DESTINATION "${CMAKE_INSTALL_BINDIR}")
 endif()
 
 # libmpv / libsodium 是运行时 dlopen 加载的动态库，安装器不会自动带上，必须显式安装。
@@ -383,6 +407,21 @@ palune_ck_core:
 IfFileExists '$INSTDIR\\bin\\Qt6Gui.dll' palune_ck_gui
   StrCpy $R0 '$R0Qt6Gui.dll; '
 palune_ck_gui:
+IfFileExists '$INSTDIR\\bin\\Qt6Widgets.dll' palune_ck_widgets
+  StrCpy $R0 '$R0Qt6Widgets.dll; '
+palune_ck_widgets:
+IfFileExists '$INSTDIR\\bin\\Qt6Qml.dll' palune_ck_qml
+  StrCpy $R0 '$R0Qt6Qml.dll; '
+palune_ck_qml:
+IfFileExists '$INSTDIR\\bin\\Qt6Quick.dll' palune_ck_quick
+  StrCpy $R0 '$R0Qt6Quick.dll; '
+palune_ck_quick:
+IfFileExists '$INSTDIR\\bin\\Qt6QuickControls2.dll' palune_ck_qc2
+  StrCpy $R0 '$R0Qt6QuickControls2.dll; '
+palune_ck_qc2:
+IfFileExists '$INSTDIR\\bin\\qml\\QtQuick\\qmldir' palune_ck_qmldir
+  StrCpy $R0 '$R0qml/QtQuick; '
+palune_ck_qmldir:
 IfFileExists '$INSTDIR\\bin\\platforms\\qwindows.dll' palune_ck_qwin
   StrCpy $R0 '$R0platforms/qwindows.dll; '
 palune_ck_qwin:
@@ -402,6 +441,16 @@ StrCmp $R0 '' palune_ck_ok
   SetErrorLevel 3
   MessageBox MB_ICONSTOP|MB_OK 'Palune 安装不完整：缺少运行所需组件（$R0）。常见原因是安全软件拦截了安装过程，请把安装目录加入信任列表后重新安装。'
 palune_ck_ok:
+; 落盘齐全不代表能跑：再用 --version 真启动一次加载器（不建窗口），
+; 早期 DLL 依赖缺失/损坏会在这里以非 0 退出码暴露，而不是留给用户双击时弹框。
+ExecWait '"$INSTDIR\\bin\\Palune.exe" --version' $R1
+StrCmp $R1 '0' palune_run_ok
+  FileOpen $R2 '$INSTDIR\\install-check.log' w
+  FileWrite $R2 'Palune.exe --version failed with exit code $R1'
+  FileClose $R2
+  SetErrorLevel 4
+  MessageBox MB_ICONSTOP|MB_OK 'Palune 已复制到安装目录，但程序无法启动（exit $R1）。请把安装目录加入安全软件信任列表后重新安装；仍然失败时请把 install-check.log 发给支持人员。'
+palune_run_ok:
 ]=])
     # MSI 的 ProductVersion 必须是纯数字版本，alpha 后缀交给文件名表达。
     set(CPACK_WIX_PRODUCT_GUID "5B0D3C11-7E10-4E1C-9A46-2C6C2C0A0F01")
@@ -421,22 +470,18 @@ add_test(NAME version COMMAND tst_version)
 
 add_executable(tst_manifest tests/unit/tst_manifest.cpp)
 target_link_libraries(tst_manifest PRIVATE palune_core Qt6::Test)
-palune_copy_runtime_libs(tst_manifest)
 add_test(NAME manifest COMMAND tst_manifest)
 
 add_executable(tst_settings tests/unit/tst_settings.cpp)
 target_link_libraries(tst_settings PRIVATE palune_core Qt6::Test)
-palune_copy_runtime_libs(tst_settings)
 add_test(NAME settings COMMAND tst_settings)
 
 add_executable(tst_theme tests/unit/tst_theme.cpp)
 target_link_libraries(tst_theme PRIVATE palune_core Qt6::Test)
-palune_copy_runtime_libs(tst_theme)
 add_test(NAME theme COMMAND tst_theme)
 
 add_executable(tst_media tests/unit/tst_media.cpp)
 target_link_libraries(tst_media PRIVATE palune_core Qt6::Test)
-palune_copy_runtime_libs(tst_media)
 add_test(NAME media COMMAND tst_media)
 
 add_executable(tst_core tests/unit/tst_core.cpp)
@@ -447,20 +492,52 @@ add_executable(tst_actions tests/unit/tst_actions.cpp)
 target_link_libraries(tst_actions PRIVATE palune_core Qt6::Test)
 add_test(NAME actions COMMAND tst_actions)
 
+# 播放队列：与「最近打开」分离的片单，新增/追加/排序/保存的行为判据。
+add_executable(tst_playqueue tests/unit/tst_playqueue.cpp)
+target_link_libraries(tst_playqueue PRIVATE palune_core Qt6::Test)
+add_test(NAME playqueue COMMAND tst_playqueue)
+
 # 适配器真机联调：未设置 PALUNE_LIVE_JELLYFIN_* 时自动跳过，不依赖网络。
 add_executable(tst_adapter_live tests/unit/tst_adapter_live.cpp)
 target_link_libraries(tst_adapter_live PRIVATE palune_core Qt6::Test)
-palune_copy_runtime_libs(tst_adapter_live)
 add_test(NAME adapter_live COMMAND tst_adapter_live)
 
 # Preferences 是配置持久化的唯一入口（QML 改设置 → 立即落盘）。
 add_executable(tst_preferences tests/unit/tst_preferences.cpp)
 target_link_libraries(tst_preferences PRIVATE palune_core Qt6::Test)
-palune_copy_runtime_libs(tst_preferences)
 add_test(NAME preferences COMMAND tst_preferences)
 
 # 媒体服务器适配器与媒体库服务：只连 127.0.0.1 回环 mock，不访问外网。
 add_executable(tst_media_server tests/unit/tst_media_server.cpp)
 target_link_libraries(tst_media_server PRIVATE palune_core Qt6::Test)
-palune_copy_runtime_libs(tst_media_server)
 add_test(NAME media_server COMMAND tst_media_server)
+
+# 所有测试程序一律获得与 Palune 同等的部署：Qt DLL、platforms 插件、Qt6Test.dll、
+# CRT、qt.conf、运行时库。它们和 Palune.exe 同目录，同样会被直接双击。
+foreach(_tst_target tst_version tst_manifest tst_settings tst_theme tst_media tst_core
+                     tst_actions tst_playqueue tst_adapter_live tst_preferences tst_media_server)
+    palune_deploy_dependencies(${_tst_target})
+endforeach()
+
+# 构建树依赖完整性静态检查：逐个 exe 解析导入表，同目录缺任何非系统 DLL 即失败。
+# CI 会跑它；本地也可以 cmake --build build --target check_exe_deps。
+find_package(Python3 COMPONENTS Interpreter QUIET)
+if(WIN32 AND Python3_Interpreter_FOUND)
+    add_custom_target(check_exe_deps
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tools/ci/check_exe_deps.py"
+                --root "$<TARGET_FILE_DIR:Palune>"
+        COMMENT "检查构建树内所有 exe 的同目录依赖完整性"
+        VERBATIM)
+    add_dependencies(check_exe_deps Palune
+                     tst_version tst_manifest tst_settings tst_theme tst_media tst_core
+                     tst_actions tst_playqueue tst_adapter_live tst_preferences tst_media_server)
+endif()
+
+# QML 启动自检：逐个加载 qrc 里的 QML，任何“属性名写错/类型缺失”都会让
+# 整个窗口起不来；把它挡在出包与发布之前，而不是等用户双击时才发现。
+if(WIN32)
+    add_test(NAME qml_check COMMAND Palune --qml-check
+             --report "${CMAKE_BINARY_DIR}/qml-check.json")
+    set_tests_properties(qml_check PROPERTIES TIMEOUT 120
+                         ENVIRONMENT "PALUNE_CONFIG_DIR=${CMAKE_BINARY_DIR}/qa/cfg-qmlcheck")
+endif()

@@ -58,6 +58,20 @@ class Preferences : public QObject
                    NOTIFY preferencesChanged)
     Q_PROPERTY(QString subtitleEncoding READ subtitleEncoding WRITE setSubtitleEncoding
                    NOTIFY preferencesChanged)
+    Q_PROPERTY(QString subtitleFontFamily READ subtitleFontFamily WRITE setSubtitleFontFamily
+                   NOTIFY preferencesChanged)
+    Q_PROPERTY(QString subtitleWeight READ subtitleWeight WRITE setSubtitleWeight
+                   NOTIFY preferencesChanged)
+    Q_PROPERTY(QString subtitleBackground READ subtitleBackground WRITE setSubtitleBackground
+                   NOTIFY preferencesChanged)
+    Q_PROPERTY(double subtitleShadow READ subtitleShadow WRITE setSubtitleShadow
+                   NOTIFY preferencesChanged)
+    Q_PROPERTY(double subtitleSpacing READ subtitleSpacing WRITE setSubtitleSpacing
+                   NOTIFY preferencesChanged)
+
+    // 截图保存目录：默认 图片/Palune，可改；播放器截图落到这里。
+    Q_PROPERTY(QString screenshotDir READ screenshotDir WRITE setScreenshotDir
+                   NOTIFY preferencesChanged)
 
     Q_PROPERTY(QString audioDevice READ audioDevice WRITE setAudioDevice NOTIFY preferencesChanged)
     Q_PROPERTY(QString audioChannels READ audioChannels WRITE setAudioChannels
@@ -137,6 +151,18 @@ public:
     void setAutoLoadSubtitles(bool value);
     QString subtitleEncoding() const { return m_subtitleEncoding; }
     void setSubtitleEncoding(const QString &value);
+    QString subtitleFontFamily() const { return m_subtitleFontFamily; }
+    void setSubtitleFontFamily(const QString &value);
+    QString subtitleWeight() const { return m_subtitleWeight; }
+    void setSubtitleWeight(const QString &value);
+    QString subtitleBackground() const { return m_subtitleBackground; }
+    void setSubtitleBackground(const QString &value);
+    double subtitleShadow() const { return m_subtitleShadow; }
+    void setSubtitleShadow(double value);
+    double subtitleSpacing() const { return m_subtitleSpacing; }
+    void setSubtitleSpacing(double value);
+    QString screenshotDir() const { return m_screenshotDir; }
+    void setScreenshotDir(const QString &value);
 
     QString audioDevice() const { return m_audioDevice; }
     void setAudioDevice(const QString &value);
@@ -172,6 +198,7 @@ public:
     Q_INVOKABLE QVariantList keyConflicts() const;
     Q_INVOKABLE void chooseDownloadDir();
     Q_INVOKABLE void chooseSubtitleFile();
+    Q_INVOKABLE void chooseScreenshotDir();
     Q_INVOKABLE void openLicense();
     // 解析到的许可文件绝对路径（空表示没找到）；自动化据此断言文件存在。
     Q_INVOKABLE QString licensePath() const;
@@ -236,6 +263,12 @@ private:
     int m_subtitlePosition = 8;
     bool m_autoLoadSubtitles = true;
     QString m_subtitleEncoding = QStringLiteral("auto");
+    QString m_subtitleFontFamily;
+    QString m_subtitleWeight = QStringLiteral("normal");
+    QString m_subtitleBackground = QStringLiteral("#00000000");
+    double m_subtitleShadow = 0.0;
+    double m_subtitleSpacing = 0.5;
+    QString m_screenshotDir;
 
     QString m_audioDevice = QStringLiteral("auto");
     QString m_audioChannels = QStringLiteral("auto");

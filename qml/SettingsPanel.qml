@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
 import "components"
+import "tokens"
 
 // 设置面板（6 页）：通用 / 播放 / 字幕 / 音频 / 快捷键 / 关于。
 // 截图模式通过 page 属性直接定位到某一页。
@@ -15,12 +16,14 @@ Item {
     property string captureActionId: ""
     // 独立顶层窗口模式：隐藏压暗层，卡片铺满自身窗口，圆角与原生 Region 共用 panelRadius。
     property bool windowMode: false
-    property int panelRadius: 18
+    property int panelRadius: tokens.radiusL
 
-    readonly property string accent: "#e7b27c"
-    readonly property string textColor: "#e8eaee"
-    readonly property string mutedColor: "#9aa0a6"
-    readonly property string lineColor: "#26ffffff"
+    Tokens { id: tokens }
+
+    readonly property color accent: tokens.accent
+    readonly property color textColor: tokens.text
+    readonly property color mutedColor: tokens.textMuted
+    readonly property color lineColor: tokens.border
 
     readonly property bool hasWindow: typeof win !== "undefined"
     readonly property string appVersion: hasWindow ? win.version
@@ -39,24 +42,28 @@ Item {
     readonly property int cardWidth: panelRoot.windowMode
                                      ? panelRoot.width
                                      : (panelRoot.capsulePopup
-                                        ? Math.min(560, parent.width - 24)
-                                        : Math.min(panelRoot.layoutMode === "B" ? 1080 : 1020,
-                                                   parent.width - (panelRoot.narrow ? 16 : 72)))
+                                        ? Math.min(tokens.settingsCardCW, parent.width - tokens.space3XL)
+                                        : Math.min(panelRoot.layoutMode === "B" ? tokens.settingsCardWB
+                                                                                : tokens.settingsCardW,
+                                                   parent.width - (panelRoot.narrow ? tokens.spaceXL
+                                                                                    : tokens.settingsGutter)))
     readonly property int cardHeight: panelRoot.windowMode
                                       ? panelRoot.height
                                       : (panelRoot.capsulePopup
-                                         ? Math.min(452, parent.height - 24)
-                                         : Math.min(660, parent.height - (panelRoot.narrow ? 16 : 72)))
+                                         ? Math.min(tokens.settingsCardCH, parent.height - tokens.space3XL)
+                                         : Math.min(tokens.settingsCardH,
+                                                    parent.height - (panelRoot.narrow ? tokens.spaceXL
+                                                                                      : tokens.settingsGutter)))
     // 窄/矮窗口（480×270 及紧凑断点附近）：页签改横向、内容区可滚动，
     // 避免设置卡片超出窗口造成截断（M2 缩放基线判据）。
-    readonly property bool narrow: !panelRoot.windowMode && (panelRoot.width < 720 || panelRoot.height < 520)
+    readonly property bool narrow: !panelRoot.windowMode && (panelRoot.width < tokens.bpCompact || panelRoot.height < tokens.bpShort)
 
     readonly property var pageTitles: [qsTr("通用"), qsTr("播放"), qsTr("字幕"), qsTr("音频"), qsTr("快捷键"), qsTr("媒体库"), qsTr("存储"), qsTr("关于")]
 
     Rectangle {
         anchors.fill: parent
         visible: !panelRoot.windowMode
-        color: panelRoot.shotMode ? "#0b0c10" : "#99000000"
+        color: panelRoot.shotMode ? tokens.bg : tokens.scrim
     }
 
     Rectangle {
@@ -67,33 +74,35 @@ Item {
            : (panelRoot.capsulePopup ? parent.width - width - 16 : (parent.width - width) / 2)
         y: panelRoot.windowMode ? 0
            : (panelRoot.capsulePopup ? parent.height - height - 16 : (parent.height - height) / 2)
-        radius: panelRoot.windowMode ? panelRoot.panelRadius : (panelRoot.narrow ? 8 : 18)
+        radius: panelRoot.windowMode ? panelRoot.panelRadius : (panelRoot.narrow ? tokens.radiusS : tokens.radiusL)
         // 独立窗口模式下必须完全不透明：窗口本身是透明的，卡片用 0xf2 会让桌面/视频透上来。
-        color: panelRoot.windowMode ? "#ff0d0e11" : "#f20d0e11"
-        border.width: 1
+        color: panelRoot.windowMode ? tokens.layerSolid : tokens.layerCard
+        // 独立窗口模式下窗口外框由系统负责（圆角 + 边框色），卡片不再自绘描边，
+        // 否则会在系统边框里面再叠一条线，深浅主题下看起来就是「白边」。
+        border.width: panelRoot.windowMode ? 0 : tokens.stroke
         border.color: panelRoot.lineColor
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: panelRoot.narrow ? 12 : 24
-            spacing: panelRoot.narrow ? 8 : 14
+            anchors.margins: panelRoot.narrow ? tokens.spaceL : tokens.space3XL
+            spacing: panelRoot.narrow ? tokens.spaceM : tokens.spaceL
 
             RowLayout {
                 Layout.fillWidth: true
 
                 Column {
-                    spacing: 4
+                    spacing: tokens.spaceXS
                     Text {
                         text: qsTr("设置")
                         color: panelRoot.textColor
-                        font.pixelSize: panelRoot.narrow ? 16 : 20
+                        font.pixelSize: panelRoot.narrow ? tokens.fontTitle : tokens.fontDisplay
                         font.weight: Font.DemiBold
                     }
                     Text {
-                        visible: !panelRoot.narrow || panelRoot.height >= 320
+                        visible: !panelRoot.narrow || panelRoot.height >= tokens.bpTiny
                         text: "Palune " + panelRoot.appVersion
                         color: panelRoot.mutedColor
-                        font.pixelSize: panelRoot.narrow ? 10 : 11
+                        font.pixelSize: panelRoot.narrow ? tokens.fontCaption : tokens.fontSmall
                     }
                 }
 
@@ -103,13 +112,13 @@ Item {
                     id: closeBtn
                     implicitWidth: 64
                     implicitHeight: 30
-                    radius: 9
-                    color: closeHover.containsMouse ? "#22ffffff" : "#10ffffff"
+                    radius: tokens.radiusS
+                    color: closeHover.containsMouse ? tokens.stateRow : "#10ffffff"
                     Text {
                         anchors.centerIn: parent
                         text: qsTr("关闭")
                         color: panelRoot.textColor
-                        font.pixelSize: 12
+                        font.pixelSize: tokens.fontBody
                     }
                     MouseArea {
                         id: closeHover
@@ -133,7 +142,7 @@ Item {
                 visible: panelRoot.narrow && !panelRoot.capsulePopup
                 Layout.fillWidth: true
                 Layout.preferredHeight: 26
-                spacing: 4
+                spacing: tokens.spaceXS
 
                 Repeater {
                     model: panelRoot.pageTitles
@@ -142,17 +151,17 @@ Item {
                         required property string modelData
                         width: 64
                         height: 26
-                        radius: 8
-                        color: panelRoot.page === index ? panelRoot.accent + "33"
-                                                        : (compactTabHover.containsMouse ? "#18ffffff" : "transparent")
-                        border.width: 1
+                        radius: tokens.radiusS
+                        color: panelRoot.page === index ? tokens.accentSoft
+                                                        : (compactTabHover.containsMouse ? tokens.stateHover : "transparent")
+                        border.width: tokens.stroke
                         border.color: panelRoot.page === index ? panelRoot.accent : "transparent"
 
                         Text {
                             anchors.centerIn: parent
                             text: modelData
                             color: panelRoot.page === index ? panelRoot.accent : panelRoot.textColor
-                            font.pixelSize: 11
+                            font.pixelSize: tokens.fontSmall
                         }
                         MouseArea {
                             id: compactTabHover
@@ -168,12 +177,12 @@ Item {
             RowLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                spacing: 18
+                spacing: tokens.spaceXL
 
                 // 左侧页签（窄窗口下隐藏，改用上方横向页签；C 的 560×452 弹出卡保留两栏）
                 Column {
                     visible: !panelRoot.narrow || panelRoot.capsulePopup
-                    spacing: 6
+                    spacing: tokens.spaceS
                     Repeater {
                         model: panelRoot.pageTitles
                         delegate: Rectangle {
@@ -181,19 +190,19 @@ Item {
                             required property string modelData
                             width: 118
                             height: 34
-                            radius: 9
-                            color: panelRoot.page === index ? panelRoot.accent + "33"
-                                                            : (tabHover.containsMouse ? "#18ffffff" : "transparent")
-                            border.width: 1
+                            radius: tokens.radiusS
+                            color: panelRoot.page === index ? tokens.accentSoft
+                                                            : (tabHover.containsMouse ? tokens.stateHover : "transparent")
+                            border.width: tokens.stroke
                             border.color: panelRoot.page === index ? panelRoot.accent : "transparent"
 
                             Text {
                                 anchors.fill: parent
-                                anchors.leftMargin: 12
+                                anchors.leftMargin: tokens.spaceL
                                 verticalAlignment: Text.AlignVCenter
                                 text: modelData
                                 color: panelRoot.page === index ? panelRoot.accent : panelRoot.textColor
-                                font.pixelSize: 13
+                                font.pixelSize: tokens.fontBodyL
                             }
                             MouseArea {
                                 id: tabHover
@@ -243,18 +252,18 @@ Item {
                     ColumnLayout {
                         Layout.fillWidth: true
                         visible: panelRoot.page === 0
-                        spacing: 12
+                        spacing: tokens.spaceL
 
                         Text {
                             text: qsTr("外观")
                             color: panelRoot.textColor
-                            font.pixelSize: 14
+                            font.pixelSize: tokens.fontSubtitle
                             font.weight: Font.DemiBold
                         }
                         Text {
                             text: qsTr("主题")
                             color: panelRoot.mutedColor
-                            font.pixelSize: 12
+                            font.pixelSize: tokens.fontBody
                         }
                         Item {
                             // 标签「布局 X」比 108px 卡片宽，首卡标签会越过内容区左边界被 Flickable 裁掉
@@ -263,7 +272,7 @@ Item {
                             Layout.preferredHeight: 88
                             Row {
                             x: 16
-                            spacing: 12
+                            spacing: tokens.spaceL
                             // ColumnLayout 不会为 Repeater 生成的子项推导高度，显式给 Row 尺寸，
                             // 否则后续分组会叠在预览卡上（实机出现过标签被「紧凑模式」覆盖）。
                             width: 348
@@ -283,65 +292,65 @@ Item {
                                                                   && themeRegistry.currentTheme === modelData
                                     Column {
                                         anchors.fill: parent
-                                        spacing: 4
+                                        spacing: tokens.spaceXS
                                     // 布局示意图：必须与实际布局一致（控制条位置、侧栏形态、信息密度）。
                                     Rectangle {
                                         width: 108
                                         height: 66
-                                        radius: 6
-                                        color: "#0b0c10"
-                                        border.width: 1
+                                        radius: tokens.radiusS
+                                        color: tokens.bg
+                                        border.width: tokens.stroke
                                         border.color: selected ? panelRoot.accent : panelRoot.lineColor
 
                                         // A：悬浮标题条 + 底部双行控制栏，无侧栏，信息密度低
                                         Rectangle {
                                             visible: modelData === "A"
-                                            anchors { top: parent.top; left: parent.left; right: parent.right; margins: 5 }
-                                            height: 7; radius: 2; color: "#2affffff"
+                                            anchors { top: parent.top; left: parent.left; right: parent.right; margins: tokens.spaceXS }
+                                            height: 7; radius: tokens.radiusXS; color: tokens.border
                                         }
                                         Rectangle {
                                             visible: modelData === "A"
-                                            anchors { bottom: parent.bottom; left: parent.left; right: parent.right; margins: 5 }
-                                            height: 15; radius: 3; color: "#33ffffff"
-                                            Rectangle { anchors { left: parent.left; right: parent.right; top: parent.top; margins: 3 } height: 2; radius: 1; color: panelRoot.accent }
+                                            anchors { bottom: parent.bottom; left: parent.left; right: parent.right; margins: tokens.spaceXS }
+                                            height: 15; radius: tokens.radiusXS; color: tokens.statePressed
+                                            Rectangle { anchors { left: parent.left; right: parent.right; top: parent.top; margins: tokens.spaceXS } height: tokens.trackThickness; radius: tokens.radiusXS; color: panelRoot.accent }
                                         }
 
                                         // B：顶部扁平栏 + 右侧常驻检查器 + 底部技术条/控制条，信息密度高
                                         Rectangle {
                                             visible: modelData === "B"
                                             anchors { top: parent.top; left: parent.left; right: parent.right }
-                                            height: 9; color: "#2affffff"
+                                            height: 9; color: tokens.border
                                         }
                                         Rectangle {
                                             visible: modelData === "B"
                                             anchors { top: parent.top; right: parent.right; bottom: parent.bottom }
-                                            width: 28; color: "#40ffffff"
+                                            width: 28; color: tokens.borderStrong
                                         }
                                         Rectangle {
                                             visible: modelData === "B"
                                             anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
-                                            height: 13; color: "#33ffffff"
+                                            height: 13; color: tokens.statePressed
                                         }
 
                                         // C：左上标题胶囊 + 右上窗口按钮 + 底部悬浮胶囊，无侧栏，信息密度最低
                                         Rectangle {
                                             visible: modelData === "C"
-                                            anchors { top: parent.top; left: parent.left; margins: 5 }
-                                            width: 30; height: 7; radius: 3.5; color: "#2affffff"
+                                            anchors { top: parent.top; left: parent.left; margins: tokens.spaceXS }
+                                            width: 30; height: 7; radius: height / 2; color: tokens.border
                                         }
                                         Row {
                                             visible: modelData === "C"
-                                            anchors { top: parent.top; right: parent.right; margins: 5 }
-                                            spacing: 2
+                                            anchors { top: parent.top; right: parent.right; margins: tokens.spaceXS }
+                                            spacing: tokens.spaceHair
                                             Repeater {
                                                 model: 3
-                                                Rectangle { width: 5; height: 5; radius: 2.5; color: "#2affffff" }
+                                                Rectangle { width: 5; height: 5; radius: width / 2; color: tokens.border }
                                             }
                                         }
                                         Rectangle {
                                             visible: modelData === "C"
-                                            anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 6 }
-                                            width: 68; height: 9; radius: 4.5; color: "#33ffffff"
+                                            anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: tokens.spaceS }
+                                            width: 68; height: 9; radius: height / 2; color: tokens.statePressed
                                         }
                                     }
                                     Text {
@@ -351,7 +360,7 @@ Item {
                                                               : modelData === "B" ? qsTr("工作台")
                                                               : qsTr("沉浸"))
                                         color: selected ? panelRoot.accent : panelRoot.textColor
-                                        font.pixelSize: 11
+                                        font.pixelSize: tokens.fontSmall
                                     }
                                     } // Column
                                     MouseArea {
@@ -380,14 +389,14 @@ Item {
                                      && themeRegistry.fallbackReason !== ""
                             text: typeof themeRegistry !== "undefined" ? themeRegistry.fallbackReason : ""
                             color: panelRoot.accent
-                            font.pixelSize: 11
+                            font.pixelSize: tokens.fontSmall
                             wrapMode: Text.WordWrap
                             Layout.fillWidth: true
                         }
                         Text {
                             text: qsTr("只提供 A / B / C 三套布局，不设皮肤或主题包入口。")
                             color: panelRoot.mutedColor
-                            font.pixelSize: 11
+                            font.pixelSize: tokens.fontSmall
                         }
 
                         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
@@ -395,14 +404,14 @@ Item {
                         Text {
                             text: qsTr("紧凑模式")
                             color: panelRoot.textColor
-                            font.pixelSize: 14
+                            font.pixelSize: tokens.fontSubtitle
                             font.weight: Font.DemiBold
                         }
                         Text {
                             text: qsTr("当前：") + (panelRoot.compact ? qsTr("紧凑") : qsTr("常规"))
                                   + qsTr(" · 滞回 ±") + (typeof compactMode !== "undefined" ? compactMode.hysteresis : "-") + qsTr("px")
                             color: panelRoot.mutedColor
-                            font.pixelSize: 12
+                            font.pixelSize: tokens.fontBody
                         }
                         SettingRow {
                             label: qsTr("紧凑断点")
@@ -420,7 +429,7 @@ Item {
                             visible: typeof compactMode !== "undefined" && compactMode.configNotice !== ""
                             text: typeof compactMode !== "undefined" ? compactMode.configNotice : ""
                             color: panelRoot.accent
-                            font.pixelSize: 11
+                            font.pixelSize: tokens.fontSmall
                         }
 
                         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
@@ -428,7 +437,7 @@ Item {
                         Text {
                             text: qsTr("启动与关闭")
                             color: panelRoot.textColor
-                            font.pixelSize: 14
+                            font.pixelSize: tokens.fontSubtitle
                             font.weight: Font.DemiBold
                         }
                         SettingRow {
@@ -485,7 +494,7 @@ Item {
                         Text {
                             text: qsTr("诊断")
                             color: panelRoot.textColor
-                            font.pixelSize: 14
+                            font.pixelSize: tokens.fontSubtitle
                             font.weight: Font.DemiBold
                         }
                         SettingRow {
@@ -521,7 +530,7 @@ Item {
                                                   : qsTr("跟随系统（当前界面文案）"))
                                   + qsTr(" · 切换语言需重启 Palune")
                             color: panelRoot.mutedColor
-                            font.pixelSize: 11
+                            font.pixelSize: tokens.fontSmall
                             wrapMode: Text.WordWrap
                             Layout.fillWidth: true
                         }
@@ -533,23 +542,23 @@ Item {
                     ColumnLayout {
                         Layout.fillWidth: true
                         visible: panelRoot.page === 1
-                        spacing: 10
+                        spacing: tokens.spaceM
 
-                        Text { text: qsTr("当前播放"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text { text: qsTr("当前播放"); color: panelRoot.textColor; font.pixelSize: tokens.fontSubtitle; font.weight: Font.DemiBold }
                         Text { text: qsTr("文件：") + (player.filePath === "" ? qsTr("未打开") : player.filePath)
-                               color: panelRoot.mutedColor; font.pixelSize: 12; elide: Text.ElideMiddle; Layout.fillWidth: true }
+                               color: panelRoot.mutedColor; font.pixelSize: tokens.fontBody; elide: Text.ElideMiddle; Layout.fillWidth: true }
                         Text { text: qsTr("标题：") + (player.title === "" ? qsTr("未打开") : player.title)
-                               color: panelRoot.mutedColor; font.pixelSize: 12; elide: Text.ElideMiddle; Layout.fillWidth: true }
+                               color: panelRoot.mutedColor; font.pixelSize: tokens.fontBody; elide: Text.ElideMiddle; Layout.fillWidth: true }
                         Text { text: qsTr("状态：") + (player.paused ? qsTr("暂停") : qsTr("播放中"))
-                               color: panelRoot.mutedColor; font.pixelSize: 12 }
+                               color: panelRoot.mutedColor; font.pixelSize: tokens.fontBody }
                         Text { text: qsTr("时长：") + Math.round(player.duration) + qsTr("s · 速度：") + player.speed + "x"
-                               color: panelRoot.mutedColor; font.pixelSize: 12 }
+                               color: panelRoot.mutedColor; font.pixelSize: tokens.fontBody }
 
                         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
 
-                        Text { text: qsTr("解码与渲染"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text { text: qsTr("解码与渲染"); color: panelRoot.textColor; font.pixelSize: tokens.fontSubtitle; font.weight: Font.DemiBold }
                         Text { text: qsTr("渲染：libmpv（动态加载）· 输出：") + Qt.platform.os + qsTr(" 原生窗口")
-                               color: panelRoot.mutedColor; font.pixelSize: 12; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+                               color: panelRoot.mutedColor; font.pixelSize: tokens.fontBody; wrapMode: Text.WordWrap; Layout.fillWidth: true }
                         SettingRow {
                             label: qsTr("硬件解码")
                             hint: qsTr("[playback] hwdec = auto / hardware / off，即时生效（切文件后重新初始化解码器）")
@@ -611,9 +620,26 @@ Item {
                             }
                         }
 
+                        SettingRow {
+                            label: qsTr("画面比例")
+                            hint: qsTr("[playback] video-aspect-override；「填充」会同时开启 panscan，即时生效")
+                            SettingCycle {
+                                current: player.aspectRatio
+                                options: [
+                                    { label: qsTr("自动"), value: "auto" },
+                                    { label: "16:9", value: "16:9" },
+                                    { label: "4:3", value: "4:3" },
+                                    { label: "21:9", value: "21:9" },
+                                    { label: "1:1", value: "1:1" },
+                                    { label: qsTr("填充"), value: "fill" }
+                                ]
+                                onPicked: function (v) { player.setAspectRatio(v) }
+                            }
+                        }
+
                         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
 
-                        Text { text: qsTr("播放行为"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text { text: qsTr("播放行为"); color: panelRoot.textColor; font.pixelSize: tokens.fontSubtitle; font.weight: Font.DemiBold }
                         SettingRow {
                             label: qsTr("断点续播")
                             hint: qsTr("[playback] resume，默认开；关闭后不再自动跳回上次位置")
@@ -631,7 +657,7 @@ Item {
                             }
                         }
                         Text { text: qsTr("播放速度在退出时写入 [playback] speed，下次启动恢复。")
-                               color: panelRoot.mutedColor; font.pixelSize: 11; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+                               color: panelRoot.mutedColor; font.pixelSize: tokens.fontSmall; wrapMode: Text.WordWrap; Layout.fillWidth: true }
 
                         Item { Layout.fillHeight: true }
                     }
@@ -640,29 +666,29 @@ Item {
                     ColumnLayout {
                         Layout.fillWidth: true
                         visible: panelRoot.page === 2
-                        spacing: 10
+                        spacing: tokens.spaceM
 
-                        Text { text: qsTr("字幕轨道"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text { text: qsTr("字幕轨道"); color: panelRoot.textColor; font.pixelSize: tokens.fontSubtitle; font.weight: Font.DemiBold }
                         ColumnLayout {
                             Layout.fillWidth: true
-                            spacing: 4
+                            spacing: tokens.spaceXS
                             Repeater {
                                 model: player.subtitleTracks
                                 delegate: Rectangle {
                                     required property var modelData
                                     Layout.fillWidth: true
                                     implicitHeight: 24
-                                    radius: 6
-                                    color: modelData.selected ? panelRoot.accent + "22" : "transparent"
-                                    border.width: 1
+                                    radius: tokens.radiusS
+                                    color: modelData.selected ? tokens.accentFaint : "transparent"
+                                    border.width: tokens.stroke
                                     border.color: modelData.selected ? panelRoot.accent : panelRoot.lineColor
                                     Text {
                                         anchors.fill: parent
-                                        anchors.leftMargin: 8
+                                        anchors.leftMargin: tokens.spaceM
                                         verticalAlignment: Text.AlignVCenter
                                         text: (modelData.selected ? "● " : "○ ") + (modelData.title || (qsTr("轨道 ") + modelData.id))
                                         color: modelData.selected ? panelRoot.accent : panelRoot.mutedColor
-                                        font.pixelSize: 11
+                                        font.pixelSize: tokens.fontSmall
                                     }
                                     MouseArea {
                                         anchors.fill: parent
@@ -676,7 +702,7 @@ Item {
                             visible: player.subtitleTracks.length === 0
                             text: qsTr("当前文件没有内嵌字幕轨道。")
                             color: panelRoot.mutedColor
-                            font.pixelSize: 12
+                            font.pixelSize: tokens.fontBody
                         }
                         PillButton {
                             visible: player.subtitleTracks.length > 0
@@ -686,7 +712,7 @@ Item {
 
                         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
 
-                        Text { text: qsTr("字幕样式"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text { text: qsTr("字幕样式"); color: panelRoot.textColor; font.pixelSize: tokens.fontSubtitle; font.weight: Font.DemiBold }
                         SettingRow {
                             label: qsTr("字号")
                             hint: qsTr("[sub] fontSize，默认 15，即时生效")
@@ -710,6 +736,72 @@ Item {
                                     { label: qsTr("绿色"), value: "#bbf7d0" }
                                 ]
                                 onPicked: function (v) { prefs.subtitleColor = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("字体")
+                            hint: qsTr("[sub] fontFamily，默认跟随系统；对纯文本字幕生效，ASS 仍按自带样式")
+                            SettingCycle {
+                                current: prefs.subtitleFontFamily
+                                options: [
+                                    { label: qsTr("默认"), value: "" },
+                                    { label: qsTr("微软雅黑"), value: "Microsoft YaHei" },
+                                    { label: qsTr("宋体"), value: "SimSun" },
+                                    { label: qsTr("楷体"), value: "KaiTi" },
+                                    { label: "Arial", value: "Arial" },
+                                    { label: "Segoe UI", value: "Segoe UI" }
+                                ]
+                                onPicked: function (v) { prefs.subtitleFontFamily = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("字重")
+                            hint: qsTr("[sub] weight，默认常规；粗体写 sub-bold=yes")
+                            SettingCycle {
+                                current: prefs.subtitleWeight
+                                options: [
+                                    { label: qsTr("常规"), value: "normal" },
+                                    { label: qsTr("粗体"), value: "bold" }
+                                ]
+                                onPicked: function (v) { prefs.subtitleWeight = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("背景")
+                            hint: qsTr("[sub] background，默认透明；格式 #RRGGBBAA")
+                            SettingCycle {
+                                current: prefs.subtitleBackground
+                                options: [
+                                    { label: qsTr("透明"), value: "#00000000" },
+                                    { label: qsTr("半透明黑"), value: "#00000099" },
+                                    { label: qsTr("不透明黑"), value: "#000000ff" }
+                                ]
+                                onPicked: function (v) { prefs.subtitleBackground = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("阴影")
+                            hint: qsTr("[sub] shadow，默认 0；播放器按 shadow × 2 px 写入")
+                            SettingStepper {
+                                value: prefs.subtitleShadow
+                                minimum: 0
+                                maximum: 6
+                                step: 0.5
+                                decimals: 1
+                                suffix: "px"
+                                onChanged: function (v) { prefs.subtitleShadow = v }
+                            }
+                        }
+                        SettingRow {
+                            label: qsTr("行距")
+                            hint: qsTr("[sub] spacing，默认 0.5，即时生效")
+                            SettingStepper {
+                                value: prefs.subtitleSpacing
+                                minimum: 0
+                                maximum: 10
+                                step: 0.5
+                                decimals: 1
+                                onChanged: function (v) { prefs.subtitleSpacing = v }
                             }
                         }
                         SettingRow {
@@ -779,9 +871,9 @@ Item {
                         Rectangle {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 84
-                            radius: 8
-                            color: "#0b0c10"
-                            border.width: 1
+                            radius: tokens.radiusS
+                            color: tokens.bg
+                            border.width: tokens.stroke
                             border.color: panelRoot.lineColor
                             clip: true
                             // 预览与实际设置联动：字号、颜色、描边、底部位置。
@@ -795,6 +887,9 @@ Item {
                                 pixelSize: prefs.subtitleFontSize
                                 textColor: prefs.subtitleColor
                                 outline: prefs.subtitleOutline * 2
+                                fontFamily: prefs.subtitleFontFamily === ""
+                                            ? Qt.application.font.family : prefs.subtitleFontFamily
+                                fontWeight: prefs.subtitleWeight === "bold" ? Font.Bold : Font.Normal
                                 horizontalAlignment: Text.AlignHCenter
                             }
                         }
@@ -806,11 +901,11 @@ Item {
                     ColumnLayout {
                         Layout.fillWidth: true
                         visible: panelRoot.page === 3
-                        spacing: 12
+                        spacing: tokens.spaceL
 
-                        Text { text: qsTr("音量"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text { text: qsTr("音量"); color: panelRoot.textColor; font.pixelSize: tokens.fontSubtitle; font.weight: Font.DemiBold }
                         RowLayout {
-                            spacing: 12
+                            spacing: tokens.spaceL
                             VolumeBar {
                                 value: player.muted ? 0 : player.volume
                                 onVolumeSet: function (v) { win.action("volumeSet", v) }
@@ -818,7 +913,7 @@ Item {
                             Text {
                                 text: Math.round(player.volume) + "%" + (player.muted ? qsTr("（静音）") : "")
                                 color: panelRoot.mutedColor
-                                font.pixelSize: 12
+                                font.pixelSize: tokens.fontBody
                             }
                         }
                         PillButton {
@@ -829,34 +924,34 @@ Item {
                         Text {
                             text: qsTr("音量与静音状态在退出时写入 [audio] volume / muted，下次启动恢复。")
                             color: panelRoot.mutedColor
-                            font.pixelSize: 11
+                            font.pixelSize: tokens.fontSmall
                             wrapMode: Text.WordWrap
                             Layout.fillWidth: true
                         }
 
                         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
 
-                        Text { text: qsTr("音频轨道"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text { text: qsTr("音频轨道"); color: panelRoot.textColor; font.pixelSize: tokens.fontSubtitle; font.weight: Font.DemiBold }
                         ColumnLayout {
                             Layout.fillWidth: true
-                            spacing: 4
+                            spacing: tokens.spaceXS
                             Repeater {
                                 model: player.audioTracks
                                 delegate: Rectangle {
                                     required property var modelData
                                     Layout.fillWidth: true
                                     implicitHeight: 24
-                                    radius: 6
-                                    color: modelData.selected ? panelRoot.accent + "22" : "transparent"
-                                    border.width: 1
+                                    radius: tokens.radiusS
+                                    color: modelData.selected ? tokens.accentFaint : "transparent"
+                                    border.width: tokens.stroke
                                     border.color: modelData.selected ? panelRoot.accent : panelRoot.lineColor
                                     Text {
                                         anchors.fill: parent
-                                        anchors.leftMargin: 8
+                                        anchors.leftMargin: tokens.spaceM
                                         verticalAlignment: Text.AlignVCenter
                                         text: (modelData.selected ? "● " : "○ ") + (modelData.title || (qsTr("轨道 ") + modelData.id))
                                         color: modelData.selected ? panelRoot.accent : panelRoot.mutedColor
-                                        font.pixelSize: 11
+                                        font.pixelSize: tokens.fontSmall
                                     }
                                     MouseArea {
                                         anchors.fill: parent
@@ -870,12 +965,12 @@ Item {
                             visible: player.audioTracks.length === 0
                             text: qsTr("当前文件没有音频轨道。")
                             color: panelRoot.mutedColor
-                            font.pixelSize: 12
+                            font.pixelSize: tokens.fontBody
                         }
 
                         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
 
-                        Text { text: qsTr("输出"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text { text: qsTr("输出"); color: panelRoot.textColor; font.pixelSize: tokens.fontSubtitle; font.weight: Font.DemiBold }
                         SettingRow {
                             label: qsTr("输出设备")
                             hint: qsTr("[audio] device，默认跟随系统；列表由 mpv 的 audio-device-list 提供，即时生效")
@@ -925,18 +1020,18 @@ Item {
                     ColumnLayout {
                         Layout.fillWidth: true
                         visible: panelRoot.page === 4
-                        spacing: 8
+                        spacing: tokens.spaceM
 
                         Text {
                             text: qsTr("快捷键（共 ") + prefs.keyRows().length + qsTr(" 项）")
                             color: panelRoot.textColor
-                            font.pixelSize: 14
+                            font.pixelSize: tokens.fontSubtitle
                             font.weight: Font.DemiBold
                         }
                         Text {
                             text: qsTr("点击「改键」后直接按下新组合键；「解绑」置为空；「默认」删除自定义项。写入 [keys] <动作ID>，即时生效并重启保持。")
                             color: panelRoot.mutedColor
-                            font.pixelSize: 11
+                            font.pixelSize: tokens.fontSmall
                             wrapMode: Text.WordWrap
                             Layout.fillWidth: true
                         }
@@ -944,7 +1039,7 @@ Item {
                             visible: panelRoot.captureActionId !== ""
                             text: qsTr("正在等待新快捷键…按 Esc 取消")
                             color: panelRoot.accent
-                            font.pixelSize: 12
+                            font.pixelSize: tokens.fontBody
                         }
                         PillButton {
                             visible: panelRoot.captureActionId !== ""
@@ -954,8 +1049,8 @@ Item {
                         Text {
                             visible: prefs.keyConflicts().length > 0
                             text: qsTr("检测到 ") + prefs.keyConflicts().length + qsTr(" 处键位冲突（同作用域内相同组合键）")
-                            color: "#ff8a80"
-                            font.pixelSize: 11
+                            color: tokens.dangerStrong
+                            font.pixelSize: tokens.fontSmall
                         }
                         Repeater {
                             model: prefs.keyConflicts()
@@ -963,8 +1058,8 @@ Item {
                                 required property var modelData
                                 text: "  · " + modelData.keys + qsTr("（") + modelData.scope + qsTr("）：")
                                       + modelData.first + qsTr(" / ") + modelData.second
-                                color: "#ff8a80"
-                                font.pixelSize: 10
+                                color: tokens.dangerStrong
+                                font.pixelSize: tokens.fontCaption
                             }
                         }
                         PillButton {
@@ -986,13 +1081,13 @@ Item {
                             delegate: RowLayout {
                                 required property var modelData
                                 Layout.fillWidth: true
-                                spacing: 6
+                                spacing: tokens.spaceS
 
                                 Text {
                                     Layout.fillWidth: true
                                     text: modelData.label
                                     color: panelRoot.textColor
-                                    font.pixelSize: 11
+                                    font.pixelSize: tokens.fontSmall
                                     elide: Text.ElideRight
                                 }
                                 Text {
@@ -1000,7 +1095,7 @@ Item {
                                     horizontalAlignment: Text.AlignRight
                                     text: modelData.key === "" ? qsTr("（未绑定）") : modelData.key
                                     color: modelData.custom ? panelRoot.accent : panelRoot.mutedColor
-                                    font.pixelSize: 11
+                                    font.pixelSize: tokens.fontSmall
                                     elide: Text.ElideRight
                                 }
                                 PillButton {
@@ -1030,7 +1125,7 @@ Item {
                         id: serverForm
                         Layout.fillWidth: true
                         visible: panelRoot.page === 5
-                        spacing: 12
+                        spacing: tokens.spaceL
 
                         // 表单状态挂在 serverForm 上，子项必须用 serverForm.xxx 访问：
                         // QML 的作用域只到「本对象 + 组件根对象 + id」，中间对象的属性对后代不可见。
@@ -1057,11 +1152,11 @@ Item {
                         onVisibleChanged: if (visible) syncServerForm()
                         Component.onCompleted: if (visible) syncServerForm()
 
-                        Text { text: qsTr("账户"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text { text: qsTr("账户"); color: panelRoot.textColor; font.pixelSize: tokens.fontSubtitle; font.weight: Font.DemiBold }
                         Text {
                             text: qsTr("本地模式：不提供账户、登录与云端同步。账户体系无后端支撑，1.1 之后显式延后，不计入 1.0.0 范围。")
                             color: panelRoot.mutedColor
-                            font.pixelSize: 11
+                            font.pixelSize: tokens.fontSmall
                             wrapMode: Text.WordWrap
                             Layout.fillWidth: true
                         }
@@ -1069,18 +1164,18 @@ Item {
                         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
 
                         // 媒体服务器连接表单：认证成功后立即拉库；token 只进系统凭据存储。
-                        Text { text: qsTr("媒体服务器（Jellyfin / Emby）"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text { text: qsTr("媒体服务器（Jellyfin / Emby）"); color: panelRoot.textColor; font.pixelSize: tokens.fontSubtitle; font.weight: Font.DemiBold }
                         Text {
                             text: qsTr("极空间、飞牛等兼容 Jellyfin 协议的设备请选「其他 Jellyfin」。密码或 API Key 保存在系统凭据存储（Windows 凭据管理器 / macOS 钥匙串 / libsecret），不写入配置文件。")
                             color: panelRoot.mutedColor
-                            font.pixelSize: 11
+                            font.pixelSize: tokens.fontSmall
                             wrapMode: Text.WordWrap
                             Layout.fillWidth: true
                         }
 
                         RowLayout {
-                            spacing: 10
-                            Text { text: qsTr("类型"); color: panelRoot.mutedColor; font.pixelSize: 12; Layout.preferredWidth: 56 }
+                            spacing: tokens.spaceM
+                            Text { text: qsTr("类型"); color: panelRoot.mutedColor; font.pixelSize: tokens.fontBody; Layout.preferredWidth: 56 }
                             SettingCycle {
                                 id: serverKindCycle
                                 current: serverForm.serverKindValue
@@ -1095,7 +1190,7 @@ Item {
                             Text {
                                 text: qsTr("登录方式")
                                 color: panelRoot.mutedColor
-                                font.pixelSize: 12
+                                font.pixelSize: tokens.fontBody
                             }
                             SettingCycle {
                                 id: serverAuthCycle
@@ -1109,58 +1204,58 @@ Item {
                         }
 
                         RowLayout {
-                            spacing: 10
-                            Text { text: qsTr("服务器地址"); color: panelRoot.mutedColor; font.pixelSize: 12; Layout.preferredWidth: 56 }
+                            spacing: tokens.spaceM
+                            Text { text: qsTr("服务器地址"); color: panelRoot.mutedColor; font.pixelSize: tokens.fontBody; Layout.preferredWidth: 56 }
                             TextField {
                                 id: serverUrlField
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 30
                                 placeholderText: "http://jellyfin.local:8096"
-                                placeholderTextColor: "#6b7178"
+                                placeholderTextColor: tokens.textFaint
                                 color: panelRoot.textColor
-                                font.pixelSize: 12
+                                font.pixelSize: tokens.fontBody
                                 selectByMouse: true
-                                leftPadding: 8
-                                rightPadding: 8
+                                leftPadding: tokens.spaceM
+                                rightPadding: tokens.spaceM
                                 background: Rectangle {
-                                    radius: 8
-                                    color: "#14ffffff"
-                                    border.width: 1
+                                    radius: tokens.radiusS
+                                    color: tokens.stateRest
+                                    border.width: tokens.stroke
                                     border.color: serverUrlField.activeFocus ? panelRoot.accent : panelRoot.lineColor
                                 }
                             }
                         }
 
                         RowLayout {
-                            spacing: 10
+                            spacing: tokens.spaceM
                             visible: serverForm.serverAuthValue !== "apikey"
-                            Text { text: qsTr("用户名"); color: panelRoot.mutedColor; font.pixelSize: 12; Layout.preferredWidth: 56 }
+                            Text { text: qsTr("用户名"); color: panelRoot.mutedColor; font.pixelSize: tokens.fontBody; Layout.preferredWidth: 56 }
                             TextField {
                                 id: serverUserField
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 30
                                 placeholderText: qsTr("Jellyfin 用户名")
-                                placeholderTextColor: "#6b7178"
+                                placeholderTextColor: tokens.textFaint
                                 color: panelRoot.textColor
-                                font.pixelSize: 12
+                                font.pixelSize: tokens.fontBody
                                 selectByMouse: true
-                                leftPadding: 8
-                                rightPadding: 8
+                                leftPadding: tokens.spaceM
+                                rightPadding: tokens.spaceM
                                 background: Rectangle {
-                                    radius: 8
-                                    color: "#14ffffff"
-                                    border.width: 1
+                                    radius: tokens.radiusS
+                                    color: tokens.stateRest
+                                    border.width: tokens.stroke
                                     border.color: serverUserField.activeFocus ? panelRoot.accent : panelRoot.lineColor
                                 }
                             }
                         }
 
                         RowLayout {
-                            spacing: 10
+                            spacing: tokens.spaceM
                             Text {
                                 text: serverForm.apiKeyMode ? qsTr("API Key") : qsTr("密码")
                                 color: panelRoot.mutedColor
-                                font.pixelSize: 12
+                                font.pixelSize: tokens.fontBody
                                 Layout.preferredWidth: 56
                             }
                             TextField {
@@ -1170,17 +1265,17 @@ Item {
                                 placeholderText: serverForm.apiKeyMode
                                                  ? qsTr("控制台 → 高级 → API 密钥")
                                                  : qsTr("密码")
-                                placeholderTextColor: "#6b7178"
+                                placeholderTextColor: tokens.textFaint
                                 color: panelRoot.textColor
-                                font.pixelSize: 12
+                                font.pixelSize: tokens.fontBody
                                 echoMode: serverForm.apiKeyMode ? TextField.Normal : TextField.Password
                                 selectByMouse: true
-                                leftPadding: 8
-                                rightPadding: 8
+                                leftPadding: tokens.spaceM
+                                rightPadding: tokens.spaceM
                                 background: Rectangle {
-                                    radius: 8
-                                    color: "#14ffffff"
-                                    border.width: 1
+                                    radius: tokens.radiusS
+                                    color: tokens.stateRest
+                                    border.width: tokens.stroke
                                     border.color: serverSecretField.activeFocus ? panelRoot.accent : panelRoot.lineColor
                                 }
                             }
@@ -1188,7 +1283,7 @@ Item {
 
                         RowLayout {
                             Layout.fillWidth: true
-                            spacing: 8
+                            spacing: tokens.spaceM
                             PillButton {
                                 label: qsTr("测试连接")
                                 onClicked: {
@@ -1233,32 +1328,32 @@ Item {
                             Layout.fillWidth: true
                             text: qsTr("状态：") + (serverForm.serverBusyText !== "" ? serverForm.serverBusyText
                                           : (library.serverStatus === "" ? qsTr("未连接") : library.serverStatus))
-                            color: library.serverFailed && serverForm.serverBusyText === "" ? "#e08a8a" : panelRoot.mutedColor
-                            font.pixelSize: 12
+                            color: library.serverFailed && serverForm.serverBusyText === "" ? tokens.dangerDim : panelRoot.mutedColor
+                            font.pixelSize: tokens.fontBody
                             wrapMode: Text.WordWrap
                         }
 
                         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
 
-                        Text { text: qsTr("媒体库"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text { text: qsTr("媒体库"); color: panelRoot.textColor; font.pixelSize: tokens.fontSubtitle; font.weight: Font.DemiBold }
                         Text {
                             text: qsTr("条目 %1 · 根目录 %2 · 状态：%3")
                                   .arg(library.itemCount).arg(library.roots.length)
                                   .arg(library.scanStatus === "" ? qsTr("就绪") : library.scanStatus)
                             color: panelRoot.mutedColor
-                            font.pixelSize: 12
+                            font.pixelSize: tokens.fontBody
                             wrapMode: Text.WordWrap
                             Layout.fillWidth: true
                         }
                         Text {
                             text: qsTr("索引文件：") + (library.available ? library.indexFile : qsTr("（尚未生成）"))
                             color: panelRoot.mutedColor
-                            font.pixelSize: 11
+                            font.pixelSize: tokens.fontSmall
                             elide: Text.ElideMiddle
                             Layout.fillWidth: true
                         }
                         RowLayout {
-                            spacing: 8
+                            spacing: tokens.spaceM
                             PillButton {
                                 label: qsTr("添加目录…")
                                 onClicked: library.addRoot()
@@ -1293,24 +1388,24 @@ Item {
                             visible: library.roots.length === 0
                             text: qsTr("还没有添加视频目录。点击「添加目录…」后会扫描并生成缩略图。")
                             color: panelRoot.mutedColor
-                            font.pixelSize: 11
+                            font.pixelSize: tokens.fontSmall
                             wrapMode: Text.WordWrap
                             Layout.fillWidth: true
                         }
                         ColumnLayout {
                             Layout.fillWidth: true
-                            spacing: 6
+                            spacing: tokens.spaceS
                             Repeater {
                                 model: library.roots
                                 delegate: RowLayout {
                                     required property string modelData
                                     Layout.fillWidth: true
-                                    spacing: 8
+                                    spacing: tokens.spaceM
                                     Text {
                                         Layout.fillWidth: true
                                         text: modelData
                                         color: panelRoot.textColor
-                                        font.pixelSize: 11
+                                        font.pixelSize: tokens.fontSmall
                                         elide: Text.ElideMiddle
                                     }
                                     PillButton {
@@ -1328,7 +1423,7 @@ Item {
                         id: storagePage
                         Layout.fillWidth: true
                         visible: panelRoot.page === 6
-                        spacing: 10
+                        spacing: tokens.spaceM
 
                         property var usage: ({})
                         function refreshUsage() { storagePage.usage = prefs.storageUsage() }
@@ -1342,7 +1437,7 @@ Item {
                             onTriggered: storagePage.refreshUsage()
                         }
 
-                        Text { text: qsTr("缓存与索引占用"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text { text: qsTr("缓存与索引占用"); color: panelRoot.textColor; font.pixelSize: tokens.fontSubtitle; font.weight: Font.DemiBold }
                         Text {
                             text: qsTr("缩略图 %1 · 索引 %2 · 日志 %3 · 配置 %4 · 合计 %5")
                                   .arg(storagePage.usage.thumbsText || "-")
@@ -1351,14 +1446,14 @@ Item {
                                   .arg(storagePage.usage.configText || "-")
                                   .arg(storagePage.usage.totalText || "-")
                             color: panelRoot.mutedColor
-                            font.pixelSize: 12
+                            font.pixelSize: tokens.fontBody
                             wrapMode: Text.WordWrap
                             Layout.fillWidth: true
                         }
                         Text {
                             text: qsTr("配置目录：") + (storagePage.usage.configDir || "")
                             color: panelRoot.mutedColor
-                            font.pixelSize: 11
+                            font.pixelSize: tokens.fontSmall
                             elide: Text.ElideMiddle
                             Layout.fillWidth: true
                         }
@@ -1389,7 +1484,7 @@ Item {
                         }
 
                         RowLayout {
-                            spacing: 8
+                            spacing: tokens.spaceM
                             PillButton {
                                 label: qsTr("清理缩略图缓存")
                                 onClicked: { library.clearThumbCache(); storagePage.refreshUsage() }
@@ -1404,7 +1499,7 @@ Item {
                             }
                         }
                         RowLayout {
-                            spacing: 8
+                            spacing: tokens.spaceM
                             PillButton {
                                 label: qsTr("导出配置…")
                                 onClicked: { prefs.chooseExportConfig(); storagePage.refreshUsage() }
@@ -1422,7 +1517,7 @@ Item {
                             visible: prefs.storageNotice !== ""
                             text: prefs.storageNotice
                             color: panelRoot.accent
-                            font.pixelSize: 11
+                            font.pixelSize: tokens.fontSmall
                             wrapMode: Text.WordWrap
                             Layout.fillWidth: true
                         }
@@ -1430,7 +1525,7 @@ Item {
                             visible: library.scanStatus !== ""
                             text: qsTr("媒体库：") + library.scanStatus
                             color: panelRoot.mutedColor
-                            font.pixelSize: 11
+                            font.pixelSize: tokens.fontSmall
                             wrapMode: Text.WordWrap
                             Layout.fillWidth: true
                         }
@@ -1441,7 +1536,7 @@ Item {
                     ColumnLayout {
                         Layout.fillWidth: true
                         visible: panelRoot.page === 7
-                        spacing: 12
+                        spacing: tokens.spaceL
 
                         // 品牌图标与窗口/任务栏/exe 共用同一份源（resources/brand）。
                         Image {
@@ -1451,9 +1546,9 @@ Item {
                             fillMode: Image.PreserveAspectFit
                             smooth: true
                         }
-                        Text { text: "Palune " + panelRoot.appVersion; color: panelRoot.textColor; font.pixelSize: 16; font.weight: Font.DemiBold }
+                        Text { text: "Palune " + panelRoot.appVersion; color: panelRoot.textColor; font.pixelSize: tokens.fontTitle; font.weight: Font.DemiBold }
                         Text { text: "Qt " + Qt.application.version + qsTr(" · libmpv 动态链接 · 渲染路径：") + Qt.platform.os
-                               color: panelRoot.mutedColor; font.pixelSize: 12
+                               color: panelRoot.mutedColor; font.pixelSize: tokens.fontBody
                                wrapMode: Text.WordWrap; Layout.fillWidth: true }
                         Text {
                             visible: panelRoot.hasWindow
@@ -1461,14 +1556,14 @@ Item {
                                   ? qsTr("配置：") + win.configDir + qsTr("\n日志：") + win.logFile + qsTr("\n崩溃：") + win.crashDir
                                   : ""
                             color: panelRoot.mutedColor
-                            font.pixelSize: 11
+                            font.pixelSize: tokens.fontSmall
                             wrapMode: Text.WordWrap
                             Layout.fillWidth: true
                         }
 
                         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
 
-                        Text { text: qsTr("更新"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text { text: qsTr("更新"); color: panelRoot.textColor; font.pixelSize: tokens.fontSubtitle; font.weight: Font.DemiBold }
                         SettingRow {
                             label: qsTr("更新通道")
                             hint: qsTr("[update] channel = stable / beta；beta 读取 latest-beta.json，需发行仓库发布该清单后才有内容")
@@ -1509,15 +1604,23 @@ Item {
                                 onClicked: prefs.chooseDownloadDir()
                             }
                         }
+                        SettingRow {
+                            label: qsTr("截图目录")
+                            hint: prefs.screenshotDir
+                            PillButton {
+                                label: qsTr("选择…")
+                                onClicked: prefs.chooseScreenshotDir()
+                            }
+                        }
                         UpdateSection {
                             Layout.fillWidth: true
                         }
 
                         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: panelRoot.lineColor }
 
-                        Text { text: qsTr("许可与诊断"); color: panelRoot.textColor; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text { text: qsTr("许可与诊断"); color: panelRoot.textColor; font.pixelSize: tokens.fontSubtitle; font.weight: Font.DemiBold }
                         RowLayout {
-                            spacing: 8
+                            spacing: tokens.spaceM
                             PillButton {
                                 label: qsTr("查看许可与开源声明")
                                 onClicked: prefs.openLicense()
@@ -1549,20 +1652,20 @@ Item {
                     Layout.preferredWidth: 300
                     Layout.maximumWidth: 300
                     Layout.fillHeight: true
-                    spacing: 10
+                    spacing: tokens.spaceM
 
                     Text {
                         text: qsTr("字幕预览")
                         color: panelRoot.textColor
-                        font.pixelSize: 14
+                        font.pixelSize: tokens.fontSubtitle
                         font.weight: Font.DemiBold
                     }
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 150
-                        radius: 10
-                        color: "#0b0c10"
-                        border.width: 1
+                        radius: tokens.radiusM
+                        color: tokens.bg
+                        border.width: tokens.stroke
                         border.color: panelRoot.lineColor
                         clip: true
 
@@ -1584,20 +1687,20 @@ Item {
                               .arg((prefs.subtitleOutline * 2).toFixed(1))
                               .arg(prefs.subtitlePosition)
                         color: panelRoot.mutedColor
-                        font.pixelSize: 11
+                        font.pixelSize: tokens.fontSmall
                     }
 
                     Text {
                         text: qsTr("BT.2390 色调映射")
                         color: panelRoot.textColor
-                        font.pixelSize: 14
+                        font.pixelSize: tokens.fontSubtitle
                         font.weight: Font.DemiBold
-                        Layout.topMargin: 6
+                        Layout.topMargin: tokens.spaceS
                     }
                     Text {
                         text: qsTr("目标峰值 %1 nits（playback.targetPeakNits，即时生效）").arg(prefs.targetPeakNits)
                         color: panelRoot.textColor
-                        font.pixelSize: 12
+                        font.pixelSize: tokens.fontBody
                         wrapMode: Text.WordWrap
                         Layout.fillWidth: true
                     }
@@ -1607,9 +1710,9 @@ Item {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 96
-                        radius: 8
-                        color: "#0b0c10"
-                        border.width: 1
+                        radius: tokens.radiusS
+                        color: tokens.bg
+                        border.width: tokens.stroke
                         border.color: panelRoot.lineColor
                         clip: true
 
@@ -1618,7 +1721,7 @@ Item {
                         Canvas {
                             id: curve
                             anchors.fill: parent
-                            anchors.margins: 8
+                            anchors.margins: tokens.spaceM
                             // 目标峰值变化即重绘。
                             property int targetNits: parent.targetNits
                             onTargetNitsChanged: requestPaint()
@@ -1668,7 +1771,7 @@ Item {
                                 const maxLum = pqOetf(target)
 
                                 // 参考线：不压缩时的 y=x（按目标峰值截断），虚线用手工短段绘制。
-                                ctx.strokeStyle = "#3affffff"
+                                ctx.strokeStyle = tokens.gridLine
                                 ctx.lineWidth = 1
                                 for (let i = 0; i < w; i += 6) {
                                     const x0 = i / w * 10000
@@ -1682,7 +1785,7 @@ Item {
                                 }
 
                                 // 实际 EETF 曲线
-                                ctx.strokeStyle = "#e7b27c"
+                                ctx.strokeStyle = tokens.accent
                                 ctx.lineWidth = 1.5
                                 ctx.beginPath()
                                 for (let i = 0; i <= w; i += 1) {
@@ -1698,10 +1801,10 @@ Item {
                             }
                         }
                         Text {
-                            anchors { left: parent.left; bottom: parent.bottom; margins: 6 }
+                            anchors { left: parent.left; bottom: parent.bottom; margins: tokens.spaceS }
                             text: qsTr("输入 0–10000 nits（虚线=不压缩）")
                             color: panelRoot.mutedColor
-                            font.pixelSize: 9
+                            font.pixelSize: tokens.fontCaption
                         }
                     }
                     Text {
@@ -1711,14 +1814,14 @@ Item {
                                    curve.eetf(curve.pqOetf(10000),
                                               curve.pqOetf(prefs.targetPeakNits)))))
                         color: panelRoot.mutedColor
-                        font.pixelSize: 10
+                        font.pixelSize: tokens.fontCaption
                         wrapMode: Text.WordWrap
                         Layout.fillWidth: true
                     }
                     Text {
                         text: qsTr("提示：目标峰值来自播放页的「目标峰值」，修改后立即作用于 mpv。")
                         color: panelRoot.mutedColor
-                        font.pixelSize: 10
+                        font.pixelSize: tokens.fontCaption
                         wrapMode: Text.WordWrap
                         Layout.fillWidth: true
                     }

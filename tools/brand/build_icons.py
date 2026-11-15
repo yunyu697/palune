@@ -21,6 +21,7 @@
 from __future__ import annotations
 
 import argparse
+import io
 import math
 import os
 import shutil
@@ -54,6 +55,15 @@ ICNS_RETINA_TYPES = {
     256: b"ic13",  # 128 @2x
     512: b"ic14",  # 256 @2x
 }
+
+# macOS 11+（Big Sur）应用图标网格：1024 画布，圆角方块本体 824×824 居中，圆角约 185。
+# 源 SVG 是满画布 100×100（本体 1024、圆角 225），直接导出会让 Dock 图标比同排应用大一圈，
+# 因此在写 .icns 时按 824/1024 缩放并居中，给系统留出统一边距。
+MACOS_CANVAS = 1024
+MACOS_BODY = 824
+
+# 菜单栏 template 图：只取三条声浪，不要底板/外框，单色黑 + alpha，由系统按菜单栏明暗反色。
+TRAY_TEMPLATE_SIZES = (18, 36)
 
 
 def svg_variant(source: Path, size: int, work: Path) -> Path:
@@ -162,14 +172,81 @@ def write_ico(images: dict[int, Image.Image], out: Path) -> None:
     out.write_bytes(struct.pack("<HHH", 0, 1, len(ICO_SIZES)) + b"".join(entries) + b"".join(blobs))
 
 
+def macos_grid_image(png: Path, size: int) -> Image.Image:
+    """把满画布导出缩到 Big Sur 网格的本体尺寸，再居中贴到透明画布。"""
+    body = max(1, round(size * MACOS_BODY / MACOS_CANVAS))
+    art = Image.open(png).convert("RGBA").resize((body, body), Image.LANCZOS)
+    canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    offset = (size - body) // 2
+    canvas.alpha_composite(art, (offset, offset))
+    return canvas
+
+
 def write_icns(pngs: dict[int, Path], out: Path) -> None:
     chunks = []
     for size, kind in ICNS_TYPES.items():
-        chunks.append(kind + struct.pack(">I", 8 + len(pngs[size].read_bytes())) + pngs[size].read_bytes())
+        buf = io.BytesIO()
+        macos_grid_image(pngs[size], size).save(buf, "PNG")
+        payload = buf.getvalue()
+        chunks.append(kind + struct.pack(">I", 8 + len(payload)) + payload)
     for size, kind in ICNS_RETINA_TYPES.items():
-        chunks.append(kind + struct.pack(">I", 8 + len(pngs[size].read_bytes())) + pngs[size].read_bytes())
+        buf = io.BytesIO()
+        macos_grid_image(pngs[size], size).save(buf, "PNG")
+        payload = buf.getvalue()
+        chunks.append(kind + struct.pack(">I", 8 + len(payload)) + payload)
     body = b"".join(chunks)
     out.write_bytes(b"icns" + struct.pack(">I", 8 + len(body)) + body)
+
+
+def tray_template(size: int, out: Path) -> None:
+    """从源 SVG 的三条声浪几何生成单色 template（黑 + alpha），不含底板与外框。
+
+    SVG 里的条带是 translate(7 0) skewX(-8) 下的三个圆角矩形；这里用逆变换
+    逐像素判定圆角矩形内部，再做 4× 超采样，避免 18px 下出现半像素毛边。
+    """
+    ss = 4
+    pad = max(1, round(size * 0.06))
+    target_h = size - pad * 2
+    scale = target_h / 62.0  # 条带纵向跨度 19..81
+    tan8 = math.tan(math.radians(8))
+    bars = ((27.5, 19.0, 11.0, 62.0), (44.5, 27.0, 11.0, 46.0), (61.5, 39.0, 11.0, 22.0))
+    # 水平居中：先算三根条带在最终像素里的外接框。
+    xs = []
+    for x, y, w, h in bars:
+        for px in (x, x + w):
+            for py in (y, y + h):
+                xs.append(px + 7 - tan8 * py)
+    glyph_w = (max(xs) - min(xs)) * scale
+    offset_x = (size - glyph_w) / 2
+
+    big = Image.new("L", (size * ss, size * ss), 0)
+    pix = big.load()
+    for yy in range(size * ss):
+        y_final = (yy + 0.5) / ss
+        y_local = (y_final - pad) / scale + 19.0
+        for xx in range(size * ss):
+            x_final = (xx + 0.5) / ss
+            x_screen = (x_final - offset_x) / scale + min(xs)
+            x_local = x_screen - 7 + tan8 * y_local
+            for bx, by, bw, bh in bars:
+                if not (by <= y_local <= by + bh):
+                    continue
+                r = bw / 2
+                if bx + r <= x_local <= bx + bw - r or (
+                    by + r <= y_local <= by + bh - r and bx <= x_local <= bx + bw
+                ):
+                    pix[xx, yy] = 255
+                    break
+                cx = min(max(x_local, bx + r), bx + bw - r)
+                cy = min(max(y_local, by + r), by + bh - r)
+                if (x_local - cx) ** 2 + (y_local - cy) ** 2 <= r * r:
+                    pix[xx, yy] = 255
+                    break
+    alpha = big.resize((size, size), Image.LANCZOS)
+    icon = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    icon.putalpha(alpha)
+    icon.save(out)
+
 
 
 def font(size: int):
@@ -280,10 +357,12 @@ def compose_sizes(pngs: dict[int, Path], out: Path) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="从品牌 SVG 导出各平台图标")
-    parser.add_argument("--rasterizer", required=True, help="svg_raster 可执行文件路径")
+    parser.add_argument("--rasterizer", default="", help="svg_raster 可执行文件路径")
     parser.add_argument("--root", default=".", help="仓库根目录")
     parser.add_argument("--qt-bin", default="", help="Qt bin 目录（提供 Qt6Svg.dll 等）")
     parser.add_argument("--no-evidence", action="store_true", help="跳过对照图")
+    parser.add_argument("--repack", action="store_true",
+                        help="不重新栅格化，直接用 resources/brand/png 里现有 PNG 重打 ICO/ICNS")
     args = parser.parse_args()
 
     root = Path(args.root).resolve()
@@ -291,29 +370,35 @@ def main() -> int:
     source = brand / "wave-clay-dark.svg"
     if not source.is_file():
         raise SystemExit(f"缺少唯一图标源：{source}")
+    if not args.repack and not args.rasterizer:
+        raise SystemExit("未指定 --rasterizer（或用 --repack 复用现有 PNG）")
 
-    rasterizer = Path(args.rasterizer).resolve()
+    rasterizer = Path(args.rasterizer).resolve() if args.rasterizer else None
     work = brand / ".build"
     work.mkdir(parents=True, exist_ok=True)
 
-    env_path = str(rasterizer.parent)
-    if args.qt_bin:
-        import os
-        env_path = args.qt_bin + ";" + env_path
-    import os
-    os.environ["PATH"] = env_path + ";" + os.environ.get("PATH", "")
+    if rasterizer is not None:
+        env_path = str(rasterizer.parent)
+        if args.qt_bin:
+            env_path = args.qt_bin + ";" + env_path
+        os.environ["PATH"] = env_path + ";" + os.environ.get("PATH", "")
 
     png_dir = brand / "png"
     png_paths: dict[int, Path] = {}
     for size in PNG_SIZES:
-        variant = svg_variant(source, size, work)
         out_png = png_dir / f"palune-{size}.png"
-        rasterize(rasterizer, variant, out_png, size)
+        if rasterizer is not None:
+            variant = svg_variant(source, size, work)
+            rasterize(rasterizer, variant, out_png, size)
+        elif not out_png.is_file():
+            raise SystemExit(f"缺少 {out_png}，无法 --repack")
         png_paths[size] = out_png
 
     images = {size: Image.open(png_paths[size]) for size in ICO_SIZES}
     write_ico(images, brand / "palune.ico")
     write_icns(png_paths, brand / "palune.icns")
+    for size in TRAY_TEMPLATE_SIZES:
+        tray_template(size, png_dir / f"tray-template-{size}.png")
 
     # Windows 资源脚本与 Qt 窗口图标沿用 packaging 下的固定路径。
     packaging = root / "packaging"

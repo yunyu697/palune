@@ -8,8 +8,8 @@ Item {
     property real value: 0
     signal volumeSet(real value)
 
-    implicitWidth: 120
-    implicitHeight: 20
+    implicitWidth: tokens.volumeW
+    implicitHeight: tokens.seekH
 
     readonly property real ratio: Math.min(1, Math.max(0, volume.value / 100))
 
@@ -19,21 +19,21 @@ Item {
         id: track
         anchors.verticalCenter: parent.verticalCenter
         width: parent.width
-        height: 2
-        radius: 1
-        color: "#33ffffff"
+        height: tokens.trackThickness
+        radius: height / 2
+        color: tokens.track
     }
     Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         width: Math.max(0, track.width * volume.ratio)
-        height: 2
-        radius: 1
+        height: tokens.trackThickness
+        radius: height / 2
         color: tokens.accent
     }
     Rectangle {
-        width: 9
-        height: 9
-        radius: 4.5
+        width: tokens.knobSize
+        height: tokens.knobSize
+        radius: width / 2
         color: tokens.accent
         anchors.verticalCenter: parent.verticalCenter
         x: Math.min(track.width - width, Math.max(0, track.width * volume.ratio - width / 2))

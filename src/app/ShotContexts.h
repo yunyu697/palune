@@ -30,6 +30,9 @@ class ShotPlayer : public QObject
     Q_PROPERTY(double videoBitrate READ videoBitrate WRITE setVideoBitrate NOTIFY videoInfoChanged)
     Q_PROPERTY(QString hwdec READ hwdec WRITE setHwdec NOTIFY videoInfoChanged)
     Q_PROPERTY(QString hdrMode READ hdrMode WRITE setHdrMode NOTIFY videoInfoChanged)
+    // 1.1.0 P0：章节列表与画面比例，供布局 B 检查器与设置面板绑定。
+    Q_PROPERTY(QVariantList chapters READ chapters WRITE setChapters NOTIFY chaptersChanged)
+    Q_PROPERTY(QString aspectRatio READ aspectRatio WRITE setAspectRatio NOTIFY aspectRatioChanged)
 
 public:
     explicit ShotPlayer(QObject *parent = nullptr) : QObject(parent) {}
@@ -66,6 +69,11 @@ public:
     void setHwdec(const QString &v) { if (m_hwdec != v) { m_hwdec = v; emit videoInfoChanged(); } }
     QString hdrMode() const { return m_hdrMode; }
     void setHdrMode(const QString &v) { if (m_hdrMode != v) { m_hdrMode = v; emit videoInfoChanged(); } }
+    QVariantList chapters() const { return m_chapters; }
+    void setChapters(const QVariantList &v) { if (m_chapters != v) { m_chapters = v; emit chaptersChanged(); } }
+    QString aspectRatio() const { return m_aspectRatio; }
+    Q_INVOKABLE void setAspectRatio(const QString &v) { if (m_aspectRatio != v) { m_aspectRatio = v; emit aspectRatioChanged(); } }
+    Q_INVOKABLE void setChapter(int) {}
 
 signals:
     void positionChanged();
@@ -79,6 +87,8 @@ signals:
     void tracksChanged();
     void errorMessageChanged();
     void videoInfoChanged();
+    void chaptersChanged();
+    void aspectRatioChanged();
 
 private:
     double m_position = 0;
@@ -97,6 +107,8 @@ private:
     QString m_hdrMode;
     double m_videoFps = 0.0;
     double m_videoBitrate = 0.0;
+    QVariantList m_chapters;
+    QString m_aspectRatio = QStringLiteral("auto");
 };
 
 // 窗口上下文桩：动作只记账，截图不触发真实窗口操作。

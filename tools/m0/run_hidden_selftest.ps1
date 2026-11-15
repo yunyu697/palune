@@ -83,11 +83,15 @@ if ($StateSwitchCount -gt 0) { $cmd += ' --state-switch-count ' + $StateSwitchCo
 if ($SoakMinute -gt 0) { $cmd += ' --soak-minute ' + $SoakMinute }
 
 $pi = New-Object -TypeName 'PaluneHiddenDesktop+PROCESS_INFORMATION'
+# 空字符串/NULL 作为 lpCurrentDirectory 会被 CreateProcessW 拒绝（ERROR_INVALID_NAME 123），
+# 未指定时用 exe 所在目录，与手工双击启动的当前目录一致。
+if ([string]::IsNullOrEmpty($WorkingDir)) { $WorkingDir = Split-Path -Parent $Exe }
 $ok = [PaluneHiddenDesktop]::CreateProcessW($Exe, $cmd, [IntPtr]::Zero, [IntPtr]::Zero,
     $false, 0, [IntPtr]::Zero, $WorkingDir, [ref]$si, [ref]$pi)
 if (-not $ok) {
+    $lastError = [Runtime.InteropServices.Marshal]::GetLastWin32Error()
     [PaluneHiddenDesktop]::CloseDesktop($desk)
-    $err = [ComponentModel.Win32Exception]::new([Runtime.InteropServices.Marshal]::GetLastWin32Error())
+    $err = [ComponentModel.Win32Exception]::new($lastError)
     throw "CreateProcessW 失败：$($err.Message)"
 }
 

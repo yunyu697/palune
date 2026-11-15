@@ -29,6 +29,8 @@ tools/update/test-key.pem
 *.dmp
 qa/runtime/
 qa/coverage/
+# 分层取证的原图单张 1.5 MB（合计 132 MB），只入库结论与机读结果
+qa/evidence/layering/*.png
 
 # IDE / 系统
 .vs/

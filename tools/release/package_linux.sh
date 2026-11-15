@@ -13,6 +13,8 @@ OUT="${OUT:-dist}"
 TOOLS="${TOOLS:-${BUILD_DIR}/release-tools}"
 APPDIR="${APPDIR:-${BUILD_DIR}/AppDir}"
 ARCH=x86_64
+# hicolor 需要的位图尺寸：与 resources/brand/png 的导出阶梯一致，缺一档系统就会自己缩。
+ICON_SIZES="${ICON_SIZES:-16 24 32 48 64 128 256 512}"
 
 mkdir -p "$OUT" "$TOOLS"
 
@@ -20,11 +22,13 @@ mkdir -p "$OUT" "$TOOLS"
 rm -rf "$APPDIR"
 mkdir -p "$APPDIR/usr/bin" "$APPDIR/usr/lib" \
          "$APPDIR/usr/share/applications" \
-         "$APPDIR/usr/share/icons/hicolor/256x256/apps" \
          "$APPDIR/usr/share/palune"
 cp "${BUILD_DIR}/Palune" "$APPDIR/usr/bin/palune"
 cp packaging/palune.desktop "$APPDIR/usr/share/applications/"
-cp packaging/palune-256.png "$APPDIR/usr/share/icons/hicolor/256x256/apps/palune.png"
+for size in $ICON_SIZES; do
+    install -D -m 0644 "resources/brand/png/palune-${size}.png" \
+        "$APPDIR/usr/share/icons/hicolor/${size}x${size}/apps/palune.png"
+done
 cp README.md NOTICE.md VERSION "$APPDIR/usr/share/palune/"
 if [ -f third_party/libmpv/libmpv.so.2 ]; then
     cp third_party/libmpv/libmpv.so.2 "$APPDIR/usr/lib/"
@@ -72,13 +76,16 @@ fi
 PKGROOT="${BUILD_DIR}/pkgroot"
 rm -rf "$PKGROOT"
 mkdir -p "$PKGROOT/opt/palune" "$PKGROOT/usr/bin" \
-         "$PKGROOT/usr/share/applications" "$PKGROOT/usr/share/icons/hicolor/256x256/apps"
+         "$PKGROOT/usr/share/applications"
 for sub in bin lib plugins qml share translations resources; do
     [ -d "$APPDIR/usr/$sub" ] && cp -a "$APPDIR/usr/$sub" "$PKGROOT/opt/palune/" || true
 done
 install -m 0755 packaging/linux/palune-launcher.sh "$PKGROOT/usr/bin/palune"
 cp packaging/palune.desktop "$PKGROOT/usr/share/applications/"
-cp packaging/palune-256.png "$PKGROOT/usr/share/icons/hicolor/256x256/apps/palune.png"
+for size in $ICON_SIZES; do
+    install -D -m 0644 "resources/brand/png/palune-${size}.png" \
+        "$PKGROOT/usr/share/icons/hicolor/${size}x${size}/apps/palune.png"
+done
 
 DEB_ROOT="${BUILD_DIR}/debroot"
 rm -rf "$DEB_ROOT"
@@ -123,7 +130,7 @@ cp -a "${PWD}/${PKGROOT}/." "%{buildroot}/"
 /opt/palune
 /usr/bin/palune
 /usr/share/applications/palune.desktop
-/usr/share/icons/hicolor/256x256/apps/palune.png
+/usr/share/icons/hicolor/*/apps/palune.png
 EOF
     rpmbuild -bb --quiet --define "_topdir ${PWD}/${RPM_TOP}" \
              --define "_binary_payload w9.gzdio" "$RPM_TOP/SPECS/palune.spec"

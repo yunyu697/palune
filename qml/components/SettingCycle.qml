@@ -19,16 +19,16 @@ Item {
     }
 
     implicitWidth: Math.max(72, labelText.implicitWidth + 24)
-    implicitHeight: 26
+    implicitHeight: tokens.ctrlH
     activeFocusOnTab: true
 
     Tokens { id: tokens }
 
     Rectangle {
         anchors.fill: parent
-        radius: 8
-        color: hoverArea.containsMouse ? "#26ffffff" : "#14ffffff"
-        border.width: cycle.activeFocus ? 2 : 1
+        radius: tokens.radiusS
+        color: hoverArea.containsMouse ? tokens.stateHover : tokens.stateRest
+        border.width: cycle.activeFocus ? tokens.strokeFocus : tokens.stroke
         border.color: cycle.activeFocus ? tokens.accent : tokens.border
 
         Text {
@@ -36,7 +36,7 @@ Item {
             anchors.centerIn: parent
             text: cycle.currentOption ? cycle.currentOption.label : "—"
             color: tokens.text
-            font.pixelSize: 11
+            font.pixelSize: tokens.fontSmall
         }
 
         MouseArea {

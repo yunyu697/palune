@@ -8,6 +8,10 @@
 
 #include <cstdlib>
 
+#if defined(Q_OS_WIN)
+#include <windows.h>
+#endif
+
 namespace palune {
 
 QMutex Log::s_mutex;
@@ -113,8 +117,19 @@ void Log::installQtHandler()
                         .arg(context.line);
         }
         Log::write(level, text);
-        if (type == QtFatalMsg)
+        if (type == QtFatalMsg) {
+            // Qt 的致命错误（图形后端、平台插件内部失败等）不允许静默退出，
+            // 也不落到 Qt 的英文原生对话框：统一给中文说明 + 日志位置。
+#if defined(Q_OS_WIN)
+            const QString detail = QStringLiteral(
+                "Palune 遇到无法恢复的错误，需要退出。\n\n日志：%1\n\n"
+                "请重新启动；如果反复出现，请把日志文件发给支持人员。")
+                .arg(Log::filePath());
+            MessageBoxW(nullptr, reinterpret_cast<LPCWSTR>(detail.utf16()),
+                        L"Palune", MB_OK | MB_ICONERROR);
+#endif
             std::abort();
+        }
     });
 }
 

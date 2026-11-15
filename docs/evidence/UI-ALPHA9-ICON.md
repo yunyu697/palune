@@ -88,3 +88,16 @@ python tools/brand/build_icons.py --rasterizer <svg_raster.exe> --qt-bin C:\Qt\6
   （证据 `qa/runtime/alpha9/windows-install-evidence.json`、`install-launch.json`）
 - 单元测试：ctest 7/7 通过。
 - 版本 `VERSION` = `1.0.0-alpha9`；本地 tag `1.0.0-alpha9`（未推送）。
+
+## 2026-11-15 平台合规修订
+
+上表的「满画布 ICNS」「窗口/托盘共用 256 彩色图」在平台合规审计中判定为问题，已修：
+
+| 项 | 修订后 |
+| --- | --- |
+| `resources/brand/palune.icns` | 仍含 icp4/icp5/ic07/ic08/ic09/ic10 + ic11–ic14 共 10 段；每段重排为 Big Sur 网格：1024 画布、824×824 本体居中、圆角约 183px |
+| 窗口 / 任务栏图标 | `src/app/main.cpp` 改用 `brandAppIcon()`：16/24/32/48/64/128/256/512/1024 多尺寸 QIcon |
+| 托盘 / 菜单栏 | `brandTrayIcon()`：macOS 用 `tray-template-18/36.png` 单色 template + `QIcon::setIsMask(true)`；Windows 用 16–64 阶梯 |
+| Linux 打包 | hicolor 由只有 256 改为 16/24/32/48/64/128/256/512 八档 |
+
+实测数据与前后对照见 `qa/evidence/icons/FINDINGS.md`、`qa/evidence/icons/icon-audit.json`。

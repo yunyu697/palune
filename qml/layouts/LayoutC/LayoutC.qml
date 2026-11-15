@@ -36,12 +36,12 @@ Item {
     // 左上标题胶囊
     Rectangle {
         visible: uiState.chromeVisible && layoutC.hasFile
-        anchors { top: parent.top; left: parent.left; margins: 16 }
+        anchors { top: parent.top; left: parent.left; margins: tokens.spaceXL }
         height: 36
         width: titleText.implicitWidth + 32
-        radius: 18
+        radius: tokens.radiusL
         color: tokens.glass
-        border.width: 1
+        border.width: tokens.stroke
         border.color: tokens.border
 
         Text {
@@ -58,7 +58,7 @@ Item {
     // 右上圆形窗口按钮
     WindowButtons {
         visible: uiState.chromeVisible
-        anchors { top: parent.top; right: parent.right; margins: 16 }
+        anchors { top: parent.top; right: parent.right; margins: tokens.spaceXL }
         compact: layoutC.compact
     }
 
@@ -68,20 +68,20 @@ Item {
         visible: uiState.chromeVisible && layoutC.hasFile
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: layoutC.compact ? 12 : 24
+        anchors.bottomMargin: layoutC.compact ? tokens.spaceL : tokens.space3XL
         height: layoutC.compact ? 44 : tokens.capsuleHeight
         width: Math.min(parent.width - (layoutC.compact ? 24 : 48),
                         layoutC.compact ? 720 : 980)
         radius: height / 2
         color: tokens.glass
-        border.width: 1
+        border.width: tokens.stroke
         border.color: tokens.borderStrong
 
         RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: 10
-            anchors.rightMargin: 12
-            spacing: 8
+            anchors.leftMargin: tokens.spaceM
+            anchors.rightMargin: tokens.spaceL
+            spacing: tokens.spaceM
 
             PillButton {
                 label: player.paused ? qsTr("播放") : qsTr("暂停")

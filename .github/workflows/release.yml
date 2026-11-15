@@ -92,6 +92,14 @@ jobs:
       - name: 单元测试
         run: ctest --test-dir build -C Release --output-on-failure -R "version|manifest"
 
+      - name: QML 静态门禁（qmllint）
+        shell: pwsh
+        run: ./tools/release/check_qml.ps1 -OutFile dist/qmllint.txt
+
+      - name: 设计令牌检查（docs/DESIGN-SYSTEM.md §9）
+        shell: pwsh
+        run: python tools/ci/check_design_tokens.py
+
       - name: 校验许可 RTF 与源文本一致
         shell: pwsh
         run: |

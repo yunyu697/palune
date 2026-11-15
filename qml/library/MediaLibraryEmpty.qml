@@ -18,7 +18,7 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             text: typeof library !== "undefined" ? library.emptyTitle : qsTr("媒体库还是空的")
             color: tokens.text
-            font.pixelSize: 20
+            font.pixelSize: tokens.fontDisplay
             font.weight: Font.DemiBold
         }
         Text {

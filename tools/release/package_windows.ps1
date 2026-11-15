@@ -70,6 +70,16 @@ if ($missing.Count -gt 0) {
 }
 Write-Output ("安装树自检通过：{0} 项运行时组件齐全" -f $requiredRuntime.Count)
 
+# 上面的清单是「必须存在」的白名单，管不到「exe 导入了什么」。这里逐个解析安装树
+# 里所有 exe 的 PE 导入表（含递归解析同目录 DLL），任何非系统 DLL 不在同目录即失败。
+$repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+$py = Get-Command python -ErrorAction SilentlyContinue
+if (-not $py) { throw "未找到 python，无法执行安装树依赖完整性校验（不允许跳过出包门禁）" }
+$depsJson = Join-Path $BuildDir "stage-deps.json"
+& $py.Source (Join-Path $repoRoot "tools/ci/check_exe_deps.py") --root $binDir --recursive --json $depsJson
+if ($LASTEXITCODE -ne 0) { throw "安装树依赖完整性校验失败（详情见 $depsJson），拒绝出包" }
+Write-Output "安装树依赖完整性校验通过"
+
 $crtNames = @("vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll",
               "msvcp140_1.dll", "msvcp140_2.dll", "concrt140.dll")
 $redistRoots = @(Get-ChildItem "$env:ProgramFiles\Microsoft Visual Studio\*\*\VC\Redist\MSVC" `

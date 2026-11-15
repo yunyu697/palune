@@ -81,6 +81,14 @@ const QVector<ActionRegistry::Action> &ActionRegistry::actionTable()
         {QStringLiteral("openSettings"), QStringLiteral("设置"), QStringLiteral("Settings"), QStringLiteral("ui"), QStringLiteral("ui"), QStringLiteral("Ctrl+,")},
         {QStringLiteral("openLibrary"), QStringLiteral("媒体库"), QStringLiteral("Library"), QStringLiteral("ui"), QStringLiteral("ui"), QStringLiteral("Ctrl+L")},
         {QStringLiteral("exit"), QStringLiteral("退出"), QStringLiteral("Exit"), QStringLiteral("ui"), QStringLiteral("ui"), QStringLiteral("Ctrl+Q")},
+        // 播放队列与画面（7）
+        {QStringLiteral("addToQueue"), QStringLiteral("添加到队列"), QStringLiteral("Add to queue"), QStringLiteral("queue"), QStringLiteral("ui"), QStringLiteral("Ctrl+Shift+O")},
+        {QStringLiteral("clearQueue"), QStringLiteral("清空队列"), QStringLiteral("Clear queue"), QStringLiteral("queue"), QStringLiteral("ui"), QString()},
+        {QStringLiteral("saveQueue"), QStringLiteral("保存队列"), QStringLiteral("Save queue"), QStringLiteral("queue"), QStringLiteral("ui"), QString()},
+        {QStringLiteral("loadQueue"), QStringLiteral("载入队列"), QStringLiteral("Load queue"), QStringLiteral("queue"), QStringLiteral("ui"), QString()},
+        {QStringLiteral("cycleAspect"), QStringLiteral("切换画面比例"), QStringLiteral("Cycle aspect ratio"), QStringLiteral("video"), QStringLiteral("global"), QStringLiteral("Shift+A")},
+        {QStringLiteral("screenshot"), QStringLiteral("截图"), QStringLiteral("Screenshot"), QStringLiteral("video"), QStringLiteral("global"), QStringLiteral("Ctrl+S")},
+        {QStringLiteral("openUrl"), QStringLiteral("打开网络地址"), QStringLiteral("Open URL"), QStringLiteral("file"), QStringLiteral("ui"), QStringLiteral("Ctrl+U")},
     };
     return table;
 }

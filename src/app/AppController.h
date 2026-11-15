@@ -49,7 +49,7 @@ public:
         bool m2StateSwitch = false;  // --m2-stateswitch：50 次跨主题状态保持
         bool m2Compact = false;      // --m2-compact：断点/滞回/防抖
         bool m2ConfigCheck = false;  // --m2-config-check：配置回退（子进程场景用）
-        bool m2Actions = false;      // --m2-actions：40 动作绑定/焦点/键盘用例
+        bool m2Actions = false;      // --m2-actions：47 动作绑定/焦点/键盘用例
         bool m2UiPerf = false;       // --m2-ui-perf：控制层显隐时延与 4K60 帧时间
         bool m2Window = false;       // --m2-window：窗口行为 20 项清单
         bool resumeProbe = false;    // --resume-probe：打开文件后续播并报告位置
@@ -62,6 +62,8 @@ public:
         QString uiPanel;             // --ui-panel：settings | library
         QString uiCapture;           // --ui-capture：真实窗口 QQuickWindow::grabWindow 落盘路径
         QString uiActions;           // --ui-actions：逗号分隔的窗口动作序列（toggleMaximize/toggleFullscreen 等）
+        bool qmlCheck = false;       // --qml-check：加载 qrc 里全部 QML，有编译错误即失败
+        bool p0Probe = false;        // --p0-probe：用真实 libmpv 验证章节/比例/字幕样式/截图
     };
 
     AppController(const Options &options, Settings *settings, QObject *parent = nullptr);
@@ -90,6 +92,12 @@ private:
     void runM2UiPerf();
     void runM2Window();
     void runShotMatrix();
+    // 启动期自检：逐个加载 qrc 里的 QML 文件，把“写错属性名导致整个窗口起不来”
+    // 这类问题挡在出包之前（安装器与 CI 都会调用）。
+    void runQmlCheck();
+    // P0 行为探针：真实 libmpv 下读取 chapter-list、写 video-aspect-override、
+    // 写字幕样式属性、调 screenshot-to-file，逐项回读并落证据 JSON。
+    void runP0Probe();
     // S1–S6 设置项端到端探针：走真实 Preferences → mpv → settings.toml，输出证据 JSON。
     void runPreferencesProbe(const QString &path);
     QStringList collectMedia() const;

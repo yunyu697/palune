@@ -13,8 +13,8 @@ Item {
     property string suffix: ""
     signal changed(real value)
 
-    implicitWidth: 112
-    implicitHeight: 26
+    implicitWidth: tokens.stepperW
+    implicitHeight: tokens.ctrlH
 
     Tokens { id: tokens }
 
@@ -32,9 +32,9 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: 8
-        color: "#14ffffff"
-        border.width: 1
+        radius: tokens.radiusS
+        color: tokens.stateRest
+        border.width: tokens.stroke
         border.color: tokens.border
     }
 
@@ -42,13 +42,13 @@ Item {
         anchors.fill: parent
 
         Item {
-            width: 26
+            width: tokens.stepperBtnW
             height: parent.height
             Text {
                 anchors.centerIn: parent
                 text: "−"
                 color: minusArea.containsMouse ? tokens.accent : tokens.text
-                font.pixelSize: 13
+                font.pixelSize: tokens.fontBodyL
             }
             MouseArea {
                 id: minusArea
@@ -60,23 +60,23 @@ Item {
         }
 
         Text {
-            width: parent.width - 52
+            width: parent.width - tokens.stepperBtnW * 2
             height: parent.height
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             text: stepper.formatted()
             color: tokens.text
-            font.pixelSize: 11
+            font.pixelSize: tokens.fontSmall
         }
 
         Item {
-            width: 26
+            width: tokens.stepperBtnW
             height: parent.height
             Text {
                 anchors.centerIn: parent
                 text: "+"
                 color: plusArea.containsMouse ? tokens.accent : tokens.text
-                font.pixelSize: 13
+                font.pixelSize: tokens.fontBodyL
             }
             MouseArea {
                 id: plusArea

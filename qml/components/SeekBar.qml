@@ -13,8 +13,8 @@ Item {
     property real dragRatio: -1
     signal seekRequested(real value)
 
-    implicitHeight: 24
-    Layout.preferredHeight: 24
+    implicitHeight: tokens.seekH
+    Layout.preferredHeight: tokens.seekH
 
     readonly property real ratio: seek.duration > 0
         ? Math.min(1, Math.max(0, seek.position / seek.duration)) : 0
@@ -26,57 +26,57 @@ Item {
         id: currentText
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
-        width: 52
+        width: tokens.seekLabelW
         text: fmtTime(seek.dragRatio >= 0 ? seek.dragRatio * seek.duration : seek.position)
         color: tokens.text
         font.pixelSize: tokens.fontM
-        font.family: "Consolas"
+        font.family: tokens.fontMono
     }
 
     Text {
         id: totalText
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        width: 52
+        width: tokens.seekLabelW
         horizontalAlignment: Text.AlignRight
         text: fmtTime(seek.duration)
         color: tokens.textMuted
         font.pixelSize: tokens.fontM
-        font.family: "Consolas"
+        font.family: tokens.fontMono
     }
 
     Item {
         id: trackArea
         anchors.left: currentText.right
         anchors.right: totalText.left
-        anchors.leftMargin: 10
-        anchors.rightMargin: 10
+        anchors.leftMargin: tokens.spaceM
+        anchors.rightMargin: tokens.spaceM
         anchors.verticalCenter: parent.verticalCenter
-        height: 18
+        height: tokens.trackHitH
 
         Rectangle {
             id: trackBg
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width
-            height: 2
-            radius: 1
-            color: "#33ffffff"
+            height: tokens.trackThickness
+            radius: height / 2
+            color: tokens.track
         }
 
         Rectangle {
             id: trackFill
             anchors.verticalCenter: parent.verticalCenter
             width: Math.max(0, trackBg.width * seek.shownRatio)
-            height: 2
-            radius: 1
+            height: tokens.trackThickness
+            radius: height / 2
             color: tokens.accent
         }
 
         Rectangle {
             id: knob
-            width: 9
-            height: 9
-            radius: 4.5
+            width: tokens.knobSize
+            height: tokens.knobSize
+            radius: width / 2
             color: tokens.accent
             anchors.verticalCenter: parent.verticalCenter
             x: Math.min(trackBg.width - width, Math.max(0, trackBg.width * seek.shownRatio - width / 2))

@@ -1,0 +1,107 @@
+{
+  "generatedAt": "2026-11-15 11:57:25",
+  "exe": "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\palune\\build\\Release\\Palune.exe",
+  "media": "D:\\Users\\Tyler Zhang\\Documents\\Trae-CN\\temp_20261106_08\\palune\\qa\\runtime\\media\\resume-60s.mp4",
+  "pid": 36540,
+  "repeats": 3,
+  "zOrderOk": true,
+  "layeringSelfHealCount": 22,
+  "scenarios": [
+    {
+      "Scenario": "control-video-behind",
+      "Verdict": "必现（符合预期）",
+      "Evidence": "control-video-behind-before.png, control-video-behind-broken.png",
+      "Note": "故意把视频窗压到最底层后与正常帧比对：diff=1（>15% 说明取证能检出真实缺陷）；截图时 z 序是否仍被破坏=True",
+      "Diff": 1.0,
+      "Foreign": 0.0
+    },
+    {
+      "Scenario": "control-cover-actually-covers",
+      "Verdict": "遮挡生效（前提成立）",
+      "Evidence": "control-cover-pre.png, control-cover-on.png, control-cover-off.png",
+      "Note": "盖上时 diff=1（应 >15%），撤下后 diff=0（应 ≤15%）",
+      "Diff": 1.0,
+      "Foreign": 0
+    },
+    {
+      "Scenario": "covered-switchback",
+      "Verdict": "当前构建未复现",
+      "Evidence": "covered-switchback-i1-before.png, covered-switchback-i2-before.png, covered-switchback-i3-before.png",
+      "Note": "0/3 次中央区域与参照帧差异 >15%（品红占比仅作参考，内容本身含近品红像素）",
+      "Diff": 0,
+      "Foreign": 0
+    },
+    {
+      "Scenario": "minimize-restore",
+      "Verdict": "当前构建未复现",
+      "Evidence": "minimize-restore-i1-before.png, minimize-restore-i2-before.png, minimize-restore-i3-before.png",
+      "Note": "0/3 次中央区域与参照帧差异 >15%（品红占比仅作参考，内容本身含近品红像素）",
+      "Diff": 0,
+      "Foreign": 0
+    },
+    {
+      "Scenario": "alt-tab-roundtrip",
+      "Verdict": "当前构建未复现",
+      "Evidence": "alt-tab-roundtrip-i1-before.png, alt-tab-roundtrip-i2-before.png, alt-tab-roundtrip-i3-before.png",
+      "Note": "0/3 次中央区域与参照帧差异 >15%（品红占比仅作参考，内容本身含近品红像素）",
+      "Diff": 0,
+      "Foreign": 0
+    },
+    {
+      "Scenario": "pause-resume",
+      "Verdict": "当前构建未复现",
+      "Evidence": "pause-resume-i1-before.png, pause-resume-i2-before.png, pause-resume-i3-before.png",
+      "Note": "0/3 次中央区域与参照帧差异 >15%（品红占比仅作参考，内容本身含近品红像素）",
+      "Diff": 0,
+      "Foreign": 0
+    },
+    {
+      "Scenario": "covered-by-browser",
+      "Verdict": "当前构建未复现",
+      "Evidence": "covered-by-browser-i1-after.png, covered-by-browser-i2-after.png, covered-by-browser-i3-after.png",
+      "Note": "3/3 次确实被浏览器盖住（覆盖时 diff 最大 1）；切回后 0/3 次与参照帧差异 >15%",
+      "Diff": 0,
+      "Foreign": 0
+    },
+    {
+      "Scenario": "fullscreen-roundtrip",
+      "Verdict": "当前构建未复现",
+      "Evidence": "fullscreen-roundtrip-i1-after.png, fullscreen-roundtrip-i2-after.png, fullscreen-roundtrip-i3-after.png",
+      "Note": "0/3 次退全屏后与进入前不一致",
+      "Diff": 0,
+      "Foreign": 0
+    },
+    {
+      "Scenario": "theme-cycle-A-B-C-A",
+      "Verdict": "当前构建未复现",
+      "Evidence": "theme-cycle-i1-A-after.png, theme-cycle-i2-A-after.png, theme-cycle-i3-A-after.png",
+      "Note": "0/3 次回到主题 A 后与切换前不一致",
+      "Diff": 0,
+      "Foreign": 0
+    },
+    {
+      "Scenario": "cross-screen-move",
+      "Verdict": "未验证",
+      "Evidence": "",
+      "Note": "本机只有 1 台显示器，不具备触发条件（不计入通过）",
+      "Diff": 0,
+      "Foreign": 0
+    },
+    {
+      "Scenario": "dpi-change",
+      "Verdict": "未验证",
+      "Evidence": "dpi-change-i1-before.png, dpi-change-i2-before.png, dpi-change-i3-before.png",
+      "Note": "仅注入消息（非真实条件），0/3 次中央区域差异 >15% 仅作参考；不计入通过",
+      "Diff": 0,
+      "Foreign": 0
+    },
+    {
+      "Scenario": "sleep-wake",
+      "Verdict": "未验证",
+      "Evidence": "sleep-wake-i1-before.png, sleep-wake-i2-before.png, sleep-wake-i3-before.png",
+      "Note": "仅注入消息（非真实条件），0/3 次中央区域差异 >15% 仅作参考；不计入通过",
+      "Diff": 0,
+      "Foreign": 0
+    }
+  ]
+}

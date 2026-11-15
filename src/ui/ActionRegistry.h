@@ -12,7 +12,7 @@
 
 namespace palune {
 
-// M2：40 个 P0 动作的唯一注册表与键盘分发器。
+// 动作注册表与键盘分发器。
 // - 每套主题的控件只声明 actionId，键位由这里统一绑定；
 // - 默认键位按平台给出（macOS 把 Ctrl 换成 Meta），启动时检测冲突，默认冲突必须为 0；
 // - dispatch 走 WindowController::action，QML 不直接调用播放器。

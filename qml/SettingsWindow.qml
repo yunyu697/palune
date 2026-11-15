@@ -1,5 +1,6 @@
 import QtQuick
 import "components"
+import "tokens"
 
 // 设置窗根项：作为独立顶层窗口的内容，铺满自身窗口。
 // 不再绘制压暗层（那是主窗内弹层的形态），保留主题圆角与外框由 SettingsPanel 的卡片承担。
@@ -7,7 +8,9 @@ Item {
     id: root
     focus: true
 
-    property int panelRadius: typeof settingsPanelRadius !== "undefined" ? settingsPanelRadius : 18
+    Tokens { id: tokens }
+
+    property int panelRadius: typeof settingsPanelRadius !== "undefined" ? settingsPanelRadius : tokens.radiusL
     // 自动化/截图：转发到内容面板的页码（0 通用 … 5 关于）。
     property alias page: panel.page
 
@@ -28,7 +31,7 @@ Item {
         height: Math.min(56, root.height / 4)
         MouseArea {
             anchors.fill: parent
-            anchors.rightMargin: 112
+            anchors.rightMargin: tokens.windowButtonsReserve
             acceptedButtons: Qt.LeftButton
             onPressed: settingsWindow.startMove()
         }

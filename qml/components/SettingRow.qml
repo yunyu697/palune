@@ -11,13 +11,13 @@ ColumnLayout {
     default property alias content: contentRow.data
 
     Layout.fillWidth: true
-    spacing: 3
+    spacing: tokens.spaceXS
 
     Tokens { id: tokens }
 
     RowLayout {
         Layout.fillWidth: true
-        spacing: 8
+        spacing: tokens.spaceM
 
         Text {
             Layout.fillWidth: true
@@ -29,7 +29,7 @@ ColumnLayout {
 
         Row {
             id: contentRow
-            spacing: 6
+            spacing: tokens.spaceS
         }
     }
 
@@ -38,7 +38,7 @@ ColumnLayout {
         Layout.fillWidth: true
         text: row.hint
         color: tokens.textMuted
-        font.pixelSize: 10
+        font.pixelSize: tokens.fontCaption
         wrapMode: Text.WordWrap
     }
 }

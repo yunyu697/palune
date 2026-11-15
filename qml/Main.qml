@@ -21,15 +21,19 @@ Item {
     readonly property bool hasFile: typeof player !== "undefined" && player.filePath !== ""
     readonly property bool compactUi: typeof compactMode !== "undefined" && compactMode.compact
     // 每个主题顶部可拖拽区的高度（A 浮动标题条 84 + 外边距，B 52，C 标题胶囊 40）。
-    readonly property int dragStripHeight: root.themeId === "B" ? 52 : (root.themeId === "C" ? 44 : 94)
+    readonly property int dragStripHeight: root.themeId === "B" ? tokens.topBarB : (root.themeId === "C" ? tokens.compactCapsuleH : tokens.dragStripA)
     // 控制条所在整条区域的高度（含隐藏状态），用于悬停热区。
-    readonly property int controlZoneHeight: root.themeId === "A" ? (root.compactUi ? 64 : tokens.transportHeight)
-                                               : root.themeId === "B" ? (root.compactUi ? 64 : 82)
-                                               : (root.compactUi ? 44 : tokens.capsuleHeight)
-    readonly property int controlZoneMargin: root.themeId === "A" ? 10
-                                             : (root.themeId === "C" ? (root.compactUi ? 12 : 24) : 0)
+    readonly property int controlZoneHeight: root.themeId === "A" ? (root.compactUi ? tokens.compactBarH : tokens.transportHeight)
+                                               : root.themeId === "B" ? (root.compactUi ? tokens.compactBarH : tokens.controlBarB)
+                                               : (root.compactUi ? tokens.compactCapsuleH : tokens.capsuleHeight)
+    readonly property int controlZoneMargin: root.themeId === "A" ? tokens.spaceM
+                                             : (root.themeId === "C" ? (root.compactUi ? tokens.spaceL : tokens.space3XL) : 0)
 
     Tokens { id: tokens }
+
+    // 系统窗框边框色跟随主题：由 C++ 下发 DWMWA_BORDER_COLOR，QML 不再画窗口级描边。
+    Component.onCompleted: win.setWindowFrameColor(tokens.layerSolid)
+    onThemeIdChanged: win.setWindowFrameColor(tokens.layerSolid)
 
     function openPanel(name) {
         root.overlayPanel = name
@@ -87,21 +91,24 @@ Item {
 
     Menu {
         id: contextMenu
-        palette.text: "#e8eaee"
-        palette.windowText: "#e8eaee"
+        palette.text: tokens.text
+        palette.windowText: tokens.text
         palette.window: "#0d0e11"
         background: Rectangle {
-            color: "#f20d0e11"
-            radius: 10
-            border.width: 1
-            border.color: "#40ffffff"
+            color: tokens.layerCard
+            radius: tokens.radiusM
+            border.width: tokens.stroke
+            border.color: tokens.borderStrong
         }
         MenuItem { text: qsTr("播放 / 暂停"); onTriggered: win.action("playPause") }
         MenuItem { text: qsTr("全屏 / 还原"); onTriggered: win.action("toggleFullscreen") }
         MenuItem { text: qsTr("打开文件…"); onTriggered: win.action("openFile") }
+        MenuItem { text: qsTr("打开网络地址…"); onTriggered: win.action("openUrl") }
+        MenuItem { text: qsTr("添加到队列…"); onTriggered: win.action("addToQueue") }
+        MenuItem { text: qsTr("截图"); onTriggered: win.action("screenshot") }
         MenuItem { text: qsTr("媒体库"); onTriggered: win.action("openLibrary") }
         MenuItem { text: qsTr("设置"); onTriggered: win.action("openSettings") }
-        MenuSeparator { contentItem: Rectangle { implicitHeight: 1; color: "#26ffffff" } }
+        MenuSeparator { contentItem: Rectangle { implicitHeight: 1; color: tokens.stateHover } }
         MenuItem { text: qsTr("退出"); onTriggered: win.action("exit") }
     }
 
@@ -191,13 +198,13 @@ Item {
         MouseArea {
             width: 12; height: 12
             anchors { right: parent.right; top: parent.top }
-            cursorShape: Qt.SizeDiagCursor
+            cursorShape: Qt.SizeBDiagCursor
             onPressed: win.startSystemResize(Qt.RightEdge | Qt.TopEdge)
         }
         MouseArea {
             width: 12; height: 12
             anchors { left: parent.left; bottom: parent.bottom }
-            cursorShape: Qt.SizeDiagCursor
+            cursorShape: Qt.SizeBDiagCursor
             onPressed: win.startSystemResize(Qt.LeftEdge | Qt.BottomEdge)
         }
         MouseArea {
@@ -208,24 +215,16 @@ Item {
         }
     }
 
-    // 窗口描边：与原生 Region 同一圆角，弥补 DWM 不会给无边框透明窗做圆角。
-    // 窗口发丝描边：设计稿 §1.3 hairline alpha 0.06–0.14；内缩 0.5px 避免被原生 Region 裁掉半边，
-    // 最大化/全屏时不画，避免与系统边框叠成「两道方框」。
-    Rectangle {
-        anchors.fill: parent
-        anchors.margins: 0.5
-        visible: !win.fullscreen && !win.maximized
-        radius: win.windowRadius - 0.5
-        color: "transparent"
-        border.width: 1
-        border.color: "#1affffff"
-    }
+    // 窗口外框不再自绘：圆角与边框色都交给系统（DWMWA_WINDOW_CORNER_PREFERENCE /
+    // DWMWA_BORDER_COLOR，见 src/window/SystemChrome.h）。这里原来是一条
+    // `radius: win.windowRadius - 0.5` + 1px `#1affffff` 的发丝描边，
+    // 在深色界面下就是四角/四边那圈很浅的白边，且与原生 Region 的裁切边界不重合。
 
     DropArea {
         anchors.fill: parent
         onDropped: function (drop) {
             if (drop.hasUrls && drop.urls.length > 0)
-                win.openFile(drop.urls[0])
+                win.handleDrop(drop.urls)
         }
     }
 
@@ -235,20 +234,20 @@ Item {
         visible: root.toastText !== ""
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 110
+        anchors.bottomMargin: tokens.toastInset
         width: toastLabel.implicitWidth + 36
         height: 36
-        radius: 18
-        color: "#e610141a"
-        border.width: 1
-        border.color: "#40ffffff"
+        radius: tokens.radiusL
+        color: tokens.layerPopover
+        border.width: tokens.stroke
+        border.color: tokens.borderStrong
 
         Text {
             id: toastLabel
             anchors.centerIn: parent
             text: root.toastText
-            color: "#e8eaee"
-            font.pixelSize: 12
+            color: tokens.text
+            font.pixelSize: tokens.fontBody
         }
     }
     Timer {
@@ -265,30 +264,30 @@ Item {
         width: 520
         height: 168
         radius: tokens.radiusL
-        color: "#f2160f12"
-        border.width: 1
-        border.color: "#66e7b27c"
+        color: tokens.layerDanger
+        border.width: tokens.stroke
+        border.color: tokens.accentBorder
 
         Column {
             anchors.centerIn: parent
             width: parent.width - 48
-            spacing: 10
+            spacing: tokens.spaceM
 
             Text {
                 text: qsTr("播放失败")
                 color: tokens.accent
-                font.pixelSize: 16
+                font.pixelSize: tokens.fontTitle
                 font.weight: Font.DemiBold
             }
             Text {
                 width: parent.width
                 text: root.errorMessage
                 color: tokens.text
-                font.pixelSize: 12
+                font.pixelSize: tokens.fontBody
                 wrapMode: Text.WordWrap
             }
             Row {
-                spacing: 10
+                spacing: tokens.spaceM
                 PillButton {
                     label: qsTr("打开其他文件")
                     highlighted: true
@@ -362,11 +361,78 @@ Item {
                 root.openPanel("library")
             } else if (name === "notice") {
                 root.showToast(String(value))
+            } else if (name === "openUrlDialog") {
+                urlDialog.open()
             }
         }
         function onFullscreenChanged() {
             if (win.fullscreen)
                 uiState.chromeVisible = false
+        }
+    }
+
+    // 打开网络地址：Ctrl+U 或右键菜单进入，确认后交给 C++ 判定协议并入队播放。
+    Dialog {
+        id: urlDialog
+        parent: Overlay.overlay
+        anchors.centerIn: parent
+        modal: true
+        width: 520
+        padding: tokens.spaceXXL
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        background: Rectangle {
+            color: tokens.layerPopover
+            radius: tokens.radiusL
+            border.width: tokens.stroke
+            border.color: tokens.statePressed
+        }
+        contentItem: Column {
+            spacing: tokens.spaceL
+            Text {
+                text: qsTr("打开网络地址")
+                color: tokens.text
+                font.pixelSize: tokens.fontSubtitle
+                font.weight: Font.DemiBold
+            }
+            TextField {
+                id: urlField
+                width: parent.width
+                placeholderText: qsTr("https://、rtsp://、rtmp:// …")
+                color: tokens.text
+                placeholderTextColor: tokens.borderStrong
+                selectByMouse: true
+                font.pixelSize: tokens.fontBodyL
+                background: Rectangle {
+                    color: tokens.stateRest
+                    radius: tokens.radiusS
+                    border.width: tokens.stroke
+                    border.color: urlField.activeFocus ? tokens.accentBorder : tokens.stateHover
+                }
+                onAccepted: {
+                    win.openUrl(text)
+                    urlDialog.close()
+                }
+            }
+            Row {
+                spacing: tokens.spaceM
+                anchors.right: parent.right
+                Button {
+                    text: qsTr("取消")
+                    onClicked: urlDialog.close()
+                }
+                Button {
+                    text: qsTr("播放")
+                    enabled: urlField.text.trim() !== ""
+                    onClicked: {
+                        win.openUrl(urlField.text)
+                        urlDialog.close()
+                    }
+                }
+            }
+        }
+        onOpened: {
+            urlField.text = ""
+            urlField.forceActiveFocus()
         }
     }
 }

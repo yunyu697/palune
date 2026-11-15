@@ -14,7 +14,7 @@ Item {
     property real dragWidth: 0
     readonly property int storedWidth: typeof uiState !== "undefined" ? uiState.panelWidth("B") : 344
     readonly property int dockWidth: layoutB.compact ? 224 : (dragWidth > 0 ? dragWidth : storedWidth)
-    readonly property bool shortHeight: layoutB.height < 360
+    readonly property bool shortHeight: layoutB.height < tokens.bpNarrow
     readonly property bool hasFile: player.filePath !== ""
     property string inspectorTab: "media"
 
@@ -39,7 +39,7 @@ Item {
         visible: uiState.chromeVisible
         anchors { top: parent.top; right: parent.right; bottom: parent.bottom }
         width: layoutB.dockWidth + 12
-        color: "#ff0c0e12"
+        color: tokens.layerSolidAlt
     }
 
     // 顶部扁平栏
@@ -52,15 +52,15 @@ Item {
 
         RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: 18
-            anchors.rightMargin: 12
-            spacing: 8
+            anchors.leftMargin: tokens.spaceXL
+            anchors.rightMargin: tokens.spaceL
+            spacing: tokens.spaceM
 
             Text {
                 text: "PALUNE"
                 color: tokens.accent
                 font.pixelSize: tokens.fontS
-                font.letterSpacing: 3
+                font.letterSpacing: tokens.trackingM
                 font.weight: Font.DemiBold
             }
             Rectangle { width: 1; height: 20; color: tokens.border }
@@ -90,7 +90,7 @@ Item {
 
             Text {
                 Layout.fillWidth: true
-                Layout.leftMargin: 8
+                Layout.leftMargin: tokens.spaceM
                 horizontalAlignment: Text.AlignLeft
                 text: player.title === "" ? qsTr("未打开文件") : player.title
                 color: tokens.text
@@ -129,13 +129,13 @@ Item {
             right: parent.right
             top: parent.top
             bottom: parent.bottom
-            rightMargin: 12
+            rightMargin: tokens.spaceL
             topMargin: layoutB.topBarHeight + 8
             bottomMargin: layoutB.techBarHeight + layoutB.controlBarHeight + 16
         }
         // 不透明底：alpha 0xf2 会让视频透上来，实机表现为「点击后右栏变透明」。
-        color: "#ff0c0e12"
-        border.width: 1
+        color: tokens.layerSolidAlt
+        border.width: tokens.stroke
         border.color: tokens.border
         // 显式压在控制条之上、且留 16px 安全间距，避免任何状态（主题切换/紧凑切换）
         // 下与控制条重叠（alpha10 问题 4）。
@@ -156,13 +156,13 @@ Item {
                     text: qsTr("媒体信息")
                     color: tokens.accent
                     font.pixelSize: tokens.fontS
-                    font.letterSpacing: 2
+                    font.letterSpacing: tokens.trackingS
                 }
                 Text {
                     Layout.fillWidth: true
                     text: layoutB.hasFile ? player.title : "—"
                     color: tokens.text
-                    font.pixelSize: 16
+                    font.pixelSize: tokens.fontTitle
                     font.weight: Font.DemiBold
                     wrapMode: Text.WrapAnywhere
                 }
@@ -205,7 +205,7 @@ Item {
                 Item { Layout.fillHeight: true }
             }
 
-            // 章节页
+            // 章节页：绑定 mpv chapter-list，点击按章节起始时间 seek。
             ColumnLayout {
                 visible: layoutB.inspectorTab === "chapters"
                 Layout.fillWidth: true
@@ -215,36 +215,176 @@ Item {
                     text: qsTr("章节")
                     color: tokens.accent
                     font.pixelSize: tokens.fontS
-                    font.letterSpacing: 2
+                    font.letterSpacing: tokens.trackingS
                 }
                 Text {
+                    visible: player.chapters.length === 0
                     text: qsTr("当前文件没有章节信息")
                     color: tokens.textFaint
                     font.pixelSize: tokens.fontS
                 }
-                Item { Layout.fillHeight: true }
+                Text {
+                    visible: player.chapters.length > 0
+                    text: qsTr("共 %1 个章节").arg(player.chapters.length)
+                    color: tokens.textFaint
+                    font.pixelSize: tokens.fontS
+                }
+                ListView {
+                    id: chapterList
+                    objectName: "chapterListB"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    model: player.chapters
+                    spacing: tokens.spaceHair
+                    delegate: Rectangle {
+                        id: chapterRow
+                        required property var modelData
+                        required property int index
+                        width: chapterList.width
+                        height: 34
+                        radius: tokens.radiusS
+                        color: chapterHover.containsMouse ? tokens.stateRow : "transparent"
+                        Text {
+                            anchors.fill: parent
+                            anchors.leftMargin: tokens.spaceM
+                            anchors.rightMargin: tokens.spaceM
+                            verticalAlignment: Text.AlignVCenter
+                            text: fmt(chapterRow.modelData.time) + "  " + chapterRow.modelData.title
+                            color: tokens.text
+                            font.pixelSize: tokens.fontS
+                            elide: Text.ElideRight
+                        }
+                        MouseArea {
+                            id: chapterHover
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: player.setChapter(chapterRow.index)
+                        }
+                    }
+                }
             }
 
-            // 队列页：最近打开
+            // 队列页：可编辑播放队列 + 独立的最近打开。
             ColumnLayout {
                 visible: layoutB.inspectorTab === "queue"
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 spacing: tokens.spaceS
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: tokens.spaceXS
+                    Text {
+                        text: qsTr("播放队列 %1").arg(queue.count)
+                        color: tokens.accent
+                        font.pixelSize: tokens.fontS
+                        font.letterSpacing: tokens.trackingS
+                    }
+                    Item { Layout.fillWidth: true }
+                    PillButton { label: qsTr("添加"); onClicked: win.action("addToQueue") }
+                    PillButton { label: qsTr("排序"); onClicked: queue.sortByName() }
+                    PillButton { label: qsTr("保存"); onClicked: win.action("saveQueue") }
+                    PillButton { label: qsTr("载入"); onClicked: win.action("loadQueue") }
+                    PillButton { label: qsTr("清空"); onClicked: queue.clear() }
+                }
+                Text {
+                    visible: queue.count === 0
+                    Layout.fillWidth: true
+                    text: qsTr("队列为空：打开文件、拖入多个文件，或点「添加」")
+                    color: tokens.textFaint
+                    font.pixelSize: tokens.fontS
+                    wrapMode: Text.Wrap
+                }
+                ListView {
+                    id: queueList
+                    objectName: "queueListB"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    model: queue.items
+                    spacing: tokens.spaceHair
+                    delegate: Rectangle {
+                        id: queueRow
+                        required property var modelData
+                        required property int index
+                        readonly property bool current: queue.currentIndex === index
+                        width: queueList.width
+                        height: 30
+                        radius: tokens.radiusS
+                        color: current ? tokens.accentSoft
+                                       : (queueHover.containsMouse ? tokens.stateRow : "transparent")
+                        Text {
+                            anchors.fill: parent
+                            anchors.leftMargin: tokens.spaceM
+                            anchors.rightMargin: tokens.space3XL * 2
+                            verticalAlignment: Text.AlignVCenter
+                            text: (current ? "▶ " : "") + modelData.name
+                            color: current ? tokens.accent : tokens.text
+                            font.pixelSize: tokens.fontS
+                            elide: Text.ElideMiddle
+                        }
+                        MouseArea {
+                            id: queueHover
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: queue.setCurrentIndex(queueRow.index)
+                        }
+                        Row {
+                            anchors.right: parent.right
+                            anchors.rightMargin: tokens.spaceXS
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: tokens.spaceHair
+                            visible: queueHover.containsMouse
+                            Text {
+                                text: "↑"
+                                color: tokens.textMuted
+                                font.pixelSize: tokens.fontS
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: queue.moveUp(queueRow.index)
+                                }
+                            }
+                            Text {
+                                text: "↓"
+                                color: tokens.textMuted
+                                font.pixelSize: tokens.fontS
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: queue.moveDown(queueRow.index)
+                                }
+                            }
+                            Text {
+                                text: "×"
+                                color: tokens.textMuted
+                                font.pixelSize: tokens.fontS
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: queue.removeAt(queueRow.index)
+                                }
+                            }
+                        }
+                    }
+                }
+                Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: tokens.border }
                 Text {
                     text: qsTr("最近打开")
-                    color: tokens.accent
+                    color: tokens.textMuted
                     font.pixelSize: tokens.fontS
-                    font.letterSpacing: 2
+                    font.letterSpacing: tokens.trackingS
                 }
                 ListView {
                     id: recentList
                     objectName: "recentListB"
                     Layout.fillWidth: true
-                    Layout.fillHeight: true
+                    Layout.preferredHeight: 110
                     clip: true
                     model: win.recentFiles
-                    spacing: 2
+                    spacing: tokens.spaceHair
                     currentIndex: typeof uiState !== "undefined" ? uiState.scrollIndex : -1
                     onCurrentIndexChanged: {
                         if (typeof uiState !== "undefined" && currentIndex >= 0
@@ -262,12 +402,12 @@ Item {
                         readonly property bool selected: typeof uiState !== "undefined"
                                                           && uiState.selectedItemId === modelData.path
                         color: selected ? tokens.accentSoft
-                                        : (recentHover.containsMouse ? "#22ffffff" : "transparent")
+                                        : (recentHover.containsMouse ? tokens.stateRow : "transparent")
 
                         Text {
                             anchors.fill: parent
-                            anchors.leftMargin: 8
-                            anchors.rightMargin: 8
+                            anchors.leftMargin: tokens.spaceM
+                            anchors.rightMargin: tokens.spaceM
                             verticalAlignment: Text.AlignVCenter
                             text: modelData.name
                             color: selected ? tokens.accent : tokens.text
@@ -337,15 +477,15 @@ Item {
             right: parent.right
             bottom: controlBar.top
         }
-        color: "#cc0d0f14"
-        border.width: 1
+        color: tokens.layerOverlay
+        border.width: tokens.stroke
         border.color: tokens.border
 
         RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: 18
-            anchors.rightMargin: 18
-            spacing: 18
+            anchors.leftMargin: tokens.spaceXL
+            anchors.rightMargin: tokens.spaceXL
+            spacing: tokens.spaceXL
             Text {
                 text: qsTr("解码 ") + layoutB.codecShort(player.videoCodec)
                 color: tokens.textFaint
@@ -397,7 +537,7 @@ Item {
                 text: qsTr("工作台")
                 color: tokens.textFaint
                 font.pixelSize: tokens.fontS
-                font.letterSpacing: 2
+                font.letterSpacing: tokens.trackingS
             }
         }
     }
@@ -412,11 +552,11 @@ Item {
 
         RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: layoutB.compact ? 10 : 18
-            anchors.rightMargin: layoutB.compact ? 10 : 18
-            anchors.topMargin: layoutB.compact ? 6 : 10
-            anchors.bottomMargin: layoutB.compact ? 6 : 10
-            spacing: 8
+            anchors.leftMargin: layoutB.compact ? tokens.spaceM : tokens.spaceXL
+            anchors.rightMargin: layoutB.compact ? tokens.spaceM : tokens.spaceXL
+            anchors.topMargin: layoutB.compact ? tokens.spaceS : tokens.spaceM
+            anchors.bottomMargin: layoutB.compact ? tokens.spaceS : tokens.spaceM
+            spacing: tokens.spaceM
 
             SeekBar {
                 Layout.fillWidth: true

@@ -1,4 +1,5 @@
 #include "window/SettingsWindow.h"
+#include "window/SystemChrome.h"
 
 #include "media/MediaLibraryService.h"
 #include <QGuiApplication>
@@ -78,7 +79,8 @@ QSize SettingsWindow::sizeForTheme(const QString &theme)
 
 int SettingsWindow::radiusForTheme(const QString &theme)
 {
-    return theme == QLatin1String("B") ? 8 : 18;
+    // 与主窗口共用同一张表，不再各自维护一份（以前这里是 B?8:18，主窗口是 10/14/20）。
+    return ThemeRegistry::windowRadius(theme);
 }
 
 void SettingsWindow::open(const QRect &ownerLogical)
@@ -162,8 +164,6 @@ void SettingsWindow::showEvent(QShowEvent *event)
     LONG_PTR style = GetWindowLongPtrW(hwnd, GWL_STYLE);
     style &= ~WS_THICKFRAME; // 设置窗固定尺寸，不保留系统缩放边框。
     SetWindowLongPtrW(hwnd, GWL_STYLE, style);
-    const DWORD corner = 2;   // DWMWCP_ROUND
-    DwmSetWindowAttribute(hwnd, 33, &corner, sizeof(corner));
 #endif
     applyNativeRegion();
 }
@@ -180,6 +180,8 @@ void SettingsWindow::applyNativeRegion()
     const int h = qRound(height() * dpr);
     HRGN region = CreateRoundRectRgn(0, 0, w + 1, h + 1, physicalRadius * 2, physicalRadius * 2);
     SetWindowRgn(reinterpret_cast<HWND>(winId()), region, TRUE);
+    // 系统窗框与主窗口同一入口：暗色模式 + 主题边框色，否则设置窗会单独带一圈亮边。
+    applySystemChrome(winId(), QColor(0x0d, 0x0e, 0x11), radiusForTheme(theme));
 #endif
 }
 

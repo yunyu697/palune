@@ -11,10 +11,10 @@ class TestActions : public QObject
     Q_OBJECT
 
 private slots:
-    void tableHasFourtyUniqueActions()
+    void tableHasUniqueActions()
     {
         ActionRegistry registry;
-        QCOMPARE(registry.count(), 40);
+        QCOMPARE(registry.count(), 47);
         QStringList ids;
         for (const QVariant &item : registry.actions()) {
             const QVariantMap entry = item.toMap();
@@ -29,7 +29,7 @@ private slots:
             QVERIFY(keys.contains(QStringLiteral("macos")));
             QVERIFY(keys.contains(QStringLiteral("linux")));
         }
-        QCOMPARE(ids.size(), 40);
+        QCOMPARE(ids.size(), 47);
         QCOMPARE(ids.removeDuplicates(), 0);
     }
 
@@ -62,6 +62,8 @@ private slots:
             const QString id = entry.value(QStringLiteral("id")).toString();
             const QString spec = entry.value(QStringLiteral("keys")).toMap()
                                      .value(platform).toString();
+            if (spec.isEmpty())
+                continue; // 队列清空/保存等动作默认不绑键
             int key = 0;
             int modifiers = 0;
             QVERIFY2(ActionRegistry::parseKeySpec(spec, &key, &modifiers), qPrintable(spec));

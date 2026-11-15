@@ -46,11 +46,16 @@ bool ThemeRegistry::isValidTheme(const QString &themeId)
 
 int ThemeRegistry::windowRadius(const QString &themeId)
 {
+    // 窗口圆角只能取 qml/tokens/Tokens.qml 的圆角阶梯（4/8/12/18），
+    // 三套主题只允许在这个阶梯里选值，不能另造一套。
+    // 以前这里是 14/10/20，SettingsWindow 又另有一张 B?8:18 的表，同一个主题下
+    // 主窗口与设置窗的圆角就不一样，这是「不同界面圆角不一致」的根因。
+    // tools/ci/check_design_tokens.py D8 会校验这里的返回值都在阶梯内。
     if (themeId == QLatin1String("B"))
-        return 10;
+        return 8;   // radiusS
     if (themeId == QLatin1String("C"))
-        return 20;
-    return 14;
+        return 18;  // radiusL
+    return 12;      // radiusM
 }
 
 bool ThemeRegistry::resourceExists(const QString &themeId) const

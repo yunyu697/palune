@@ -16,8 +16,14 @@ class OverlayWindow : public QQuickView
 public:
     explicit OverlayWindow(QObject *parent = nullptr);
 
+    // 立即请求一帧完整重绘（供 WindowController 在重新分层后调用）。
+    void requestRepaint() { scheduleRepaint(); }
+
 signals:
     void closed();
+    // 覆盖窗的原生状态发生可能影响合成结果的变化（遮挡、DPI、屏幕切换、休眠唤醒、
+    // 全屏/最大化几何变化）。WindowController 收到后重新锁定双窗 z 序。
+    void nativeStateChanged();
 
 protected:
     void showEvent(QShowEvent *event) override;

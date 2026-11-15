@@ -1,31 +1,34 @@
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
+import "tokens"
 
 ColumnLayout {
     id: root
-    spacing: 12
+    spacing: tokens.spaceL
 
-    readonly property string accent: "#e7b27c"
-    readonly property string textColor: "#e8eaee"
-    readonly property string mutedColor: "#9aa0a6"
-    readonly property string lineColor: "#26ffffff"
+    Tokens { id: tokens }
+
+    readonly property color accent: tokens.accent
+    readonly property color textColor: tokens.text
+    readonly property color mutedColor: tokens.textMuted
+    readonly property color lineColor: tokens.border
 
     // 常驻：当前版本 + 检查更新 + 打开主页
     RowLayout {
         Layout.fillWidth: true
-        spacing: 10
+        spacing: tokens.spaceM
 
         Text {
             text: qsTr("当前版本 ") + updater.currentVersion
             color: root.textColor
-            font.pixelSize: 12
+            font.pixelSize: tokens.fontBody
         }
 
         Text {
             text: qsTr("上次检查：") + updater.lastCheckedText
             color: root.mutedColor
-            font.pixelSize: 11
+            font.pixelSize: tokens.fontSmall
         }
 
         Item { Layout.fillWidth: true }
@@ -45,8 +48,8 @@ ColumnLayout {
     Text {
         Layout.fillWidth: true
         text: updater.statusText
-        color: updater.state === "error" ? "#ef8f7a" : root.mutedColor
-        font.pixelSize: 12
+        color: updater.state === "error" ? tokens.danger : root.mutedColor
+        font.pixelSize: tokens.fontBody
         wrapMode: Text.WordWrap
     }
 
@@ -55,37 +58,37 @@ ColumnLayout {
         visible: updater.updateAvailable
         Layout.fillWidth: true
         implicitHeight: infoColumn.implicitHeight + 28
-        radius: 12
-        color: "#12ffffff"
-        border.width: 1
+        radius: tokens.radiusM
+        color: tokens.stateRest
+        border.width: tokens.stroke
         border.color: root.lineColor
 
         ColumnLayout {
             id: infoColumn
             anchors.fill: parent
-            anchors.margins: 14
-            spacing: 8
+            anchors.margins: tokens.spaceL
+            spacing: tokens.spaceM
 
             RowLayout {
-                spacing: 12
+                spacing: tokens.spaceL
                 Text {
                     text: qsTr("新版本 ") + updater.availableVersion
                     color: root.accent
-                    font.pixelSize: 15
+                    font.pixelSize: tokens.fontSubtitle
                     font.weight: Font.DemiBold
                 }
                 Text {
                     text: qsTr("发布 ") + updater.publishedAt.substring(0, 10) + " · " + updater.sizeText
                     color: root.mutedColor
-                    font.pixelSize: 11
+                    font.pixelSize: tokens.fontSmall
                 }
             }
 
             Text {
                 Layout.fillWidth: true
                 text: updater.notes
-                color: "#c9ccd1"
-                font.pixelSize: 12
+                color: tokens.textMuted
+                font.pixelSize: tokens.fontBody
                 wrapMode: Text.WordWrap
             }
         }
@@ -95,17 +98,17 @@ ColumnLayout {
     ColumnLayout {
         visible: updater.updateAvailable
         Layout.fillWidth: true
-        spacing: 6
+        spacing: tokens.spaceS
 
         Text {
             text: qsTr("下载通道 · 当前：") + updater.mirrorName
             color: root.mutedColor
-            font.pixelSize: 11
+            font.pixelSize: tokens.fontSmall
         }
         Text {
             text: qsTr("镜像只影响下载速度；SHA-256 与 Ed25519 签名校验始终基于内置公钥，不依赖镜像。")
-            color: "#6f757b"
-            font.pixelSize: 10
+            color: tokens.textFaint
+            font.pixelSize: tokens.fontCaption
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
         }
@@ -118,32 +121,32 @@ ColumnLayout {
                 required property var modelData
                 Layout.fillWidth: true
                 implicitHeight: 36
-                radius: 9
-                color: index === updater.mirrorIndex ? "#22e7b27c" : "#0dffffff"
-                border.width: 1
+                radius: tokens.radiusS
+                color: index === updater.mirrorIndex ? tokens.accentFaint : tokens.stateRest
+                border.width: tokens.stroke
                 border.color: index === updater.mirrorIndex ? root.accent : root.lineColor
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 12
-                    anchors.rightMargin: 12
-                    spacing: 8
+                    anchors.leftMargin: tokens.spaceL
+                    anchors.rightMargin: tokens.spaceL
+                    spacing: tokens.spaceM
 
                     Rectangle {
                         width: 8
                         height: 8
-                        radius: 4
-                        color: mirrorRow.index === updater.mirrorIndex ? root.accent : "#5a6066"
+                        radius: tokens.radiusXS
+                        color: mirrorRow.index === updater.mirrorIndex ? root.accent : tokens.textFaint
                     }
                     Text {
                         text: mirrorRow.modelData.name
                         color: root.textColor
-                        font.pixelSize: 12
+                        font.pixelSize: tokens.fontBody
                     }
                     Text {
                         text: mirrorRow.modelData.url
                         color: root.mutedColor
-                        font.pixelSize: 10
+                        font.pixelSize: tokens.fontCaption
                         elide: Text.ElideMiddle
                         Layout.fillWidth: true
                     }
@@ -151,7 +154,7 @@ ColumnLayout {
                         visible: mirrorRow.index === updater.mirrorIndex
                         text: qsTr("使用中")
                         color: root.accent
-                        font.pixelSize: 10
+                        font.pixelSize: tokens.fontCaption
                     }
                 }
 
@@ -168,16 +171,16 @@ ColumnLayout {
     ColumnLayout {
         visible: updater.state === "downloading"
         Layout.fillWidth: true
-        spacing: 6
+        spacing: tokens.spaceS
 
         Rectangle {
             Layout.fillWidth: true
             height: 7
-            radius: 4
-            color: "#1affffff"
+            radius: tokens.radiusXS
+            color: tokens.stateRest
             Rectangle {
                 height: parent.height
-                radius: 4
+                radius: tokens.radiusXS
                 width: parent.width * Math.max(0, Math.min(100, updater.progress)) / 100
                 color: root.accent
             }
@@ -188,13 +191,13 @@ ColumnLayout {
             Text {
                 text: updater.progress + "%"
                 color: root.textColor
-                font.pixelSize: 11
+                font.pixelSize: tokens.fontSmall
             }
             Item { Layout.fillWidth: true }
             Text {
                 text: updater.speedText + "   " + updater.etaText
                 color: root.mutedColor
-                font.pixelSize: 11
+                font.pixelSize: tokens.fontSmall
             }
         }
     }
@@ -202,7 +205,7 @@ ColumnLayout {
     // 操作按钮：只有发现新版本时才出现「更新」与「仅下载」
     RowLayout {
         Layout.fillWidth: true
-        spacing: 10
+        spacing: tokens.spaceM
 
         UButton {
             visible: updater.state === "available" || updater.state === "error"
@@ -238,19 +241,19 @@ ColumnLayout {
         signal clicked()
         implicitWidth: buttonLabel.implicitWidth + 30
         implicitHeight: 32
-        radius: 9
+        radius: tokens.radiusS
         opacity: enabled ? 1 : 0.55
-        color: primary ? (hover.containsMouse ? "#f0c394" : "#e7b27c")
-                       : (hover.containsMouse ? "#26ffffff" : "#12ffffff")
-        border.width: primary ? 0 : 1
-        border.color: "#2affffff"
+        color: primary ? (hover.containsMouse ? tokens.accentHover : tokens.accent)
+                       : (hover.containsMouse ? tokens.stateHover : tokens.stateRest)
+        border.width: primary ? 0 : tokens.stroke
+        border.color: tokens.border
 
         Text {
             id: buttonLabel
             anchors.centerIn: parent
             text: button.label
-            color: button.primary ? "#15110c" : "#e6e8ec"
-            font.pixelSize: 12
+            color: button.primary ? tokens.accentOn : tokens.text
+            font.pixelSize: tokens.fontBody
             font.weight: button.primary ? Font.DemiBold : Font.Normal
         }
 

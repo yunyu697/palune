@@ -11,9 +11,11 @@
 #include "theme/ThemeRegistry.h"
 #include "ui/ActionRegistry.h"
 #include "ui/CompactController.h"
+#include "ui/PlayQueue.h"
 #include "ui/UiStateStore.h"
 #include "update/UpdateService.h"
 #include "window/SettingsWindow.h"
+#include "window/SystemChrome.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -53,6 +55,42 @@ bool isMediaFile(const QFileInfo &info)
 {
     return info.isFile() && kMediaSuffixes.contains(info.suffix().toLower());
 }
+
+bool isSubtitleFile(const QFileInfo &info)
+{
+    static const QStringList suffixes = {
+        QStringLiteral("srt"), QStringLiteral("ass"), QStringLiteral("ssa"),
+        QStringLiteral("vtt"), QStringLiteral("sub"), QStringLiteral("idx"),
+        QStringLiteral("sup")
+    };
+    return info.isFile() && suffixes.contains(info.suffix().toLower());
+}
+
+QStringList expandMediaPaths(const QVariantList &urls, QVariantList *sidecarSubtitles)
+{
+    QStringList media;
+    for (const QVariant &value : urls) {
+        const QUrl url = value.toUrl();
+        const QString path = url.isLocalFile() ? url.toLocalFile() : value.toString();
+        if (path.isEmpty())
+            continue;
+        const QFileInfo info(path);
+        if (info.isDir()) {
+            const QFileInfoList entries = QDir(path).entryInfoList(QDir::Files, QDir::Name);
+            for (const QFileInfo &entry : entries) {
+                if (isMediaFile(entry))
+                    media << entry.absoluteFilePath();
+            }
+        } else if (isSubtitleFile(info) && sidecarSubtitles) {
+            sidecarSubtitles->append(info.absoluteFilePath());
+        } else if (path.contains(QStringLiteral("://"))) {
+            media << path;
+        } else if (info.exists() || isMediaFile(info)) {
+            media << info.absoluteFilePath();
+        }
+    }
+    return media;
+}
 } // namespace
 
 WindowController::WindowController(MpvClient *player,
@@ -73,6 +111,11 @@ WindowController::WindowController(MpvClient *player,
     m_actions = new ActionRegistry(this);
     m_actions->setInvoker([this](const QString &id, const QVariant &value) { action(id, value); });
     m_preferences = new Preferences(m_settings, m_player, m_updater, m_compactMode, m_actions, this);
+    // 播放队列独立于「最近打开」：自动持久化到 configDir/queue.json。
+    m_queue = new PlayQueue(this);
+    m_queue->setPersistPath(QDir(AppPaths::configDir()).filePath(QStringLiteral("queue.json")));
+    connect(m_queue, &PlayQueue::playRequested, this, &WindowController::playQueueIndex);
+    m_queue->load(m_queue->persistPath());
     // 本地媒体库：根目录与索引来自 settings.toml / configDir/library/index.json。
     if (m_library) {
         m_library->setSettings(m_settings);
@@ -103,10 +146,16 @@ WindowController::WindowController(MpvClient *player,
             if (m_preferences && !m_preferences->autoPlay() && m_player && !m_player->paused())
                 m_player->setPaused(true);
         });
-        // 「自动播放下一集」开启时，正常播完（eof）后顺序播放同目录下一个文件。
+        // 「自动播放下一集」开启时，优先走播放队列；没有队列才回退到同目录顺序。
         connect(m_player, &MpvClient::endFile, this, [this](const QString &reason) {
             if (!m_preferences || !m_preferences->autoNext() || reason != QLatin1String("eof"))
                 return;
+            if (m_queue && m_queue->count() > 1) {
+                const int next = m_queue->currentIndex() + 1;
+                if (next < m_queue->count())
+                    m_queue->setCurrentIndex(next);
+                return;
+            }
             playSibling(1);
         });
         connect(m_player, &MpvClient::positionChanged, this, [this]() {
@@ -218,6 +267,24 @@ bool WindowController::start(int width, int height)
             m_player->refreshFrame();
     });
     m_compactMode->feedWidth(m_overlay->width());
+    // 双窗分层看护。覆盖窗是透明的，视频由下方的独立顶层窗提供；任何一次
+    // 系统重排（遮挡恢复、Alt+Tab、贴边/最大化、跨屏、DPI、休眠唤醒）都可能有
+    // 其它窗口被插到两窗之间，此时透明区域就会漏出桌面或上一个窗口的内容，
+    // 只剩一层 QML UI 浮在上面。这里在原生消息之外再加一层低频巡检兜底，
+    // 并且每次修正后补一帧重绘，不依赖「动一下鼠标就恢复」这种副作用。
+    if (!m_layerWatchdog) {
+        m_layerWatchdog = new QTimer(this);
+        m_layerWatchdog->setInterval(400);
+        m_layerWatchdog->setTimerType(Qt::CoarseTimer);
+        connect(m_layerWatchdog, &QTimer::timeout, this, [this]() { enforceLayering(); });
+        m_layerWatchdog->start();
+    }
+    connect(m_overlay, &OverlayWindow::nativeStateChanged, this, [this]() { enforceLayering(); });
+    connect(m_overlay, &QWindow::screenChanged, this, [this]() {
+        syncVideoToOverlay();
+        if (m_player && m_player->paused() && !m_player->filePath().isEmpty())
+            m_player->refreshFrame();
+    });
     // 先按恢复几何摆好两窗，再最大化；顺序反过来会被 applyGeometry 的 SetWindowPos
     // 覆盖回普通尺寸（实测「设置 startMaximized 后启动仍是小窗」）。
     applyGeometry(r);
@@ -275,6 +342,7 @@ bool WindowController::loadQml()
     ctx->setContextProperty(QStringLiteral("actions"), m_actions);
     ctx->setContextProperty(QStringLiteral("library"), m_library);
     ctx->setContextProperty(QStringLiteral("prefs"), m_preferences);
+    ctx->setContextProperty(QStringLiteral("queue"), m_queue);
 
     m_overlay->setSource(QUrl(QStringLiteral("qrc:/qml/Main.qml")));
     if (m_overlay->status() != QQuickView::Ready) {
@@ -675,6 +743,32 @@ void WindowController::syncVideoToOverlay()
     m_syncing = false;
 }
 
+void WindowController::enforceLayering()
+{
+#if defined(Q_OS_WIN)
+    if (!m_overlay || !m_video || m_minimized)
+        return;
+    if (!m_overlay->isVisible() || m_overlay->visibility() == QWindow::Minimized)
+        return;
+    HWND videoHwnd = reinterpret_cast<HWND>(m_video->winId());
+    HWND overlayHwnd = reinterpret_cast<HWND>(m_overlay->winId());
+    if (!videoHwnd || !overlayHwnd)
+        return;
+    // GW_HWNDPREV 就是 z 序里的上一层：等于覆盖窗说明视频窗仍紧贴其下方。
+    if (GetWindow(videoHwnd, GW_HWNDPREV) == overlayHwnd)
+        return;
+    SetWindowPos(videoHwnd, overlayHwnd, 0, 0, 0, 0,
+                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
+    // 重新插入 z 序会重建合成层：暂停态 mpv 不产新帧，必须重新提交当前帧，
+    // 否则视频窗恢复为「未呈现」而透明区域继续漏出下层内容。
+    if (m_player && m_player->paused() && !m_player->filePath().isEmpty())
+        m_player->refreshFrame();
+    if (m_overlay)
+        m_overlay->requestRepaint();
+    Log::info(QStringLiteral("双窗分层已修正：视频窗重新插入覆盖窗正下方"));
+#endif
+}
+
 void WindowController::setVideoInsets(double left, double top, double right, double bottom)
 {
     m_insetLeft = qMax(0.0, left);
@@ -685,6 +779,15 @@ void WindowController::setVideoInsets(double left, double top, double right, dou
     syncVideoToOverlay();
 }
 
+void WindowController::setWindowFrameColor(const QColor &color)
+{
+    if (!color.isValid() || color == m_frameColor)
+        return;
+    m_frameColor = color;
+    // 边框色变了要重新下发系统窗框（DWM 属性不会自动跟随主题）。
+    applyWindowRegion();
+}
+
 void WindowController::applyWindowRegion()
 {
 #if defined(Q_OS_WIN)
@@ -693,7 +796,7 @@ void WindowController::applyWindowRegion()
     const qreal dpr = m_overlay ? m_overlay->devicePixelRatio() : 1.0;
     const int logical = (m_fullscreen || m_maximized) ? 0 : m_cornerRadius;
     const int radius = qRound(logical * dpr);
-    auto applyRegion = [radius](qintptr handle) {
+    auto applyRegion = [this, logical, radius](qintptr handle) {
         HWND hwnd = reinterpret_cast<HWND>(handle);
         if (!hwnd)
             return;
@@ -704,6 +807,8 @@ void WindowController::applyWindowRegion()
         HRGN region = CreateRoundRectRgn(0, 0, w + 1, h + 1, radius * 2, radius * 2);
         if (SetWindowRgn(hwnd, region, TRUE) == 0)
             DeleteObject(region);
+        // 系统窗框：圆角偏好 + 暗色模式 + 主题边框色一起下发（见 SystemChrome.h）。
+        applySystemChrome(handle, m_frameColor, logical);
     };
     if (m_overlay)
         applyRegion(m_overlay->winId());
@@ -716,11 +821,16 @@ void WindowController::applyWindowRegion()
 
 void WindowController::openFileDialog()
 {
-    const QString file = QFileDialog::getOpenFileName(
+    const QStringList files = QFileDialog::getOpenFileNames(
         nullptr, QStringLiteral("打开媒体文件"), QString(),
-        QStringLiteral("媒体文件 (*.mp4 *.mkv *.mov *.webm *.avi *.ts *.flv *.m4a *.mp3 *.flac *.wav);;所有文件 (*)"));
-    if (!file.isEmpty())
-        openFile(QUrl::fromLocalFile(file));
+        QStringLiteral("媒体文件 (*.mp4 *.mkv *.mov *.webm *.avi *.ts *.m2ts *.flv *.mpg *.mpeg *.m4a *.mp3 *.flac *.wav);;所有文件 (*)"));
+    if (files.isEmpty())
+        return;
+    QVariantList urls;
+    for (const QString &file : files)
+        urls.append(QUrl::fromLocalFile(file));
+    m_queue->setUrls(urls, 0);
+    beginQueuePlayback(files.first());
 }
 
 void WindowController::openFolderDialog()
@@ -742,13 +852,143 @@ void WindowController::openFolderDialog()
         return;
     }
     CrashBreadcrumb::record(QStringLiteral("打开文件夹：%1（%2 个媒体）").arg(dir).arg(media.size()));
-    openFile(QUrl::fromLocalFile(media.first()));
+    QVariantList urls;
+    for (const QString &file : media)
+        urls.append(QUrl::fromLocalFile(file));
+    m_queue->setUrls(urls, 0);
+    beginQueuePlayback(media.first());
 }
 
 void WindowController::openRecentFile(const QString &path)
 {
     if (!path.isEmpty())
         openFile(QUrl::fromLocalFile(path));
+}
+
+void WindowController::handleDrop(const QVariantList &urls)
+{
+    QVariantList subtitles;
+    const QStringList media = expandMediaPaths(urls, &subtitles);
+    for (const QVariant &subtitle : subtitles)
+        m_player->addSubtitleFile(subtitle.toString());
+    if (media.isEmpty()) {
+        if (!subtitles.isEmpty()) {
+            emit uiActionRequested(QStringLiteral("notice"), QStringLiteral("已加载外挂字幕"));
+        } else {
+            emit uiActionRequested(QStringLiteral("notice"), QStringLiteral("拖入的内容里没有可播放的媒体"));
+        }
+        return;
+    }
+    const bool idle = !m_player || m_player->filePath().isEmpty();
+    QVariantList queueUrls;
+    for (const QString &path : media)
+        queueUrls.append(path);
+    if (idle) {
+        m_queue->setUrls(queueUrls, 0);
+        beginQueuePlayback(media.first());
+        return;
+    }
+    // 正在播放时只追加，不打断当前播放；这与「拖放替换当前播放」的旧行为相反。
+    const int first = m_queue->append(queueUrls);
+    if (first >= 0) {
+        emit uiActionRequested(QStringLiteral("notice"),
+                               QStringLiteral("已加入队列：%1 个文件").arg(media.size()));
+    }
+}
+
+void WindowController::openUrl(const QString &url)
+{
+    const QString trimmed = url.trimmed();
+    if (trimmed.isEmpty())
+        return;
+    if (!trimmed.contains(QStringLiteral("://"))) {
+        emit uiActionRequested(QStringLiteral("notice"),
+                               QStringLiteral("地址需要带协议前缀，例如 https:// 或 rtsp://"));
+        return;
+    }
+    m_queue->setUrls(QVariantList{trimmed}, 0);
+    beginQueuePlayback(trimmed);
+}
+
+void WindowController::appendFilesDialog()
+{
+    const QStringList files = QFileDialog::getOpenFileNames(
+        nullptr, QStringLiteral("添加到播放队列"), QString(),
+        QStringLiteral("媒体文件 (*.mp4 *.mkv *.mov *.webm *.avi *.ts *.m2ts *.flv *.mpg *.mpeg *.m4a *.mp3 *.flac *.wav);;所有文件 (*)"));
+    if (files.isEmpty())
+        return;
+    QVariantList urls;
+    for (const QString &file : files)
+        urls.append(file);
+    const int first = m_queue->append(urls);
+    const bool idle = !m_player || m_player->filePath().isEmpty();
+    if (idle && first >= 0)
+        m_queue->setCurrentIndex(first);
+    else
+        emit uiActionRequested(QStringLiteral("notice"),
+                               QStringLiteral("已加入队列：%1 个文件").arg(files.size()));
+}
+
+void WindowController::saveQueueDialog()
+{
+    if (m_queue->empty()) {
+        emit uiActionRequested(QStringLiteral("notice"), QStringLiteral("播放队列为空，无需保存"));
+        return;
+    }
+    const QString path = QFileDialog::getSaveFileName(
+        nullptr, QStringLiteral("保存播放队列"),
+        QDir(AppPaths::configDir()).filePath(QStringLiteral("queue-export.json")),
+        QStringLiteral("播放队列 (*.json)"));
+    if (path.isEmpty())
+        return;
+    if (m_queue->saveTo(path))
+        emit uiActionRequested(QStringLiteral("notice"), QStringLiteral("队列已保存"));
+}
+
+void WindowController::loadQueueDialog()
+{
+    const QString path = QFileDialog::getOpenFileName(
+        nullptr, QStringLiteral("载入播放队列"), QString(),
+        QStringLiteral("播放队列 (*.json);;所有文件 (*)"));
+    if (path.isEmpty())
+        return;
+    if (m_queue->loadFrom(path)) {
+        emit uiActionRequested(QStringLiteral("notice"),
+                               QStringLiteral("队列已载入：%1 个文件").arg(m_queue->count()));
+    }
+}
+
+void WindowController::playQueueIndex(int index)
+{
+    if (!m_queue || index < 0 || index >= m_queue->count())
+        return;
+    const QString path = m_queue->items()
+                             .at(index)
+                             .toMap()
+                             .value(QStringLiteral("path"))
+                             .toString();
+    if (!path.isEmpty())
+        beginQueuePlayback(path);
+}
+
+void WindowController::beginQueuePlayback(const QString &path)
+{
+    if (path.isEmpty())
+        return;
+    m_playingFromQueue = true;
+    openFile(path.contains(QStringLiteral("://")) ? QUrl(path) : QUrl::fromLocalFile(path));
+    m_playingFromQueue = false;
+}
+
+void WindowController::setAspectAndNotify(const QString &mode)
+{
+    if (!m_player)
+        return;
+    m_player->setAspectRatio(mode);
+    const QString label = mode == QLatin1String("fill") ? QStringLiteral("填充")
+        : (mode == QLatin1String("auto") ? QStringLiteral("自动") : mode);
+    emit uiActionRequested(QStringLiteral("notice"),
+                           QStringLiteral("画面比例：%1").arg(label));
 }
 
 void WindowController::action(const QString &name)
@@ -820,8 +1060,22 @@ void WindowController::action(const QString &name, const QVariant &value)
         if (m_player)
             m_player->frameStep(false);
     } else if (name == QLatin1String("nextEpisode")) {
+        if (m_queue && m_queue->count() > 1) {
+            const int next = m_queue->currentIndex() + 1;
+            if (next < m_queue->count()) {
+                m_queue->setCurrentIndex(next);
+                return;
+            }
+        }
         playSibling(1);
     } else if (name == QLatin1String("prevEpisode")) {
+        if (m_queue && m_queue->count() > 1) {
+            const int prev = m_queue->currentIndex() - 1;
+            if (prev >= 0) {
+                m_queue->setCurrentIndex(prev);
+                return;
+            }
+        }
         playSibling(-1);
     } else if (name == QLatin1String("volumeSet")) {
         if (m_player)
@@ -916,6 +1170,31 @@ void WindowController::action(const QString &name, const QVariant &value)
     } else if (name == QLatin1String("subtitleDelayDown")) {
         if (m_player)
             m_player->addSubtitleDelay(-0.1);
+    } else if (name == QLatin1String("cycleAspect")) {
+        static const QStringList order = {QStringLiteral("auto"), QStringLiteral("16:9"),
+                                          QStringLiteral("4:3"), QStringLiteral("21:9"),
+                                          QStringLiteral("1:1"), QStringLiteral("fill")};
+        const QString current = m_player ? m_player->aspectRatio() : QStringLiteral("auto");
+        const int index = order.indexOf(current);
+        setAspectAndNotify(order.at((index + 1) % order.size()));
+    } else if (name == QLatin1String("screenshot")) {
+        const QString dir = m_preferences ? m_preferences->screenshotDir() : QString();
+        const QString saved = m_player ? m_player->screenshotToDir(dir) : QString();
+        emit uiActionRequested(QStringLiteral("notice"),
+                               saved.isEmpty() ? QStringLiteral("截图失败，请检查保存目录")
+                                               : QStringLiteral("截图已保存：%1").arg(saved));
+        CrashBreadcrumb::record(QStringLiteral("截图：%1").arg(saved));
+    } else if (name == QLatin1String("openUrl")) {
+        emit uiActionRequested(QStringLiteral("openUrlDialog"), QVariant());
+    } else if (name == QLatin1String("addToQueue")) {
+        appendFilesDialog();
+    } else if (name == QLatin1String("clearQueue")) {
+        if (m_queue)
+            m_queue->clear();
+    } else if (name == QLatin1String("saveQueue")) {
+        saveQueueDialog();
+    } else if (name == QLatin1String("loadQueue")) {
+        loadQueueDialog();
     } else if (name == QLatin1String("toggleFullscreen")) {
         toggleFullscreen();
     } else if (name == QLatin1String("toggleMaximize")) {
@@ -1007,7 +1286,12 @@ void WindowController::playSibling(int delta)
     if (index < 0 || media.size() < 2)
         return;
     const int next = (index + delta + media.size()) % media.size();
-    openFile(QUrl::fromLocalFile(media.at(next)));
+    QVariantList urls;
+    for (const QString &file : media)
+        urls.append(file);
+    // 同目录切换同步成队列，后续 N/P 与「自动下一集」都按这份队列走。
+    m_queue->setUrls(urls, next);
+    beginQueuePlayback(media.at(next));
 }
 
 void WindowController::openPath(const QString &path)
@@ -1044,6 +1328,8 @@ void WindowController::openFile(const QUrl &url)
         return;
     }
     Log::info(QStringLiteral("开始播放：%1").arg(path));
+    if (!m_playingFromQueue && m_queue)
+        m_queue->setUrls(QVariantList{path}, 0);
     rememberFile(path);
     CrashBreadcrumb::record(QStringLiteral("打开媒体：%1").arg(path));
     updateTitle();

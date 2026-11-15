@@ -1,0 +1,173 @@
+[
+  {
+    "order": 1,
+    "hwnd": 15665482,
+    "hostPid": 608,
+    "title": "Palune.exe - 系统错误",
+    "body": "由于找不到 Qt6Gui.dll，无法继续执行代码。重新安装程序可能会解决此问题。 ",
+    "visible": true,
+    "dismissedBy": "wm-close"
+  },
+  {
+    "order": 2,
+    "hwnd": 15731018,
+    "hostPid": 608,
+    "title": "Palune.exe - 系统错误",
+    "body": "由于找不到 Qt6Qml.dll，无法继续执行代码。重新安装程序可能会解决此问题。 ",
+    "visible": true,
+    "dismissedBy": "wm-close"
+  },
+  {
+    "order": 3,
+    "hwnd": 15796554,
+    "hostPid": 608,
+    "title": "Palune.exe - 系统错误",
+    "body": "由于找不到 Qt6Quick.dll，无法继续执行代码。重新安装程序可能会解决此问题。 ",
+    "visible": true,
+    "dismissedBy": "wm-close"
+  },
+  {
+    "order": 4,
+    "hwnd": 15862090,
+    "hostPid": 608,
+    "title": "Palune.exe - 系统错误",
+    "body": "由于找不到 Qt6Widgets.dll，无法继续执行代码。重新安装程序可能会解决此问题。 ",
+    "visible": true,
+    "dismissedBy": "wm-close"
+  },
+  {
+    "order": 5,
+    "hwnd": 15927626,
+    "hostPid": 608,
+    "title": "Palune.exe - 系统错误",
+    "body": "由于找不到 Qt6Gui.dll，无法继续执行代码。重新安装程序可能会解决此问题。 ",
+    "visible": true,
+    "dismissedBy": "wm-close"
+  },
+  {
+    "order": 6,
+    "hwnd": 15993162,
+    "hostPid": 608,
+    "title": "Palune.exe - 系统错误",
+    "body": "由于找不到 Qt6Widgets.dll，无法继续执行代码。重新安装程序可能会解决此问题。 ",
+    "visible": true,
+    "dismissedBy": "wm-close"
+  },
+  {
+    "order": 7,
+    "hwnd": 16058698,
+    "hostPid": 608,
+    "title": "Palune.exe - 系统错误",
+    "body": "由于找不到 Qt6Quick.dll，无法继续执行代码。重新安装程序可能会解决此问题。 ",
+    "visible": true,
+    "dismissedBy": "wm-close"
+  },
+  {
+    "order": 8,
+    "hwnd": 16124234,
+    "hostPid": 608,
+    "title": "Palune.exe - 系统错误",
+    "body": "由于找不到 Qt6Qml.dll，无法继续执行代码。重新安装程序可能会解决此问题。 ",
+    "visible": true,
+    "dismissedBy": "wm-close"
+  },
+  {
+    "order": 9,
+    "hwnd": 16189770,
+    "hostPid": 608,
+    "title": "Palune.exe - 系统错误",
+    "body": "由于找不到 Qt6Quick.dll，无法继续执行代码。重新安装程序可能会解决此问题。 ",
+    "visible": true,
+    "dismissedBy": "wm-close"
+  },
+  {
+    "order": 10,
+    "hwnd": 16255306,
+    "hostPid": 608,
+    "title": "Palune.exe - 系统错误",
+    "body": "由于找不到 Qt6Widgets.dll，无法继续执行代码。重新安装程序可能会解决此问题。 ",
+    "visible": true,
+    "dismissedBy": "wm-close"
+  },
+  {
+    "order": 11,
+    "hwnd": 16320842,
+    "hostPid": 608,
+    "title": "Palune.exe - 系统错误",
+    "body": "由于找不到 Qt6Quick.dll，无法继续执行代码。重新安装程序可能会解决此问题。 ",
+    "visible": true,
+    "dismissedBy": "wm-close"
+  },
+  {
+    "order": 12,
+    "hwnd": 16386378,
+    "hostPid": 608,
+    "title": "Palune.exe - 系统错误",
+    "body": "由于找不到 Qt6Quick.dll，无法继续执行代码。重新安装程序可能会解决此问题。 ",
+    "visible": true,
+    "dismissedBy": "wm-close"
+  },
+  {
+    "order": 13,
+    "hwnd": 16451914,
+    "hostPid": 608,
+    "title": "Palune.exe - 系统错误",
+    "body": "由于找不到 Qt6Quick.dll，无法继续执行代码。重新安装程序可能会解决此问题。 ",
+    "visible": true,
+    "dismissedBy": "wm-close"
+  },
+  {
+    "order": 14,
+    "hwnd": 16517450,
+    "hostPid": 608,
+    "title": "Palune.exe - 系统错误",
+    "body": "由于找不到 Qt6Quick.dll，无法继续执行代码。重新安装程序可能会解决此问题。 ",
+    "visible": true,
+    "dismissedBy": "wm-close"
+  },
+  {
+    "order": 15,
+    "hwnd": 16582986,
+    "hostPid": 608,
+    "title": "Palune.exe - 系统错误",
+    "body": "由于找不到 Qt6Gui.dll，无法继续执行代码。重新安装程序可能会解决此问题。 ",
+    "visible": true,
+    "dismissedBy": "wm-close"
+  },
+  {
+    "order": 16,
+    "hwnd": 16648522,
+    "hostPid": 608,
+    "title": "Palune.exe - 系统错误",
+    "body": "由于找不到 Qt6Widgets.dll，无法继续执行代码。重新安装程序可能会解决此问题。 ",
+    "visible": true,
+    "dismissedBy": "wm-close"
+  },
+  {
+    "order": 17,
+    "hwnd": 16714058,
+    "hostPid": 608,
+    "title": "Palune.exe - 系统错误",
+    "body": "由于找不到 Qt6Quick.dll，无法继续执行代码。重新安装程序可能会解决此问题。 ",
+    "visible": true,
+    "dismissedBy": "wm-close"
+  },
+  {
+    "order": 18,
+    "hwnd": 16779594,
+    "hostPid": 608,
+    "title": "Palune.exe - 系统错误",
+    "body": "由于找不到 Qt6Qml.dll，无法继续执行代码。重新安装程序可能会解决此问题。 ",
+    "visible": true,
+    "dismissedBy": "wm-close"
+  },
+  {
+    "order": 19,
+    "hwnd": 16845130,
+    "hostPid": 608,
+    "title": "Palune.exe - 系统错误",
+    "body": "由于找不到 Qt6Widgets.dll，无法继续执行代码。重新安装程序可能会解决此问题。 ",
+    "visible": true,
+    "dismissedBy": "wm-close"
+  }
+]

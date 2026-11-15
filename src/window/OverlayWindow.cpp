@@ -114,15 +114,24 @@ LRESULT CALLBACK OverlayWindow::nativeEventProc(HWND hwnd, UINT msg, WPARAM wPar
     // 不进入 DefWindowProc 的非客户区绘制路径，直接吞掉非客户区绘制；
     // 但必须显式让客户区重绘，否则激活切换后客户端缓冲不失效，会残留上一窗口的合成快照。
     if (msg == WM_NCACTIVATE) {
-        if (self)
+        if (self) {
             self->scheduleRepaint();
+            QMetaObject::invokeMethod(self, "nativeStateChanged", Qt::QueuedConnection);
+        }
         return TRUE;
     }
     if (msg == WM_NCPAINT)
         return TRUE;
-    if (msg == WM_ACTIVATE || msg == WM_SIZE || msg == WM_SHOWWINDOW) {
-        if (self)
+    // 遮挡/恢复、跨屏、DPI 变化、休眠唤醒、全屏进出都会走其中至少一条消息。
+    // 逐条覆盖而不是只挂 activeChanged：被其它窗口覆盖时本窗可能仍是 active
+    // （例如置顶窗口、系统弹层），此时不会触发 activeChanged，但合成层已经变了。
+    if (msg == WM_ACTIVATE || msg == WM_SIZE || msg == WM_SHOWWINDOW
+        || msg == WM_WINDOWPOSCHANGED || msg == WM_DISPLAYCHANGE || msg == WM_DPICHANGED
+        || msg == WM_POWERBROADCAST || msg == WM_ACTIVATEAPP) {
+        if (self) {
             self->scheduleRepaint();
+            QMetaObject::invokeMethod(self, "nativeStateChanged", Qt::QueuedConnection);
+        }
     }
     return DefSubclassProc(hwnd, msg, wParam, lParam);
 }

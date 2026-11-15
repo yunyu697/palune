@@ -66,6 +66,7 @@ $required = @(
     "bin\Palune.exe",
     "bin\Qt6Core.dll",
     "bin\Qt6Gui.dll",
+    "bin\Qt6Widgets.dll",
     "bin\Qt6Qml.dll",
     "bin\Qt6Quick.dll",
     "bin\Qt6QuickControls2.dll",
@@ -118,6 +119,19 @@ $evidence.launch["report"] = $launchReport
 $evidence.launch["ok"] = ($launchCode -eq 0) -and $null -ne $launchReport -and
     $launchReport.verdict -eq "PASS"
 
+# 安装树里的 QML 全量加载自检：任何 QML 编译错误都意味着窗口起不来，
+# 必须在发布前失败，而不是等用户双击时静默退出。
+$qmlReport = Join-Path $outFull "install-qml-check.json"
+Remove-Item -Force -ErrorAction SilentlyContinue $qmlReport
+Write-Output "Checking installed QML ..."
+$qmlProc = Start-Process -FilePath (Join-Path $InstallDir "bin\Palune.exe") `
+    -ArgumentList "--qml-check", "--report", "`"$qmlReport`"" `
+    -WorkingDirectory (Join-Path $InstallDir "bin") -Wait -PassThru
+$qmlJson = if (Test-Path $qmlReport) { Get-Content $qmlReport -Raw | ConvertFrom-Json } else { $null }
+$evidence.launch["qmlCheckExitCode"] = $qmlProc.ExitCode
+$evidence.launch["qmlCheckOk"] = ($qmlProc.ExitCode -eq 0) -and $null -ne $qmlJson -and $qmlJson.ok -eq $true
+$evidence.launch["qmlCheckFiles"] = if ($qmlJson) { $qmlJson.count } else { 0 }
+
 # Uninstall and confirm shortcuts + files disappear.
 Write-Output "Uninstalling silently ..."
 Start-Process -FilePath $uninstaller -ArgumentList "/S" -Wait
@@ -137,7 +151,7 @@ $uninstallClean = $evidence.uninstall.installDirGone -and $evidence.uninstall.st
 
 $noStray = @($evidence.shortcuts.startMenuRootStray).Count -eq 0
 $pass = ($evidence.installExitCode -eq 0) -and $filesOk -and $startOk -and $desktopOk -and $noStray -and
-    $uninstallOk -and $evidence.launch.ok -and $uninstallClean
+    $uninstallOk -and $evidence.launch.ok -and $evidence.launch.qmlCheckOk -and $uninstallClean
 $evidence.verdict = if ($pass) { "PASS" } else { "FAIL" }
 
 $json = $evidence | ConvertTo-Json -Depth 6

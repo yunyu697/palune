@@ -48,7 +48,7 @@ Item {
     // A 是滑出侧栏、不压暗画面；C 是覆盖式抽屉，压暗背景。
     Rectangle {
         anchors.fill: parent
-        color: libraryPanel.railMode ? "transparent" : "#99000000"
+        color: libraryPanel.railMode ? "transparent" : tokens.scrim
         MouseArea {
             anchors.fill: parent
             onClicked: libraryPanel.closeRequested()
@@ -67,8 +67,8 @@ Item {
                                                             : (parent.width - width) / 2
         y: libraryPanel.railMode ? 104 : (libraryPanel.drawerMode ? 0 : (parent.height - height) / 2)
         radius: libraryPanel.drawerMode ? 0 : tokens.radiusL
-        color: "#f20d0e11"
-        border.width: libraryPanel.drawerMode ? 0 : 1
+        color: tokens.layerCard
+        border.width: libraryPanel.drawerMode ? 0 : tokens.stroke
         border.color: tokens.border
 
         // 卡片自身的点击不关闭面板（只处理边距区域的点击）。
@@ -76,7 +76,7 @@ Item {
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: libraryPanel.railMode ? 16 : 24
+            anchors.margins: libraryPanel.railMode ? tokens.spaceXL : tokens.space3XL
             spacing: tokens.spaceM
 
             RowLayout {
@@ -85,7 +85,7 @@ Item {
                 Text {
                     text: qsTr("媒体库")
                     color: tokens.text
-                    font.pixelSize: libraryPanel.railMode ? 16 : tokens.fontL
+                    font.pixelSize: libraryPanel.railMode ? tokens.fontTitle : tokens.fontL
                     font.weight: Font.DemiBold
                 }
                 Text {
@@ -118,13 +118,13 @@ Item {
                 Item { Layout.fillWidth: true }
                 // 视图切换：海报墙 / 列表
                 Row {
-                    spacing: 2
+                    spacing: tokens.spaceHair
                     Rectangle {
                         width: posterLabel.implicitWidth + 18
                         height: 26
                         radius: tokens.radiusS
-                        color: libraryPanel.posterMode ? tokens.accentSoft : "#14ffffff"
-                        border.width: 1
+                        color: libraryPanel.posterMode ? tokens.accentSoft : tokens.stateRest
+                        border.width: tokens.stroke
                         border.color: libraryPanel.posterMode ? tokens.accent : tokens.border
                         Text {
                             id: posterLabel
@@ -143,8 +143,8 @@ Item {
                         width: listLabel.implicitWidth + 18
                         height: 26
                         radius: tokens.radiusS
-                        color: !libraryPanel.posterMode ? tokens.accentSoft : "#14ffffff"
-                        border.width: 1
+                        color: !libraryPanel.posterMode ? tokens.accentSoft : tokens.stateRest
+                        border.width: tokens.stroke
                         border.color: !libraryPanel.posterMode ? tokens.accent : tokens.border
                         Text {
                             id: listLabel
@@ -166,20 +166,20 @@ Item {
             Flow {
                 Layout.fillWidth: true
                 visible: typeof library !== "undefined" && library.roots.length > 0
-                spacing: 6
+                spacing: tokens.spaceS
                 Repeater {
                     model: typeof library !== "undefined" ? library.roots : []
                     delegate: Rectangle {
                         height: 22
                         width: rootText.implicitWidth + 30
-                        radius: 11
-                        color: "#14ffffff"
-                        border.width: 1
+                        radius: height / 2
+                        color: tokens.stateRest
+                        border.width: tokens.stroke
                         border.color: tokens.border
                         Text {
                             id: rootText
                             anchors.left: parent.left
-                            anchors.leftMargin: 10
+                            anchors.leftMargin: tokens.spaceM
                             anchors.verticalCenter: parent.verticalCenter
                             text: {
                                 const value = String(modelData)
@@ -194,14 +194,14 @@ Item {
                         }
                         Text {
                             anchors.right: parent.right
-                            anchors.rightMargin: 8
+                            anchors.rightMargin: tokens.spaceM
                             anchors.verticalCenter: parent.verticalCenter
                             text: "×"
                             color: tokens.textFaint
-                            font.pixelSize: 12
+                            font.pixelSize: tokens.fontBody
                             MouseArea {
                                 anchors.fill: parent
-                                anchors.margins: -6
+                                anchors.margins: -tokens.spaceS
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: library.removeRoot(String(modelData))
                             }
@@ -262,11 +262,11 @@ Item {
                         Rectangle {
                             id: tile
                             anchors.fill: parent
-                            anchors.margins: 4
-                            anchors.bottomMargin: 48
+                            anchors.margins: tokens.spaceXS
+                            anchors.bottomMargin: tokens.space3XL * 2
                             radius: tokens.radiusM
-                            color: hoverArea.containsMouse ? "#1fffffff" : "#12ffffff"
-                            border.width: 1
+                            color: hoverArea.containsMouse ? tokens.stateHover : tokens.stateRest
+                            border.width: tokens.stroke
                             border.color: hoverArea.containsMouse ? tokens.accent : tokens.border
                             clip: true
 
@@ -284,14 +284,14 @@ Item {
                                 anchors.fill: parent
                                 visible: modelData.poster === undefined || modelData.poster === ""
                                 gradient: Gradient {
-                                    GradientStop { position: 0.0; color: "#20242c" }
-                                    GradientStop { position: 1.0; color: "#14161c" }
+                                    GradientStop { position: 0.0; color: tokens.posterGradTop }
+                                    GradientStop { position: 1.0; color: tokens.posterBg }
                                 }
                                 Text {
                                     anchors.centerIn: parent
                                     text: (modelData.suffix || "?").toUpperCase()
                                     color: tokens.textFaint
-                                    font.pixelSize: 13
+                                    font.pixelSize: tokens.fontBodyL
                                     font.weight: Font.DemiBold
                                 }
                             }
@@ -299,17 +299,17 @@ Item {
                             Rectangle {
                                 anchors.left: parent.left
                                 anchors.bottom: parent.bottom
-                                anchors.margins: 6
+                                anchors.margins: tokens.spaceS
                                 height: 18
                                 width: suffixLabel.implicitWidth + 12
-                                radius: 4
-                                color: "#cc0b0c10"
+                                radius: tokens.radiusXS
+                                color: tokens.badgeBg
                                 Text {
                                     id: suffixLabel
                                     anchors.centerIn: parent
                                     text: (modelData.suffix || "").toUpperCase()
                                     color: tokens.textMuted
-                                    font.pixelSize: 9
+                                    font.pixelSize: tokens.fontCaption
                                 }
                             }
 
@@ -324,11 +324,11 @@ Item {
 
                         Text {
                             anchors.top: tile.bottom
-                            anchors.topMargin: 8
+                            anchors.topMargin: tokens.spaceM
                             anchors.left: parent.left
-                            anchors.leftMargin: 6
+                            anchors.leftMargin: tokens.spaceS
                             anchors.right: parent.right
-                            anchors.rightMargin: 6
+                            anchors.rightMargin: tokens.spaceS
                             text: modelData.title !== undefined ? modelData.title : ""
                             color: tokens.text
                             font.pixelSize: tokens.fontS
@@ -337,14 +337,14 @@ Item {
                         }
                         Text {
                             anchors.top: tile.bottom
-                            anchors.topMargin: 23
+                            anchors.topMargin: tokens.space3XL
                             anchors.left: parent.left
-                            anchors.leftMargin: 6
+                            anchors.leftMargin: tokens.spaceS
                             anchors.right: parent.right
-                            anchors.rightMargin: 6
+                            anchors.rightMargin: tokens.spaceS
                             text: (modelData.sizeText || "") + " · " + (modelData.modifiedText || "")
                             color: tokens.textFaint
-                            font.pixelSize: 10
+                            font.pixelSize: tokens.fontCaption
                             elide: Text.ElideRight
                         }
                     }
@@ -360,12 +360,12 @@ Item {
                     Rectangle {
                         width: parent.width
                         height: 28
-                        color: "#0affffff"
+                        color: tokens.stateHeader
                         Row {
                             anchors.fill: parent
-                            anchors.leftMargin: 8
-                            anchors.rightMargin: 8
-                            spacing: 10
+                            anchors.leftMargin: tokens.spaceM
+                            anchors.rightMargin: tokens.spaceM
+                            spacing: tokens.spaceM
                             Text {
                                 width: 96
                                 text: qsTr("预览")
@@ -416,21 +416,21 @@ Item {
                         delegate: Rectangle {
                             width: ListView.view.width
                             height: 56
-                            color: rowHover.containsMouse ? "#14ffffff" : (index % 2 === 0 ? "transparent" : "#08ffffff")
-                            radius: 4
+                            color: rowHover.containsMouse ? tokens.stateRest : (index % 2 === 0 ? "transparent" : tokens.stateZebra)
+                            radius: tokens.radiusXS
 
                             Row {
                                 anchors.fill: parent
-                                anchors.leftMargin: 8
-                                anchors.rightMargin: 8
-                                spacing: 10
+                                anchors.leftMargin: tokens.spaceM
+                                anchors.rightMargin: tokens.spaceM
+                                spacing: tokens.spaceM
 
                                 Rectangle {
                                     width: 96
                                     height: 54
                                     anchors.verticalCenter: parent.verticalCenter
-                                    radius: 4
-                                    color: "#14161c"
+                                    radius: tokens.radiusXS
+                                    color: tokens.posterBg
                                     clip: true
                                     Image {
                                         anchors.fill: parent
@@ -445,14 +445,14 @@ Item {
                                         visible: modelData.poster === undefined || modelData.poster === ""
                                         text: (modelData.suffix || "?").toUpperCase()
                                         color: tokens.textFaint
-                                        font.pixelSize: 11
+                                        font.pixelSize: tokens.fontSmall
                                     }
                                 }
 
                                 Column {
                                     width: parent.width - 96 - (libraryPanel.railMode ? 118 : 324)
                                     anchors.verticalCenter: parent.verticalCenter
-                                    spacing: 2
+                                    spacing: tokens.spaceHair
                                     Text {
                                         width: parent.width
                                         text: modelData.title !== undefined ? modelData.title : ""
@@ -464,7 +464,7 @@ Item {
                                         width: parent.width
                                         text: modelData.fileName !== undefined ? modelData.fileName : ""
                                         color: tokens.textFaint
-                                        font.pixelSize: 10
+                                        font.pixelSize: tokens.fontCaption
                                         elide: Text.ElideRight
                                     }
                                 }

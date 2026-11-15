@@ -1,12 +1,16 @@
 #pragma once
 
+#include <QColor>
 #include <QObject>
 #include <QRect>
 #include <QVariantList>
 #include <QUrl>
 
+class QTimer;
+
 #include "window/OverlayWindow.h"
 #include "window/VideoWindow.h"
+#include "ui/PlayQueue.h"
 
 namespace palune {
 
@@ -21,6 +25,7 @@ class MediaLibraryService;
 class ActionRegistry;
 class SettingsWindow;
 class Preferences;
+class PlayQueue;
 
 // 双窗几何同步结果（M0 判据用）。
 struct ApplyResult {
@@ -38,6 +43,7 @@ class WindowController : public QObject
     Q_PROPERTY(QString windowTitle READ windowTitle NOTIFY windowTitleChanged)
     Q_PROPERTY(bool ready READ ready CONSTANT)
     Q_PROPERTY(QVariantList recentFiles READ recentFiles NOTIFY recentFilesChanged)
+    Q_PROPERTY(PlayQueue *playQueue READ playQueue CONSTANT)
     Q_PROPERTY(QString version READ version CONSTANT)
     Q_PROPERTY(QString configDir READ configDir CONSTANT)
     Q_PROPERTY(QString crashDir READ crashDir CONSTANT)
@@ -63,6 +69,7 @@ public:
     int windowRadius() const { return m_cornerRadius; }
     QString windowTitle() const { return m_windowTitle; }
     QVariantList recentFiles() const;
+    PlayQueue *playQueue() const { return m_queue; }
     QString version() const;
     QString configDir() const;
     QString crashDir() const;
@@ -83,6 +90,14 @@ public:
     Q_INVOKABLE void action(const QString &name, const QVariant &value);
     Q_INVOKABLE void openFolderDialog();
     Q_INVOKABLE void openRecentFile(const QString &path);
+    // 拖放统一入口：区分媒体 / 字幕 / 网络地址，多文件全部入队。
+    Q_INVOKABLE void handleDrop(const QVariantList &urls);
+    // 打开网络地址：http/https/rtsp/rtmp 等直接交给 mpv。
+    Q_INVOKABLE void openUrl(const QString &url);
+    // 队列相关：追加文件、保存/载入 .json 队列。
+    Q_INVOKABLE void appendFilesDialog();
+    Q_INVOKABLE void saveQueueDialog();
+    Q_INVOKABLE void loadQueueDialog();
     // 媒体库条目点击：接受本地绝对路径或已编码的 URL。
     Q_INVOKABLE void openPath(const QString &path);
     // 无边框窗口的原生拖拽 / 边缘缩放 / 最大化：交给系统处理，保证与 Snap、多屏 DPI 一致。
@@ -93,6 +108,8 @@ public:
     // 布局 B 等需要给侧栏让位时，由布局下发视频区在窗口内的逻辑像素内缩。
     // 布局切换时新布局会在 onCompleted 里重新下发，A/C 下发 0 即恢复满窗。
     Q_INVOKABLE void setVideoInsets(double left, double top, double right, double bottom);
+    // 窗口外框的边框色由主题（QML 令牌）下发，交给系统画；QML 不再自绘窗口级描边。
+    Q_INVOKABLE void setWindowFrameColor(const QColor &color);
 
     ApplyResult applyGeometry(const QRect &rect);
     ApplyResult toggleFullscreenForTest();
@@ -138,6 +155,8 @@ private:
     void updateTitle();
     // 用户拖拽/缩放原生窗口后，把视频窗同步到覆盖窗几何。
     void syncVideoToOverlay();
+    // 锁死双窗分层：视频窗必须紧贴覆盖窗正下方；被系统重排后立即插回。
+    void enforceLayering();
     // 给两窗应用与主题一致的圆角 Region（Windows 无边框窗默认没有圆角）。
     void applyWindowRegion();
     void showWindows();
@@ -145,6 +164,9 @@ private:
     void rememberFile(const QString &path);
     void playSibling(int delta);
     void saveResumePosition();
+    void playQueueIndex(int index);
+    void beginQueuePlayback(const QString &path);
+    void setAspectAndNotify(const QString &mode);
 
     MpvClient *m_player = nullptr;
     UpdateService *m_updater = nullptr;
@@ -156,10 +178,14 @@ private:
     CompactController *m_compactMode = nullptr;
     ActionRegistry *m_actions = nullptr;
     Preferences *m_preferences = nullptr;
+    PlayQueue *m_queue = nullptr;
+    bool m_playingFromQueue = false;
     VideoWindow *m_video = nullptr;
     OverlayWindow *m_overlay = nullptr;
     SettingsWindow *m_settingsWindow = nullptr;
     bool m_ready = false;
+    // 系统窗框边框色：由 QML 按主题下发，默认取深色底层色，避免首帧出现系统亮边。
+    QColor m_frameColor = QColor(0x0d, 0x0e, 0x11);
     double m_pendingResume = -1.0;
     qint64 m_lastResumeSaveMs = 0;
     qint64 m_lastRemoteReportMs = 0;
@@ -178,6 +204,9 @@ private:
     QRect m_restoreGeometry;
     QString m_windowTitle = QStringLiteral("Palune");
     qint64 m_lastSyncMicros = 0;
+    // 双窗分层巡检（兜底系统消息覆盖不到的路径，如无激活变更的置顶遮挡、
+    // 休眠唤醒后的合成层重建）。仅在窗口可见且未最小化时运行。
+    QTimer *m_layerWatchdog = nullptr;
 };
 
 } // namespace palune

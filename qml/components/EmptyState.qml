@@ -7,11 +7,11 @@ Rectangle {
     id: empty
     signal openRequested()
 
-    width: 460
-    height: 168
+    width: tokens.emptyCardW
+    height: tokens.emptyCardH
     radius: tokens.radiusL
     color: tokens.glass
-    border.width: 1
+    border.width: tokens.stroke
     border.color: tokens.border
 
     Tokens { id: tokens }
@@ -24,14 +24,14 @@ Rectangle {
 
     Column {
         anchors.centerIn: parent
-        spacing: 10
+        spacing: tokens.spaceM
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             text: "PALUNE"
             color: tokens.accent
             font.pixelSize: tokens.fontL
-            font.letterSpacing: 4
+            font.letterSpacing: tokens.trackingL
             font.weight: Font.DemiBold
         }
         Text {
@@ -42,7 +42,7 @@ Rectangle {
         }
         Row {
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 10
+            spacing: tokens.spaceM
             PillButton {
                 label: qsTr("打开文件")
                 highlighted: true

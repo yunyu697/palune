@@ -49,6 +49,29 @@ permissions:
 
 正式发布前必须换成离线保管的生产密钥，并同步替换 `resources/trust/update.pub`；轮换窗口内旧公钥仍需保留，否则已安装客户端无法验证新清单。
 
+### 2.1 测试签名密钥现状（2026-11-15 审计，只查未改）
+
+`resources/trust/update.pub` **就是测试公钥**：与 `resources/trust/test-update.pub` 文件内容完全相同（SHA-256 `c7e28969bb7796e6857c8fbe179fa2da58f51d20c2d5b875fcf59517d752606f`），对应 `keyId=palune-test`。它只服务 RC/测试通道，**不代表生产信任**；一旦用于 stable，等于用仓库可见的测试体系给正式更新链背书。
+
+私钥去向（审计结论）：
+
+| 位置 | 结论 |
+|---|---|
+| 仓库历史 | **从未入库**。`tools/update/test-key.pem` 被 [.gitignore](file:///D:/Users/Tyler%20Zhang/Documents/Trae-CN/temp_20261106_08/palune/.gitignore) 第 24 行忽略；`git log --all --full-history -- tools/update/test-key.pem`、`git log --all -S"BEGIN PRIVATE KEY"`、`--name-only -- "*test-key*"`、`-- "*key*.pem"` 四条检索均为空；远端只有 `origin/main` + 10 个 tag，无其他分支可藏 |
+| CI Secret | `PALUNE_UPDATE_PRIVATE_KEY`、`PALUNE_UPDATE_KEY_ID`（2026-11-07 创建），仅 release 工作流的 `manifest` job 读取 |
+| 本机 | 只有 `tools/update/test-key.pem`（2026-11-06 生成）；未进安装树（`build/stage-record` 无 `*.pem`），也未随安装包发布 |
+
+风险：公钥公开、私钥同时存在于本机文件与 CI Secret 两处；任何能读到 Secret 的人都可签出被现有客户端接受、但实际是测试信任链的清单。
+
+stable 之前的轮转步骤（未开始）：
+
+1. 离线（air-gapped）生成新密钥对，`keyId` 改为 `palune-prod-1`，私钥只落离线介质 + 受控签名环境，不再进 CI Secret 的可读变量。
+2. 先发一版过渡 RC：客户端同时内置旧测试公钥与新生产公钥（`resources/trust/` 双文件），保证已安装客户端仍能验证过渡期的清单；客户端是否支持多公钥需先验证，不支持则本步不可跳过。
+3. 用生产私钥重签 `latest.json` 与产物签名，`--base-url` 与 `SHA256SUMS` 同步；CI 侧改为注入签名结果或走离线签名产物，Secret 换成生产密钥并删掉测试密钥。
+4. 过渡期结束后从客户端移除测试公钥，只认 `palune-prod-*`；旧测试密钥的 `latest.json` 一律按验签失败（`UPD-004`）丢弃。
+5. 轮转窗口内保留旧公钥，窗口结束后再删；期间任何一次清单漏签都会让老客户端拒绝更新，需在发布清单里显式记录切换版本号。
+
+
 ## 3. 发布流水线
 
 `.github/workflows/release.yml`：

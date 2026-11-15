@@ -184,5 +184,6 @@ void TstPlayQueue::networkUrlKeptVerbatim()
              QStringLiteral("index.m3u8"));
 }
 
-QTEST_MAIN(TstPlayQueue)
+// 纯模型用例：不建窗口、不碰 QPA，headless CI 与桌面行为一致。
+QTEST_GUILESS_MAIN(TstPlayQueue)
 #include "tst_playqueue.moc"

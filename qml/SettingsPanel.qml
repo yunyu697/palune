@@ -633,7 +633,7 @@ Item {
                                     { label: "1:1", value: "1:1" },
                                     { label: qsTr("填充"), value: "fill" }
                                 ]
-                                onPicked: function (v) { player.setAspectRatio(v) }
+                                onPicked: function (v) { win.action("setAspectRatio", v) }
                             }
                         }
 

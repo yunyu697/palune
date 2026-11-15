@@ -205,7 +205,7 @@ Item {
                 Item { Layout.fillHeight: true }
             }
 
-            // 章节页：绑定 mpv chapter-list，点击按章节起始时间 seek。
+            // 章节页：读 player.chapters，点击按章节起始时间跳转。
             ColumnLayout {
                 visible: layoutB.inspectorTab === "chapters"
                 Layout.fillWidth: true
@@ -260,7 +260,7 @@ Item {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: player.setChapter(chapterRow.index)
+                            onClicked: win.action("setChapter", chapterRow.index)
                         }
                     }
                 }

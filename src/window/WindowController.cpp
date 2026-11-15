@@ -1005,6 +1005,8 @@ void WindowController::action(const QString &name, const QVariant &value)
         QStringLiteral("seekBack"), QStringLiteral("volumeSet"), QStringLiteral("volumeBy"),
         QStringLiteral("speedSet"), QStringLiteral("speedCycle"), QStringLiteral("audioSet"),
         QStringLiteral("subtitleSet"), QStringLiteral("setTheme"),
+        // 带参数的定点设置：QML 只下发「设成什么」，取值与后端交互仍在 C++。
+        QStringLiteral("setAspectRatio"), QStringLiteral("setChapter"),
         QStringLiteral("openSettings"), QStringLiteral("closeSettings"),
     };
     if (!m_actions->has(name) && !kLegacyIds.contains(name)) {
@@ -1177,6 +1179,16 @@ void WindowController::action(const QString &name, const QVariant &value)
         const QString current = m_player ? m_player->aspectRatio() : QStringLiteral("auto");
         const int index = order.indexOf(current);
         setAspectAndNotify(order.at((index + 1) % order.size()));
+    } else if (name == QLatin1String("setAspectRatio")) {
+        const QString mode = value.toString();
+        static const QStringList allowed = {QStringLiteral("auto"), QStringLiteral("16:9"),
+                                            QStringLiteral("4:3"), QStringLiteral("21:9"),
+                                            QStringLiteral("1:1"), QStringLiteral("fill")};
+        if (allowed.contains(mode))
+            setAspectAndNotify(mode);
+    } else if (name == QLatin1String("setChapter")) {
+        if (m_player)
+            m_player->setChapter(value.toInt());
     } else if (name == QLatin1String("screenshot")) {
         const QString dir = m_preferences ? m_preferences->screenshotDir() : QString();
         const QString saved = m_player ? m_player->screenshotToDir(dir) : QString();

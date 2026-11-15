@@ -170,7 +170,7 @@ macOS / Linux 依赖：`tools/ci/fetch_deps.sh`（brew / apt / dnf / pacman）�
 | 可访问性 | 匿名访问 Release 页、`latest.json`、安装包均 **200**；`releases/latest` 仍为 **404**（不接管 Latest） |
 | 本版内容 | UI 六条、覆盖窗分层（`enforceLayering`）、图标平台合规（icns Big Sur 824 / hicolor 8 档 / macOS 单色 template / 多尺寸 QIcon）、圆角白边（删 QML 发丝描边 + 圆角单一来源 12/8/18 + DWM 系统窗框）、依赖部署与 CI 校验（构建树 12 exe + 安装暂存树出包门禁）；逐条见 `docs/release-notes/1.0.0-RC2.md` |
 | 本机校验 | `check_version.py` 0、`ctest` 12/12、`check_qml.ps1` 0、`check_design_tokens.py` 0 |
-| 已知红 | 该提交 CI（run 43699085001）红：`check_layers.py` 3 处（LayoutB 的 `player.setChapter`/mpv 注释、SettingsPanel 的 `player.setAspectRatio`）与覆盖率 job 的 `qml_check`（未部署 QPA 插件）；详见 `docs/RELEASES.md` §11.2 |
+| 已知红（已修） | 该提交 CI 的两处红已在后续提交修复：`check_layers` 3 处改走 `win.action`；覆盖率 job 的 `qml_check`/`playqueue` 缺 QPA 插件 → `tst_playqueue` 改 `QTEST_GUILESS_MAIN`，另修 macOS 组合键查表顺序、qmllint 字体回退、补 40 条英文翻译；CI run 43701809740 **6/6 全绿**。RC2 安装包仍是 `e1eca14` 构建，未重新打包 |
 | 未提供 | macOS/Linux 产物、MSI、生产签名；安装→启动→卸载自检本机未跑（按「不占前台/不弹窗」跳过） |
 
 ### 1.0.0-RC1 发布状态（2026-11-14 核对）

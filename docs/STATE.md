@@ -93,7 +93,7 @@
 | 发布 | https://github.com/yunyu697/palune/releases/tag/1.0.0-RC2，4 个资产，远端 digest 与本地一致；`latest.json`（keyId `palune-test`）用 `update.pub` 独立验签 PASS |
 | 出包门禁 | 构建树 12 个 exe 依赖检查 PASS；安装暂存树白名单 10 项 + 依赖检查 PASS（缺件拒绝出包） |
 | 本机校验 | ctest 12/12（0 失败）、qmllint 0、设计令牌检查 0 |
-| 已知红 | 该提交 CI（run 43699085001）：`check_layers.py` 3 处、覆盖率 job 的 `qml_check` 缺 QPA 插件；未在本版修 |
+| 已知红（已修） | 原 CI（run 43699085001）红两项：`check_layers.py` 3 处、覆盖率 job 的 `qml_check` 缺 QPA 插件；已在 `5e946a5`/`e3d7fe3`/`9d06bbc` 修复，CI run 43701809740 6/6 全绿。RC2 资产仍为 `e1eca14` 构建 |
 | 内容 | UI 六条、覆盖窗分层、图标平台合规、圆角白边、依赖部署与 CI 校验（`docs/release-notes/1.0.0-RC2.md`） |
 
 ### 1.0.0 候选版本（RC）记录

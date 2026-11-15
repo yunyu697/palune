@@ -247,7 +247,7 @@ stable 之前的轮转步骤（未开始）：
 | 出包门禁 | 构建树 12 个 exe 依赖检查 **PASS**；`cmake --install` 暂存树白名单 10 项齐全 + 依赖检查 **PASS**（1 个 exe / 16 个同目录二进制） |
 | 本机校验 | `check_version.py` 0；`ctest` 12/12 通过（0 失败）；`check_qml.ps1` 0；`check_design_tokens.py` 0 |
 | 未做 | 安装→启动→卸载自检（本机验证会弹窗，按「不占前台/不弹窗」跳过）；macOS/Linux 产物、MSI、生产签名 |
-| 已知红 | 该提交的 CI（run 43699085001）红：① `check_layers.py` 3 处违规（`qml/layouts/LayoutB/LayoutB.qml` 第 263 行 `player.setChapter(...)`、第 208 行注释含 mpv；`qml/SettingsPanel.qml` 第 636 行 `player.setAspectRatio(...)`）；② 覆盖率 job 的 `qml_check` 用例在未部署 QPA 插件的 build-cov 下失败（`no Qt platform plugin could be initialized`）。本地 `ctest` 跑在已部署插件的 `build/` 上，故未复现 ② |
+| 已知红（已修） | 该提交 CI（run 43699085001）红：① `check_layers.py` 3 处；② 覆盖率 job 的 `qml_check`。已修复：`5e946a5` 把 LayoutB/SettingsPanel 改走 `win.action` 并把 `tst_playqueue` 改 `QTEST_GUILESS_MAIN`；`e3d7fe3` 去掉排序的 locale 依赖、补 40 条英文翻译；`9d06bbc` 修 macOS 组合键查表顺序与 qmllint 字体回退。CI run 43701809740 **6/6 全绿**。RC2 安装包仍为 `e1eca14` 构建，未重新打包 |
 | 流程偏差（记录在案） | 按 §10 应先停用 Release 工作流再建 tag；本次漏做，`gh release create` 触发 run 43699395430，`version` job 通过后在 `windows` 构建阶段被取消，未触达 `publish`，资产未被覆盖（取消后重新核对远端 4 个资产 digest 与本地一致） |
 
 
